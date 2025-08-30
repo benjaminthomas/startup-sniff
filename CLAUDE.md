@@ -308,38 +308,47 @@ export const API_LIMITS = {
 
 ## 🎨 UI Components (shadcn/ui + Tailwind v4)
 
-### StartupSniff Design System
+### StartupSniff Design System (Updated)
 
 ```css
-/* app/globals.css - Current Color Palette */
+/* app/globals.css - Design System v1.0.0 */
 :root {
   /* Brand Colors */
-  --color-brand-primary: #6C63FF;        /* Purple - Main brand */
-  --color-brand-primary-hover: #5a52d6;  /* Purple hover */
-  --color-brand-accent: #0EA5E9;         /* Sky Blue - Secondary actions */
-  --color-brand-secondary: #F3F4F6;      /* Light gray - Backgrounds */
+  --color-brand-primary: #2563EB;        /* Blue - Main brand */
+  --color-brand-secondary: #1E293B;      /* Dark slate - Secondary brand */
   
-  /* Surface Colors */
-  --color-background: #FFFFFF;           /* Main background */
-  --color-surface: #F9FAFB;              /* Card surfaces */
-  --color-border: #E5E7EB;               /* Borders */
+  /* Background Colors */
+  --color-background-default: #F8FAFC;   /* Default background */
+  --color-background-alt: #FFFFFF;       /* Alternative background */
   
   /* Text Colors */
-  --color-text-primary: #111827;         /* Main text */
-  --color-text-secondary: #6B7280;       /* Secondary text */
-  --color-text-muted: #9CA3AF;           /* Muted text */
+  --color-text-primary: #1E293B;         /* Main text */
+  --color-text-secondary: #475569;       /* Secondary text */
+  
+  /* Utility Colors */
+  --color-border: #E2E8F0;               /* Borders */
+  --color-success: #22C55E;              /* Success states */
+  --color-warning: #FACC15;              /* Warning states */
+  --color-error: #EF4444;                /* Error states */
 
   /* Tailwind CSS Variables */
-  --primary: #6C63FF;
-  --accent: #0EA5E9;
-  --secondary: #F3F4F6;
-  --muted: #F9FAFB;
-  --border: #E5E7EB;
+  --primary: #2563EB;
+  --secondary: #1E293B;
+  --background: #F8FAFC;
+  --background-alt: #FFFFFF;
+  --border: #E2E8F0;
+  --success: #22C55E;
+  --warning: #FACC15;
+  --error: #EF4444;
   
   /* Typography */
-  --font-display: var(--font-geist-sans);
-  --font-body: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-family-base: 'Inter', 'Segoe UI', sans-serif;
+  --font-size-sm: 12px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+  --line-height-base: 1.6;
   
   /* Spacing */
   --spacing-xs: 4px;
@@ -347,49 +356,570 @@ export const API_LIMITS = {
   --spacing-md: 16px;
   --spacing-lg: 24px;
   --spacing-xl: 32px;
-  --spacing-2xl: 48px;
-  --spacing-3xl: 64px;
   
   /* Border Radius */
-  --radius: 0.625rem;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.12);
 }
 
 /* Dark Theme */
 .dark {
-  --color-brand-primary: #8B82FF;        /* Lighter purple for dark */
-  --color-brand-primary-hover: #7C73E6;  /* Purple hover dark */
-  --color-brand-accent: #0EA5E9;         /* Same sky blue */
-  --color-brand-secondary: #374151;      /* Dark gray backgrounds */
+  --color-brand-primary: #3B82F6;        /* Lighter blue for dark */
+  --color-brand-secondary: #E2E8F0;      /* Light text for secondary */
   
-  --color-background: #111827;           /* Dark background */
-  --color-surface: #1F2937;              /* Dark card surfaces */
-  --color-border: #374151;               /* Dark borders */
+  --color-background-default: #1E293B;   /* Dark background */
+  --color-background-alt: #334155;       /* Dark alternative background */
   
-  --color-text-primary: #F9FAFB;         /* Light text */
-  --color-text-secondary: #D1D5DB;       /* Secondary light text */
-  --color-text-muted: #9CA3AF;           /* Muted light text */
+  --color-text-primary: #F8FAFC;         /* Light text */
+  --color-text-secondary: #CBD5E1;       /* Secondary light text */
   
-  --primary: #8B82FF;
-  --accent: #0EA5E9;
-  --secondary: #374151;
-  --muted: #374151;
-  --border: #374151;
+  --color-border: #475569;               /* Dark borders */
+  
+  /* Update Tailwind variables for dark mode */
+  --primary: #3B82F6;
+  --secondary: #E2E8F0;
+  --background: #1E293B;
+  --background-alt: #334155;
+  --border: #475569;
+}
+```
+
+### Design Token Integration
+
+```typescript
+// styles/design-tokens.json - Complete Design System
+{
+  "name": "StartupSniff Design System",
+  "version": "1.0.0",
+  "tokens": {
+    "color": {
+      "brand-primary": { "value": "#2563EB", "type": "color" },
+      "brand-secondary": { "value": "#1E293B", "type": "color" },
+      "background-default": { "value": "#F8FAFC", "type": "color" },
+      "background-alt": { "value": "#FFFFFF", "type": "color" },
+      "text-primary": { "value": "#1E293B", "type": "color" },
+      "text-secondary": { "value": "#475569", "type": "color" },
+      "border": { "value": "#E2E8F0", "type": "color" },
+      "success": { "value": "#22C55E", "type": "color" },
+      "warning": { "value": "#FACC15", "type": "color" },
+      "error": { "value": "#EF4444", "type": "color" }
+    },
+    "typography": {
+      "font-family-base": { "value": "'Inter', 'Segoe UI', sans-serif", "type": "fontFamily" },
+      "font-size-sm": { "value": "12px", "type": "dimension" },
+      "font-size-md": { "value": "16px", "type": "dimension" },
+      "font-size-lg": { "value": "20px", "type": "dimension" },
+      "font-weight-normal": { "value": "400", "type": "fontWeight" },
+      "font-weight-bold": { "value": "700", "type": "fontWeight" },
+      "line-height-base": { "value": "1.6", "type": "lineHeight" }
+    },
+    "spacing": {
+      "spacing-xs": { "value": "4px", "type": "dimension" },
+      "spacing-sm": { "value": "8px", "type": "dimension" },
+      "spacing-md": { "value": "16px", "type": "dimension" },
+      "spacing-lg": { "value": "24px", "type": "dimension" },
+      "spacing-xl": { "value": "32px", "type": "dimension" }
+    },
+    "border-radius": {
+      "radius-xs": { "value": "2px", "type": "dimension" },
+      "radius-sm": { "value": "4px", "type": "dimension" },
+      "radius-md": { "value": "8px", "type": "dimension" },
+      "radius-lg": { "value": "16px", "type": "dimension" }
+    },
+    "shadow": {
+      "shadow-xs": { "value": "0 1px 2px rgba(0,0,0,0.05)", "type": "boxShadow" },
+      "shadow-sm": { "value": "0 2px 8px rgba(0,0,0,0.08)", "type": "boxShadow" },
+      "shadow-md": { "value": "0 4px 20px rgba(0,0,0,0.12)", "type": "boxShadow" }
+    }
+  }
 }
 ```
 
 ### Shadcn/ui Setup & Integration
 
+StartupSniff uses **shadcn/ui** exclusively for all UI components to ensure consistency, accessibility, and maintainability.
+
+#### Core shadcn/ui Components Available
+
 ```bash
 # Initialize shadcn/ui with Tailwind v4
 npx shadcn@latest init
 
-# Add components as needed
+# Core UI Components (Already Added)
 npx shadcn@latest add button form card toast dialog sheet
+npx shadcn@latest add input label select textarea checkbox
+npx shadcn@latest add dropdown-menu avatar badge separator
+npx shadcn@latest add progress sidebar table tabs alert
+npx shadcn@latest add navigation-menu tooltip skeleton
+```
+
+#### StartupSniff Component Architecture
+
+```typescript
+// ✅ ALWAYS use shadcn/ui components as building blocks
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+
+export function FeatureCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Feature Title</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p>Feature description</p>
+        <div className="flex gap-2 mt-4">
+          <Button variant="default">Primary Action</Button>
+          <Button variant="outline">Secondary</Button>
+        </div>
+        <Badge variant="secondary" className="mt-2">Status</Badge>
+      </CardContent>
+    </Card>
+  )
+}
+
+// ❌ NEVER create custom styled divs when shadcn equivalent exists
+function BadExample() {
+  return (
+    <div className="border rounded-lg p-4 shadow"> {/* Use Card instead */}
+      <div className="font-semibold mb-2"> {/* Use CardTitle instead */}
+        Title
+      </div>
+      <button className="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded"> {/* Use Button instead */}
+        Click me
+      </button>
+    </div>
+  )
+}
+```
+
+#### Shadcn/ui Component Categories
+
+**Layout & Structure**
+- `Card` - Primary container for content sections
+- `Separator` - Visual dividers between content
+- `Sidebar` - Navigation sidebar (used in dashboard)
+
+**Form Components**  
+- `Button` - All interactive buttons
+- `Input`, `Textarea` - Text input fields
+- `Label` - Form field labels
+- `Select` - Dropdown selections
+- `Checkbox` - Boolean inputs
+- `Form` - Form validation wrapper
+
+**Navigation & Interaction**
+- `DropdownMenu` - Context menus and user menus
+- `NavigationMenu` - Primary navigation
+- `Tabs` - Content organization
+- `Dialog` - Modal overlays
+- `Sheet` - Slide-out panels
+
+**Feedback & Status**
+- `Badge` - Status indicators and tags
+- `Progress` - Loading and completion bars
+- `Alert` - Important messages
+- `Toast` - Notification system (Sonner)
+- `Skeleton` - Loading states
+
+**Data Display**
+- `Table` - Structured data display
+- `Avatar` - User profile images
+- `Tooltip` - Additional information on hover
+
+#### Component Composition Patterns
+
+```typescript
+// StartupSniff Dashboard Card Pattern
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { FeatureIcons } from '@/lib/icons'
+
+interface DashboardCardProps {
+  title: string
+  description: string
+  status: 'active' | 'pending' | 'completed'
+  action?: () => void
+}
+
+export function DashboardCard({ title, description, status, action }: DashboardCardProps) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg">{title}</CardTitle>
+          <Badge variant={status === 'active' ? 'default' : 'secondary'}>
+            {status}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground mb-4">{description}</p>
+        {action && (
+          <Button onClick={action} variant="outline" size="sm">
+            <FeatureIcons.Forward className="w-4 h-4 mr-2" />
+            Take Action
+          </Button>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+```
+
+#### Sidebar Implementation (StartupSniff Pattern)
+
+```typescript
+// components/features/dashboard/app-sidebar.tsx
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarRail,
+} from '@/components/ui/sidebar'
+
+export function AppSidebar() {
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        {/* Brand/Logo */}
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Platform</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      
+      <SidebarFooter>
+        {/* Footer content */}
+      </SidebarFooter>
+      
+      <SidebarRail />
+    </Sidebar>
+  )
+}
+
+// Layout Integration
+export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger />
+          {/* Header content */}
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          {children}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}
+```
+
+### Icon System (Lucide React)
+
+StartupSniff uses **Lucide React** as the exclusive icon library for consistency, performance, and accessibility.
+
+#### Core Principles
+
+```typescript
+// ✅ ALWAYS use Lucide React icons
+import { Lightbulb, TrendingUp, BarChart3, User, Settings } from 'lucide-react'
+
+// ❌ NEVER use SVG files or other icon libraries
+import Icon from './icon.svg' // DON'T DO THIS
+```
+
+#### Icon Categories & Usage
+
+```typescript
+// StartupSniff Icon Vocabulary
+const STARTUPSNIFF_ICONS = {
+  // Core Features
+  idea_generation: ['Lightbulb', 'Sparkles', 'Zap'],
+  market_validation: ['Target', 'BarChart3', 'TrendingUp'],
+  content_creation: ['FileText', 'PenTool', 'Share2'],
+  reddit_analysis: ['MessageCircle', 'Users', 'TrendingUp'],
+  
+  // Navigation & UI
+  navigation: ['Home', 'Search', 'Bell', 'User', 'Settings'],
+  actions: ['Plus', 'Edit', 'Trash2', 'Copy', 'Download'],
+  states: ['Loader2', 'CheckCircle', 'AlertCircle', 'Eye', 'EyeOff'],
+  
+  // Business & Analytics
+  billing: ['CreditCard', 'DollarSign', 'Calendar'],
+  analytics: ['BarChart', 'PieChart', 'LineChart'],
+  growth: ['TrendingUp', 'ArrowUp', 'Target'],
+  
+  // Social & Communication
+  social: ['Heart', 'Share2', 'MessageCircle', 'ExternalLink'],
+  communication: ['Mail', 'Phone', 'MessageSquare']
+} as const
+```
+
+#### Icon Implementation Standards
+
+```typescript
+// Standard Icon Component Pattern
+import { LucideIcon } from 'lucide-react'
+
+interface IconButtonProps {
+  icon: LucideIcon
+  label: string
+  variant?: 'default' | 'ghost' | 'outline'
+  size?: 'sm' | 'md' | 'lg'
+}
+
+export function IconButton({ icon: Icon, label, variant = 'default', size = 'md' }: IconButtonProps) {
+  const sizeClasses = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5', 
+    lg: 'h-6 w-6'
+  }
+  
+  return (
+    <Button variant={variant} size={size}>
+      <Icon className={sizeClasses[size]} />
+      <span className="ml-2">{label}</span>
+    </Button>
+  )
+}
+
+// Usage Examples
+<IconButton icon={Lightbulb} label="Generate Ideas" />
+<IconButton icon={TrendingUp} label="View Trends" variant="outline" />
+<IconButton icon={BarChart3} label="Analytics" size="lg" />
+```
+
+#### Icon Sizing & Consistency
+
+```css
+/* Standard Icon Sizes */
+.icon-xs { @apply h-3 w-3; }    /* 12px - Inline text */
+.icon-sm { @apply h-4 w-4; }    /* 16px - Small buttons, badges */
+.icon-md { @apply h-5 w-5; }    /* 20px - Default buttons, nav */
+.icon-lg { @apply h-6 w-6; }    /* 24px - Headers, large buttons */
+.icon-xl { @apply h-8 w-8; }    /* 32px - Feature highlights */
+.icon-2xl { @apply h-12 w-12; } /* 48px - Hero sections */
+```
+
+#### Semantic Icon Usage
+
+```typescript
+// Feature-Specific Icon Mappings
+export const FeatureIcons = {
+  // Idea Generation
+  IdeaGeneration: Lightbulb,
+  AiGenerating: Sparkles,
+  BrainStorming: Zap,
+  
+  // Market Validation  
+  MarketResearch: Target,
+  DataAnalysis: BarChart3,
+  TrendAnalysis: TrendingUp,
+  CompetitorAnalysis: Users,
+  
+  // Content Creation
+  BlogPost: FileText,
+  SocialContent: Share2,
+  EmailCampaign: Mail,
+  LandingPage: Layout,
+  
+  // Reddit Analysis
+  RedditTrends: MessageCircle,
+  CommunityInsights: Users,
+  DiscussionAnalysis: MessageSquare,
+  
+  // User Interface
+  Dashboard: LayoutDashboard,
+  Profile: User,
+  Settings: Settings,
+  Notifications: Bell,
+  Search: Search,
+  
+  // Actions
+  Create: Plus,
+  Edit: Edit,
+  Delete: Trash2,
+  Save: Save,
+  Export: Download,
+  Share: Share2,
+  Copy: Copy,
+  
+  // States & Feedback
+  Loading: Loader2,
+  Success: CheckCircle,
+  Warning: AlertTriangle,
+  Error: AlertCircle,
+  Info: Info,
+  
+  // Navigation
+  Back: ArrowLeft,
+  Forward: ArrowRight,
+  Up: ArrowUp,
+  Down: ArrowDown,
+  External: ExternalLink,
+  
+  // Subscription & Billing
+  Billing: CreditCard,
+  Pricing: DollarSign,
+  Calendar: Calendar,
+  Plan: Zap,
+  Upgrade: ArrowUp,
+  
+  // Visibility & Privacy
+  Show: Eye,
+  Hide: EyeOff,
+  Public: Globe,
+  Private: Lock,
+  
+  // Content Types
+  Text: Type,
+  Image: Image,
+  Video: Video,
+  File: FileText,
+  Link: Link
+} as const
+
+// Usage in Components
+import { FeatureIcons } from '@/lib/icons'
+
+export function GenerateIdeasButton() {
+  return (
+    <Button>
+      <FeatureIcons.IdeaGeneration className="h-5 w-5 mr-2" />
+      Generate Ideas
+    </Button>
+  )
+}
+```
+
+#### Accessibility & Performance
+
+```typescript
+// Accessible Icon Pattern
+interface AccessibleIconProps {
+  icon: LucideIcon
+  label: string
+  decorative?: boolean
+}
+
+export function AccessibleIcon({ icon: Icon, label, decorative = false }: AccessibleIconProps) {
+  if (decorative) {
+    return <Icon className="h-5 w-5" aria-hidden="true" />
+  }
+  
+  return (
+    <Icon 
+      className="h-5 w-5" 
+      aria-label={label}
+      role="img"
+    />
+  )
+}
+
+// Performance: Tree-shaking friendly imports
+import { 
+  Lightbulb,
+  TrendingUp,
+  BarChart3 
+} from 'lucide-react' // ✅ Only imports needed icons
+
+// ❌ Don't import entire library
+import * as Icons from 'lucide-react' // Imports everything
+```
+
+#### Dark Mode Icon Handling
+
+```typescript
+// Icons automatically inherit text color
+export function ThemedIcon({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <Icon className="h-5 w-5 text-foreground" /> // Adapts to theme
+  )
+}
+
+// Specific themed icons
+export function BrandIcon({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <Icon className="h-5 w-5 text-primary" /> // Brand color
+  )
+}
+
+export function SuccessIcon({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <Icon className="h-5 w-5 text-success" /> // Success color
+  )
+}
+```
+
+#### Icon Animation Patterns
+
+```typescript
+// Loading States
+export function LoadingIcon() {
+  return <Loader2 className="h-5 w-5 animate-spin" />
+}
+
+// Interactive States
+export function InteractiveIcon({ icon: Icon, isActive }: { icon: LucideIcon, isActive: boolean }) {
+  return (
+    <Icon 
+      className={cn(
+        "h-5 w-5 transition-colors duration-200",
+        isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+      )} 
+    />
+  )
+}
+
+// Micro-animations
+export function AnimatedHeartIcon({ isLiked }: { isLiked: boolean }) {
+  return (
+    <Heart 
+      className={cn(
+        "h-5 w-5 transition-all duration-200",
+        isLiked 
+          ? "text-red-500 fill-red-500 scale-110" 
+          : "text-muted-foreground hover:text-red-500"
+      )} 
+    />
+  )
+}
 ```
 
 ### Modular Component Structure
@@ -1450,6 +1980,113 @@ export default function StartupPage() {
     WHERE user_id = $1 
     ORDER BY created_at DESC 
     LIMIT 10;
+    ```
+
+### Icon System Rules
+21. **Lucide React Exclusive** - Use only Lucide React icons, no SVGs or other libraries
+    ```typescript
+    // ✅ CORRECT
+    import { Lightbulb, TrendingUp } from 'lucide-react'
+    
+    // ❌ NEVER DO THIS
+    import Icon from './icon.svg'
+    import { SomeIcon } from 'react-icons'
+    ```
+
+22. **Semantic Icon Usage** - Use FeatureIcons for consistent naming
+    ```typescript
+    import { FeatureIcons } from '@/lib/icons'
+    
+    // ✅ Semantic and consistent
+    <FeatureIcons.IdeaGeneration className="h-5 w-5" />
+    <FeatureIcons.DataAnalysis className="h-5 w-5" />
+    
+    // ❌ Direct imports are less semantic
+    <Lightbulb className="h-5 w-5" />
+    <BarChart3 className="h-5 w-5" />
+    ```
+
+23. **Icon Sizing Standards** - Use standard size classes for consistency
+    ```typescript
+    import { IconSizes } from '@/lib/icons'
+    
+    // ✅ Standard sizes
+    <Icon className={IconSizes.md} />  // h-5 w-5 (default)
+    <Icon className={IconSizes.lg} />  // h-6 w-6 (headers)
+    <Icon className={IconSizes.sm} />  // h-4 w-4 (small UI)
+    ```
+
+24. **Accessibility for Icons** - Always provide context for screen readers
+    ```typescript
+    // ✅ Accessible icon patterns
+    <Icon className="h-5 w-5" aria-label="Generate new startup idea" />
+    <Icon className="h-5 w-5" aria-hidden="true" /> {/* Decorative only */}
+    
+    // ✅ Icons with text labels
+    <Button>
+      <Icon className="h-4 w-4 mr-2" />
+      Generate Ideas
+    </Button>
+    ```
+
+### Shadcn/ui Component Rules
+25. **Shadcn/ui Components Only** - Use exclusively shadcn/ui components, never custom styled divs
+    ```typescript
+    // ✅ CORRECT - Use shadcn components
+    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    
+    <Card>
+      <CardHeader>
+        <CardTitle>Title</CardTitle>
+      </CardHeader>
+      <CardContent>Content</CardContent>
+    </Card>
+    
+    // ❌ NEVER DO THIS - Custom styled divs
+    <div className="border rounded-lg p-4 shadow">
+      <div className="font-semibold mb-2">Title</div>
+      <div>Content</div>
+    </div>
+    ```
+
+26. **Component Composition** - Build complex components by composing shadcn/ui primitives
+    ```typescript
+    // ✅ Compose shadcn components
+    export function FeatureCard({ title, description, action }: Props) {
+      return (
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader>
+            <CardTitle>{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">{description}</p>
+            <Button onClick={action} className="mt-4">Action</Button>
+          </CardContent>
+        </Card>
+      )
+    }
+    ```
+
+27. **Variant System Usage** - Use built-in variant systems consistently
+    ```typescript
+    // ✅ Use shadcn variants
+    <Button variant="default">Primary</Button>
+    <Button variant="outline">Secondary</Button>
+    <Button variant="ghost">Tertiary</Button>
+    
+    <Badge variant="default">Active</Badge>
+    <Badge variant="secondary">Inactive</Badge>
+    <Badge variant="destructive">Error</Badge>
+    ```
+
+28. **Proper Import Patterns** - Import only needed shadcn components
+    ```typescript
+    // ✅ Import only what you need
+    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+    import { Button } from '@/components/ui/button'
+    
+    // ❌ Don't import everything
+    import * as Card from '@/components/ui/card'
     ```
 
 ---
