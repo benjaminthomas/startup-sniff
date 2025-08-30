@@ -1,0 +1,197 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { 
+  stripe, 
+  getStripeCustomerId, 
+  createCheckoutSession, 
+  createBillingPortalSession 
+} from '@/lib/stripe';
+import { PRICING_PLANS } from '@/constants';
+
+export async function createSubscription(priceId: string) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'User not authenticated' };
+  }
+
+  try {
+    // Get or create Stripe customer
+    const customerId = await getStripeCustomerId(user.id, user.email!);
+
+    // Update user with Stripe customer ID if not exists
+    const { data: profile } = await supabase
+      .from('users')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_customer_id) {
+      await supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', user.id);
+    }
+
+    // Create checkout session
+    const session = await createCheckoutSession({
+      customerId,
+      priceId,
+      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+      userId: user.id,
+    });
+
+    redirect(session.url!);
+  } catch (error) {
+    console.error('Error creating subscription:', error);
+    return { error: 'Failed to create subscription' };
+  }
+}
+
+export async function manageBilling() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'User not authenticated' };
+  }
+
+  try {
+    // Get user's Stripe customer ID
+    const { data: profile } = await supabase
+      .from('users')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!profile?.stripe_customer_id) {
+      return { error: 'No billing information found' };
+    }
+
+    // Create billing portal session
+    const session = await createBillingPortalSession(
+      profile.stripe_customer_id,
+      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
+    );
+
+    redirect(session.url);
+  } catch (error) {
+    console.error('Error creating billing portal session:', error);
+    return { error: 'Failed to access billing portal' };
+  }
+}
+
+export async function cancelSubscription(subscriptionId: string) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'User not authenticated' };
+  }
+
+  try {
+    // Verify the subscription belongs to this user
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('stripe_subscription_id', subscriptionId)
+      .single();
+
+    if (!subscription) {
+      return { error: 'Subscription not found' };
+    }
+
+    // Cancel subscription in Stripe
+    await stripe.subscriptions.cancel(subscriptionId);
+
+    // Update subscription in database
+    await supabase
+      .from('subscriptions')
+      .update({ 
+        status: 'cancelled',
+        cancel_at_period_end: true 
+      })
+      .eq('stripe_subscription_id', subscriptionId);
+
+    return { success: true, message: 'Subscription cancelled successfully' };
+  } catch (error) {
+    console.error('Error cancelling subscription:', error);
+    return { error: 'Failed to cancel subscription' };
+  }
+}
+
+export async function updateSubscription(newPriceId: string) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'User not authenticated' };
+  }
+
+  try {
+    // Get current active subscription
+    const { data: subscription } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .single();
+
+    if (!subscription) {
+      return { error: 'No active subscription found' };
+    }
+
+    // Update subscription in Stripe
+    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id!);
+    
+    await stripe.subscriptions.update(subscription.stripe_subscription_id!, {
+      items: [
+        {
+          id: stripeSubscription.items.data[0].id,
+          price: newPriceId,
+        },
+      ],
+      proration_behavior: 'create_prorations',
+    });
+
+    // Find the plan type for the new price
+    const newPlan = PRICING_PLANS.find(plan => plan.priceId === newPriceId);
+    
+    if (newPlan) {
+      // Update subscription in database
+      await supabase
+        .from('subscriptions')
+        .update({ 
+          stripe_price_id: newPriceId,
+          plan_type: newPlan.id
+        })
+        .eq('id', subscription.id);
+
+      // Update user's plan type
+      await supabase
+        .from('users')
+        .update({ plan_type: newPlan.id })
+        .eq('id', user.id);
+
+      // Update usage limits
+      await supabase
+        .from('usage_limits')
+        .update({
+          plan_type: newPlan.id,
+          monthly_limit_ideas: newPlan.limits.ideas,
+          monthly_limit_validations: newPlan.limits.validations
+        })
+        .eq('user_id', user.id);
+    }
+
+    return { success: true, message: 'Subscription updated successfully' };
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    return { error: 'Failed to update subscription' };
+  }
+}
