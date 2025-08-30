@@ -1,0 +1,45 @@
+{
+  "name": "StartupSniff Design System",
+  "version": "1.0.0",
+  "tokens": {
+    "color": {
+      "brand-primary": { "value": "#2563EB", "type": "color" },
+      "brand-secondary": { "value": "#1E293B", "type": "color" },
+      "background-default": { "value": "#F8FAFC", "type": "color" },
+      "background-alt": { "value": "#FFFFFF", "type": "color" },
+      "text-primary": { "value": "#1E293B", "type": "color" },
+      "text-secondary": { "value": "#475569", "type": "color" },
+      "border": { "value": "#E2E8F0", "type": "color" },
+      "success": { "value": "#22C55E", "type": "color" },
+      "warning": { "value": "#FACC15", "type": "color" },
+      "error": { "value": "#EF4444", "type": "color" }
+    },
+    "typography": {
+      "font-family-base": { "value": "'Inter', 'Segoe UI', sans-serif", "type": "fontFamily" },
+      "font-size-sm": { "value": "12px", "type": "dimension" },
+      "font-size-md": { "value": "16px", "type": "dimension" },
+      "font-size-lg": { "value": "20px", "type": "dimension" },
+      "font-weight-normal": { "value": "400", "type": "fontWeight" },
+      "font-weight-bold": { "value": "700", "type": "fontWeight" },
+      "line-height-base": { "value": "1.6", "type": "lineHeight" }
+    },
+    "spacing": {
+      "spacing-xs": { "value": "4px", "type": "dimension" },
+      "spacing-sm": { "value": "8px", "type": "dimension" },
+      "spacing-md": { "value": "16px", "type": "dimension" },
+      "spacing-lg": { "value": "24px", "type": "dimension" },
+      "spacing-xl": { "value": "32px", "type": "dimension" }
+    },
+    "border-radius": {
+      "radius-xs": { "value": "2px", "type": "dimension" },
+      "radius-sm": { "value": "4px", "type": "dimension" },
+      "radius-md": { "value": "8px", "type": "dimension" },
+      "radius-lg": { "value": "16px", "type": "dimension" }
+    },
+    "shadow": {
+      "shadow-xs": { "value": "0 1px 2px rgba(0,0,0,0.05)", "type": "boxShadow" },
+      "shadow-sm": { "value": "0 2px 8px rgba(0,0,0,0.08)", "type": "boxShadow" },
+      "shadow-md": { "value": "0 4px 20px rgba(0,0,0,0.12)", "type": "boxShadow" }
+    }
+  }
+}
