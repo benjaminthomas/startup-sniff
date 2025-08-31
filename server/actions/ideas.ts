@@ -34,9 +34,9 @@ export async function generateIdea(formData: FormData) {
     userPrompt: formData.get('userPrompt') as string | null,
   };
 
-  // Filter out null values
+  // Filter out null and empty string values
   const filteredData = Object.fromEntries(
-    Object.entries(rawData).filter(([_, value]) => value !== null)
+    Object.entries(rawData).filter(([_, value]) => value !== null && value !== '')
   );
 
   const validationResult = generateIdeaSchema.safeParse(filteredData);
