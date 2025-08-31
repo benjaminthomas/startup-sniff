@@ -1,24 +1,43 @@
 # StartupSniff
 
-A modern, secure startup idea generation and validation platform built with Next.js 15 and Supabase.
+AI-powered startup idea discovery and validation platform built with Next.js 15, Supabase, and modern web technologies.
+
+## 🎯 Product Overview
+
+### Mission Statement
+Empower entrepreneurs to discover trending startup opportunities through AI-powered idea generation, comprehensive market validation, and Reddit trend analysis.
+
+### Core Value Propositions
+- **AI-Powered Idea Generation**: Transform market trends and user input into viable startup concepts
+- **Market Validation Engine**: Research and validate ideas with comprehensive analysis
+- **Reddit Trend Mining**: Extract insights from entrepreneurial communities and market discussions  
+- **Content Generation Suite**: Create marketing materials, blog posts, and promotional content
+- **Usage Analytics**: Track idea generation, validation progress, and user engagement
 
 ## 🚀 Features
 
-- **AI-Powered Idea Generation**: Generate startup ideas based on market trends and user input
-- **Market Validation**: Research and validate ideas with comprehensive market analysis
+- **AI-Powered Idea Generation**: Generate startup ideas using OpenAI GPT-4 based on market trends and user input
+- **Market Validation**: Research and validate ideas with comprehensive market analysis and Reddit sentiment
 - **Secure Authentication**: Token-based password reset, CSRF protection, and session management
-- **User Dashboard**: Track ideas, validation progress, and usage analytics
-- **Content Generation**: Create marketing content, blog posts, and promotional materials
+- **Responsive Dashboard**: Track ideas, validation progress, and usage analytics with mobile-first design
+- **Content Generation**: Create marketing content, blog posts, and promotional materials with Claude integration
+- **Subscription Management**: Stripe-powered billing with Explorer, Founder, and Growth plans
+- **Modern UI/UX**: Built with shadcn/ui components and Lucide React icons for consistency
 
 ## 🏗️ Architecture
 
 ### Tech Stack
 - **Frontend**: Next.js 15.5.2 with App Router and Turbopack
 - **Backend**: Supabase (PostgreSQL + Auth + Storage)
-- **Styling**: Tailwind CSS v4 + shadcn/ui components
+- **UI Components**: shadcn/ui with Radix UI primitives
+- **Styling**: Tailwind CSS v4 with custom design tokens
+- **Icons**: Lucide React icon system (replacing SVG icons)
 - **Authentication**: Supabase Auth with secure server-side session management
+- **AI Integration**: OpenAI GPT-4 and Claude for content generation
+- **Payments**: Stripe Checkout with webhook integration
 - **Forms**: React Hook Form + Zod validation
-- **TypeScript**: Strict mode for type safety
+- **TypeScript**: Strict mode with generated Supabase types
+- **Testing**: Playwright for E2E testing with MCP integration
 
 ### Security-First Design
 - **HttpOnly Cookies**: All auth tokens stored securely, never exposed to client-side JS
@@ -119,33 +138,59 @@ A modern, secure startup idea generation and validation platform built with Next
 ## 📁 Project Structure
 
 ```
-├── app/                      # Next.js App Router
-│   ├── auth/                # Authentication pages
-│   │   ├── signin/          # Sign in page
-│   │   ├── signup/          # Sign up page
-│   │   ├── forgot-password/ # Password reset request
-│   │   ├── reset-password/  # Password reset form
-│   │   └── callback/        # OAuth callback handler
-│   ├── dashboard/           # Protected dashboard pages
-│   └── layout.tsx           # Root layout
+startup-sniff/
+├── app/                           # Next.js 15.5.2 App Router
+│   ├── (dashboard)/               # Protected dashboard routes  
+│   │   ├── dashboard/
+│   │   │   ├── page.tsx           # Main dashboard overview
+│   │   │   ├── generate/          # AI idea generation
+│   │   │   ├── ideas/             # Saved ideas management
+│   │   │   ├── validation/        # Market validation tools
+│   │   │   ├── trends/            # Reddit trend analysis
+│   │   │   ├── content/           # Content generation
+│   │   │   └── billing/           # Subscription management
+│   │   └── layout.tsx             # Dashboard shell with sidebar
+│   ├── auth/                      # Authentication flows
+│   │   ├── signin/                # Sign in page
+│   │   ├── signup/                # Sign up page  
+│   │   ├── forgot-password/       # Password reset request
+│   │   ├── reset-password/        # Password reset form
+│   │   └── callback/              # OAuth/email confirmation
+│   ├── api/                       # API routes
+│   │   └── webhooks/stripe/       # Stripe webhook handler
+│   ├── icon.tsx                   # Dynamic favicon generation
+│   ├── page.tsx                   # Landing page
+│   ├── layout.tsx                 # Root layout
+│   └── globals.css                # Tailwind v4 + CSS variables
 ├── components/
-│   ├── auth/               # Authentication form components
-│   └── ui/                 # shadcn/ui components
+│   ├── ui/                        # shadcn/ui components
+│   ├── auth/                      # Authentication components
+│   ├── features/                  # Feature-specific components
+│   │   ├── dashboard/             # Dashboard-related UI
+│   │   └── billing/               # Subscription/billing UI
+│   └── examples/                  # Component examples
 ├── lib/
-│   ├── auth/               # Authentication utilities
-│   │   ├── actions.ts      # Server actions for auth
-│   │   ├── supabase-server.ts # Server-side Supabase client
-│   │   ├── supabase-client.ts # Browser-side Supabase client
-│   │   ├── csrf.ts         # CSRF token management
-│   │   └── security-logger.ts # Security event logging
-│   └── utils.ts            # General utilities
+│   ├── auth/                      # Authentication utilities
+│   ├── supabase/                  # Database clients (server/client)
+│   ├── ai/                        # OpenAI integration
+│   ├── icons.ts                   # Lucide React icon mappings
+│   ├── stripe.ts                  # Stripe integration
+│   └── utils.ts                   # Common utilities
+├── server/                        # Server-only code
+│   └── actions/                   # Server actions (ideas, billing)
+├── constants/                     # Application constants
 ├── types/
-│   ├── supabase.ts         # Generated Supabase types
-│   └── global.ts           # Global type definitions
-├── middleware.ts           # Next.js middleware for auth
-└── supabase/
-    ├── migrations/         # Database migrations
-    └── config.toml         # Supabase configuration
+│   ├── supabase.ts                # Generated Supabase types
+│   └── global.ts                  # Application types
+├── styles/                        # Design system
+│   └── design-tokens.json         # Design tokens
+├── database-setup.sql             # Complete database schema
+├── supabase/                      # Supabase configuration
+│   ├── migrations/                # Database migrations
+│   └── config.toml                # Local development config
+├── hooks/                         # Custom React hooks
+├── scripts/                       # Build and utility scripts
+└── middleware.ts                  # Next.js auth middleware
 ```
 
 ## 🔧 Development
@@ -178,15 +223,49 @@ npx supabase gen types --local > types/supabase.ts
 
 ## 📊 Database Schema
 
+### Pricing & Plan Structure
+
+| Plan | Price | Ideas/Month | Validations/Month | Key Features |
+|------|-------|-------------|-------------------|---------------|
+| **Explorer** | Free | 3 | 1 | Basic Reddit analysis, Standard content |
+| **Founder** | $19 | 25 | 10 | Advanced analysis, PDF export, Priority support |
+| **Growth** | $49 | Unlimited | Unlimited | Multi-platform trends, API access, Consultation |
+
+### Core Database Schema
+
+```sql
+-- Main Entity Relationships
+users (id, email, plan_type, stripe_customer_id)
+├── subscriptions (stripe data, billing cycles)
+├── usage_limits (plan quotas, monthly resets)
+├── startup_ideas (AI-generated concepts with validation)
+└── generated_content (marketing materials, blog posts)
+
+-- Key JSONB Data Structures
+startup_ideas.target_market = {
+  "demographic": "string",
+  "size": "number", 
+  "pain_level": "high|medium|low"
+}
+
+startup_ideas.solution = {
+  "value_proposition": "string",
+  "features": ["string"],
+  "business_model": "string"
+}
+```
+
 ### Core Tables
-- `users` - User profiles and metadata
-- `startup_ideas` - Generated startup ideas
-- `generated_content` - AI-generated marketing content
-- `usage_limits` - User plan limits and tracking
-- `subscriptions` - Billing and subscription data
+- `users` - User profiles and metadata with plan information
+- `startup_ideas` - AI-generated startup ideas with market analysis
+- `generated_content` - AI-generated marketing content (blog posts, tweets, emails)
+- `usage_limits` - User plan limits and monthly usage tracking
+- `subscriptions` - Stripe billing and subscription data
+- `market_validations` - Market research and validation results
 
 ### Security Tables
-- `security_events` - Audit log for security events (optional)
+- `security_events` - Audit log for security events and rate limiting
+- `rate_limits` - API rate limiting by user and plan type
 
 ## 🚀 Deployment
 
@@ -197,17 +276,53 @@ npx supabase gen types --local > types/supabase.ts
 
 ### Environment Variables for Production
 ```env
-# Supabase (Production)
-NEXT_PUBLIC_SUPABASE_URL=your_production_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_production_service_role_key
+# Core Application
+NEXT_PUBLIC_APP_URL=https://startupsniff.com
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiJ9...
 
-# App Configuration
-NEXT_PUBLIC_APP_URL=https://your-domain.com
+# Server-Side Keys (Never expose to client)
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiJ9...
+CSRF_SECRET=your-production-csrf-secret
 
-# Security (Generate new secure keys)
-CSRF_SECRET=your_production_csrf_secret
+# AI Services
+OPENAI_API_KEY=sk-...
+ANTHROPIC_API_KEY=sk-ant-...
+
+# Stripe Integration
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+NEXT_PUBLIC_STRIPE_FOUNDER_PRICE_ID=price_...
+NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID=price_...
+
+# Reddit API (for trend analysis)
+REDDIT_CLIENT_ID=your_reddit_client_id
+REDDIT_CLIENT_SECRET=your_reddit_secret
 ```
+
+## 🎨 Design System & UI Components
+
+### shadcn/ui Integration
+- **Component Architecture**: All UI built with shadcn/ui components for consistency
+- **Design Tokens**: Custom CSS variables for StartupSniff branding
+- **Responsive Design**: Mobile-first approach with proper breakpoints
+- **Accessibility**: WCAG compliant components with proper ARIA labels
+- **Icon System**: Lucide React icons with semantic naming conventions
+
+### Key Features
+- **Dynamic Favicon**: Next.js 15+ dynamic icon generation with branded design
+- **Responsive Sidebar**: Collapsible sidebar with proper state management
+- **Profile Dropdown**: Fixed hover states and proper contrast ratios
+- **Plan Badges**: Visual subscription plan indicators in header
+- **Breadcrumbs**: Dynamic route-based navigation breadcrumbs
+
+### Component Standards
+- ✅ **shadcn/ui components only** - No custom styled divs
+- ✅ **Lucide React icons exclusively** - No SVG files
+- ✅ **Proper hover states** - Tested with Playwright
+- ✅ **Accessibility first** - Screen reader compatible
+- ✅ **TypeScript strict** - Fully typed components
 
 ## 🧪 Testing
 
@@ -215,15 +330,27 @@ CSRF_SECRET=your_production_csrf_secret
 # Run unit tests
 npm test
 
-# Run E2E tests
+# Run E2E tests with Playwright
 npm run test:e2e
+
+# Visual regression testing
+npm run test:visual
 
 # Type checking
 npm run typecheck
 
 # Linting
 npm run lint
+
+# Database validation
+npm run db:validate
 ```
+
+### MCP Testing Integration
+- **Playwright MCP**: Automated UI testing with visual regression
+- **Supabase MCP**: Database schema validation and migration testing  
+- **Context7 MCP**: Documentation sync and latest patterns
+- **Shadcn MCP**: Component generation and validation
 
 ## 📝 Contributing
 
@@ -267,6 +394,27 @@ Please report security vulnerabilities to [security@yourdomain.com](mailto:secur
 - **Issues**: Open a GitHub issue for bugs and feature requests
 - **Discussions**: Use GitHub Discussions for questions and community support
 
+## 🔄 Recent Updates
+
+### v1.0 (Latest)
+- ✅ **UI/UX Overhaul**: Complete migration to shadcn/ui components
+- ✅ **Icon System**: Replaced SVGs with Lucide React icon system  
+- ✅ **Responsive Dashboard**: Mobile-first sidebar with collapse functionality
+- ✅ **Profile Dropdown**: Fixed hover states and visibility issues
+- ✅ **Dynamic Favicon**: Next.js 15+ branded favicon generation
+- ✅ **Plan Badges**: Visual subscription indicators in header
+- ✅ **MCP Integration**: Automated testing and development workflows
+
+### Development Status
+- 🚧 **AI Integration**: OpenAI and Claude API implementation in progress
+- 🚧 **Reddit Analysis**: Trend mining and sentiment analysis features
+- 🚧 **Stripe Billing**: Subscription management and webhooks
+- 📋 **Content Generation**: Marketing copy and blog post creation
+- 📋 **Market Validation**: Comprehensive idea validation engine
+
 ---
 
-Built with ❤️ by the StartupSniff team using Next.js 15, Supabase, and modern web technologies.
+**StartupSniff** - AI-powered startup idea discovery platform  
+Built with Next.js 15, Supabase, shadcn/ui, and modern web technologies.
+
+*Ready to validate your next big idea?* 🚀
