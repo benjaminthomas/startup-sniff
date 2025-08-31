@@ -1,16 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
 import { TrendingUp, MessageCircle, BarChart, Clock } from "lucide-react";
 
 export default function TrendsPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Reddit Trends Analysis</h1>
-        <p className="text-muted-foreground">
-          Discover trending topics and emerging opportunities from Reddit communities.
-        </p>
-      </div>
+      <PageHeader
+        title="Reddit Trends Analysis"
+        description="Discover trending topics and emerging opportunities from Reddit communities"
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card>

@@ -4,17 +4,45 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader } from "@/components/ui/page-header";
 import { FileText, PenTool, Share2, Copy } from "lucide-react";
+import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 
-export default function ContentPage() {
+export default async function ContentPage() {
+  const supabase = await createServerSupabaseClient();
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let contentStats = {
+    contentCreated: 0,
+    blogPosts: 0,
+    socialPosts: 0,
+    templates: 12, // This could be a fixed number of available templates
+  };
+
+  if (user) {
+    // Fetch actual content generation statistics
+    const { data: generatedContent } = await supabase
+      .from('generated_content')
+      .select('content_type, created_at')
+      .eq('user_id', user.id);
+
+    if (generatedContent) {
+      contentStats.contentCreated = generatedContent.length;
+      contentStats.blogPosts = generatedContent.filter(content => content.content_type === 'blog_post').length;
+      contentStats.socialPosts = generatedContent.filter(content => 
+        content.content_type === 'tweet' || content.content_type === 'social_media'
+      ).length;
+    }
+  }
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Content Generation</h1>
-        <p className="text-muted-foreground">
-          Create compelling marketing content for your startup with AI assistance.
-        </p>
-      </div>
+      <PageHeader
+        title="Content Generation"
+        description="Create compelling marketing content for your startup with AI assistance"
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -23,8 +51,8 @@ export default function ContentPage() {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">23</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">{contentStats.contentCreated}</div>
+            <p className="text-xs text-muted-foreground">Total generated</p>
           </CardContent>
         </Card>
 
@@ -34,8 +62,8 @@ export default function ContentPage() {
             <PenTool className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">8</div>
-            <p className="text-xs text-muted-foreground">Ready to publish</p>
+            <div className="text-2xl font-bold">{contentStats.blogPosts}</div>
+            <p className="text-xs text-muted-foreground">Blog posts created</p>
           </CardContent>
         </Card>
 
@@ -45,8 +73,8 @@ export default function ContentPage() {
             <Share2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">15</div>
-            <p className="text-xs text-muted-foreground">Multi-platform</p>
+            <div className="text-2xl font-bold">{contentStats.socialPosts}</div>
+            <p className="text-xs text-muted-foreground">Social posts created</p>
           </CardContent>
         </Card>
 
@@ -56,7 +84,7 @@ export default function ContentPage() {
             <Copy className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{contentStats.templates}</div>
             <p className="text-xs text-muted-foreground">Available templates</p>
           </CardContent>
         </Card>

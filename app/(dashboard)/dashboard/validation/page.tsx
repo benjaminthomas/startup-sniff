@@ -3,17 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PageHeader } from "@/components/ui/page-header";
 import { BarChart3, Target, Users, DollarSign, CheckCircle } from "lucide-react";
 
 export default function ValidationPage() {
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Idea Validation</h1>
-        <p className="text-muted-foreground">
-          Validate your startup ideas with AI-powered market research and analysis.
-        </p>
-      </div>
+      <PageHeader
+        title="Idea Validation"
+        description="Validate your startup ideas with AI-powered market research and analysis"
+      />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
