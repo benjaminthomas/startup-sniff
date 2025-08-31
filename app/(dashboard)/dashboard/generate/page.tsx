@@ -1,9 +1,10 @@
 import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
 import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generation-form';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { getUserIdeas } from '@/server/actions/ideas';
-import { Lightbulb, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 export default async function GeneratePage() {
   let recentIdeas = [];
@@ -15,35 +16,15 @@ export default async function GeneratePage() {
     // Continue with empty array - component will handle this gracefully
   }
   return (
-    <div className="space-y-8">
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-          <Lightbulb className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-3xl font-bold">Generate Ideas</h1>
-          <p className="text-muted-foreground">
-            Use AI to discover your next startup opportunity
-          </p>
-        </div>
-      </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Generate Ideas"
+        description="Use AI to discover your next startup opportunity"
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <span>AI Idea Generator</span>
-              </CardTitle>
-              <CardDescription>
-                Tell us about your preferences and let AI generate personalized startup ideas for you
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <IdeaGenerationForm />
-            </CardContent>
-          </Card>
+          <IdeaGenerationForm />
         </div>
 
         <div className="space-y-6">

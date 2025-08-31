@@ -3,35 +3,29 @@ import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/ui/page-header';
 import { IdeaCard } from '@/components/features/dashboard/idea-card';
 import { getUserIdeas } from '@/server/actions/ideas';
-import { Target, Plus, Lightbulb } from 'lucide-react';
+import { Plus, Lightbulb } from 'lucide-react';
 
 export default async function IdeasPage() {
   const ideas = await getUserIdeas(50);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-            <Target className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold">My Ideas</h1>
-            <p className="text-muted-foreground">
-              Manage and track your generated startup ideas
-            </p>
-          </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="My Ideas"
+        description="Manage and track your generated startup ideas"
+      >
+        <div className="mt-4">
+          <Button asChild>
+            <Link href="/dashboard/generate">
+              <Plus className="mr-2 h-4 w-4" />
+              Generate New Idea
+            </Link>
+          </Button>
         </div>
-        
-        <Button asChild>
-          <Link href="/dashboard/generate">
-            <Plus className="mr-2 h-4 w-4" />
-            Generate New Idea
-          </Link>
-        </Button>
-      </div>
+      </PageHeader>
 
       {ideas.length === 0 ? (
         <Card className="text-center py-16">

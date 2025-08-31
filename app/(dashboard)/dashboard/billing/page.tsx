@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
+import { PageHeader } from '@/components/ui/page-header';
 import { PricingCards } from '@/components/features/billing/pricing-cards';
 import { BillingHistory } from '@/components/features/billing/billing-history';
 import { CurrentPlan } from '@/components/features/billing/current-plan';
@@ -54,13 +55,11 @@ export default async function BillingPage() {
 
   return (
     <DashboardShell>
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Billing & Subscription</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your subscription and view billing history
-          </p>
-        </div>
+      <div className="space-y-6">
+        <PageHeader
+          title="Billing & Subscription"
+          description="Manage your subscription and view billing history"
+        />
 
         <CurrentPlan 
           currentPlan={currentPlan}
