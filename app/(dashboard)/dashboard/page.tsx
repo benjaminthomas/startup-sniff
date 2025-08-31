@@ -5,6 +5,7 @@ import { StatsCards } from '@/components/features/dashboard/stats-cards';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { QuickActions } from '@/components/features/dashboard/quick-actions';
 import { UsageLimits } from '@/components/features/dashboard/usage-limits';
+import { UsageTracker } from '@/components/ui/usage-tracker';
 
 export const metadata: Metadata = {
   title: 'Dashboard | StartupSniff',
@@ -89,6 +90,19 @@ export default async function DashboardPage() {
             
             <div className="space-y-6">
               <UsageLimits limits={limits} />
+              <UsageTracker 
+                planType={user?.plan_type || 'explorer'}
+                usage={{
+                  ideas_used: ideas.length,
+                  validations_used: ideas.filter(idea => idea?.is_validated).length,
+                  content_used: 0, // This would come from generated_content table
+                }}
+                limits={{
+                  ideas_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 25 : -1,
+                  validations_per_month: user?.plan_type === 'explorer' ? 1 : user?.plan_type === 'founder' ? 10 : -1,
+                  content_per_month: user?.plan_type === 'explorer' ? 5 : user?.plan_type === 'founder' ? 50 : -1,
+                }}
+              />
             </div>
           </div>
         </div>

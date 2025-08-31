@@ -1,5 +1,6 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
+import { TrialBanner } from "@/components/ui/trial-banner";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 import { redirect } from 'next/navigation';
 import { 
@@ -54,6 +55,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4">
+          <TrialBanner />
           {children}
         </div>
       </SidebarInset>
