@@ -18,25 +18,10 @@ export const createClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       auth: {
-        // Use secure storage for tokens
-        storage: {
-          getItem: (key: string) => {
-            // For browser client, we rely on the server to manage cookies
-            // This prevents XSS attacks by never exposing tokens to JS
-            return null;
-          },
-          setItem: (key: string, value: string) => {
-            // No-op - server manages all token storage via HttpOnly cookies
-          },
-          removeItem: (key: string) => {
-            // No-op - server handles token removal
-          },
-        },
-        // Disable automatic refresh on client side
-        // Server middleware handles all auth state
-        autoRefreshToken: false,
-        persistSession: false,
-        detectSessionInUrl: false,
+        // Allow client to read session for UI state, server manages storage
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true,
       },
     }
   )
