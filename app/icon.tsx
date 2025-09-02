@@ -13,58 +13,19 @@ export default function Icon() {
     (
       <div
         style={{
-          fontSize: 16,
-          background: '#6C63FF',
+          fontSize: 20,
+          background: '#2563EB',
           width: '100%',
           height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: 'white',
+          fontWeight: 'bold',
           borderRadius: '6px',
         }}
       >
-        <div
-          style={{
-            width: 20,
-            height: 20,
-            border: '2px solid white',
-            borderRadius: '50%',
-            position: 'relative',
-          }}
-        >
-          <div
-            style={{
-              width: 4,
-              height: 4,
-              background: 'white',
-              borderRadius: '50%',
-              position: 'absolute',
-              top: '6px',
-              left: '6px',
-            }}
-          />
-          <div
-            style={{
-              width: 8,
-              height: '1px',
-              background: 'white',
-              position: 'absolute',
-              top: '8px',
-              left: '2px',
-            }}
-          />
-          <div
-            style={{
-              width: '1px',
-              height: 8,
-              background: 'white',
-              position: 'absolute',
-              top: '2px',
-              left: '8px',
-            }}
-          />
-        </div>
+        S
       </div>
     ),
     {
