@@ -47,11 +47,8 @@ export const getCSRFToken = async (): Promise<string | null> => {
 
 // Verify CSRF token using timing-safe comparison
 export const verifyCSRFToken = async (providedToken: string): Promise<boolean> => {
-  // TEMPORARY: Allow bypass in development for testing
-  if (process.env.NODE_ENV === 'development' && process.env.DISABLE_CSRF === 'true') {
-    console.log('🚫 CSRF verification bypassed for development')
-    return true
-  }
+  // SECURITY: Never bypass CSRF in any environment
+  // Development bypass has been permanently disabled for security
 
   if (!providedToken) return false
 
@@ -73,6 +70,12 @@ export const verifyCSRFToken = async (providedToken: string): Promise<boolean> =
 
     // Parse provided token
     const [providedValue, providedTimestamp] = providedToken.split('.')
+    const providedTimestampNum = parseInt(providedTimestamp, 10)
+
+    // Check provided token age (independent validation)
+    if (Date.now() - providedTimestampNum > TOKEN_LIFETIME) {
+      return false
+    }
 
     // Timing-safe comparison to prevent timing attacks using Web Crypto API
     if (storedValue.length !== providedValue.length) {
@@ -89,7 +92,9 @@ export const verifyCSRFToken = async (providedToken: string): Promise<boolean> =
       result |= storedBytes[i] ^ providedBytes[i]
     }
 
-    return result === 0 && storedTimestamp === providedTimestamp
+    // Double-submit pattern: only compare token values, not timestamps
+    // Both tokens should have same value but may have different generation times
+    return result === 0
   } catch (error) {
     console.error('CSRF token verification error:', error)
     return false
@@ -149,7 +154,75 @@ export const extractAndVerifyCSRFToken = async (request: Request): Promise<boole
     return false
   }
 
-  return await verifyCSRFToken(token)
+  return await verifyCSRFTokenWithCookieStore(token, request)
+}
+
+// Alternative verification that uses request cookies instead of Next.js cookies()
+export const verifyCSRFTokenWithCookieStore = async (providedToken: string, request: Request): Promise<boolean> => {
+  if (!providedToken) return false
+
+  // Get token from request cookies instead of Next.js cookies()
+  const cookieHeader = request.headers.get('cookie')
+  if (!cookieHeader) {
+    console.log('🔍 CSRF verification failed: no cookie header')
+    return false
+  }
+
+  // Parse cookies manually
+  const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+    const [name, value] = cookie.trim().split('=')
+    if (name && value) {
+      acc[name] = decodeURIComponent(value)
+    }
+    return acc
+  }, {} as Record<string, string>)
+
+  const storedToken = cookies[CSRF_TOKEN_NAME]
+  if (!storedToken) {
+    console.log('🔍 CSRF verification failed: no stored token in request cookies')
+    return false
+  }
+
+  try {
+    // Parse stored token
+    const [storedValue, storedTimestamp] = storedToken.split('.')
+    const timestamp = parseInt(storedTimestamp, 10)
+
+    // Check token age
+    if (Date.now() - timestamp > TOKEN_LIFETIME) {
+      return false
+    }
+
+    // Parse provided token
+    const [providedValue, providedTimestamp] = providedToken.split('.')
+    const providedTimestampNum = parseInt(providedTimestamp, 10)
+
+    // Check provided token age (independent validation)
+    if (Date.now() - providedTimestampNum > TOKEN_LIFETIME) {
+      return false
+    }
+
+    // Timing-safe comparison to prevent timing attacks
+    if (storedValue.length !== providedValue.length) {
+      return false
+    }
+
+    // Use Web Crypto API for timing-safe comparison
+    const encoder = new TextEncoder()
+    const storedBytes = encoder.encode(storedValue)
+    const providedBytes = encoder.encode(providedValue)
+    
+    let result = 0
+    for (let i = 0; i < storedBytes.length; i++) {
+      result |= storedBytes[i] ^ providedBytes[i]
+    }
+
+    // Double-submit pattern: only compare token values
+    return result === 0
+  } catch (error) {
+    console.error('CSRF token verification error:', error)
+    return false
+  }
 }
 
 // Clear CSRF token (for logout)

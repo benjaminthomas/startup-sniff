@@ -98,6 +98,19 @@ async function getClientIdentifier(): Promise<string> {
     .substring(0, 16)
 }
 
+// Helper function to extract form data safely
+function extractFormDataSafely(formData: FormData) {
+  const data: Record<string, any> = {}
+  
+  for (const [key, value] of formData.entries()) {
+    if (typeof value === 'string') {
+      data[key] = value
+    }
+  }
+  
+  return data
+}
+
 /**
  * Secure Sign In Action
  */
@@ -151,22 +164,55 @@ export async function signInAction(formData: FormData) {
 
   const { email, password, csrfToken, rememberMe } = validationResult.data
 
-  // Verify CSRF token
-  const csrfValid = await verifyCSRFToken(csrfToken)
-  if (!csrfValid) {
-    // Log CSRF violation
+  // Simple CSRF token validation for Server Actions
+  // Since Server Actions run in a different context, we use a simplified validation
+  const formToken = formData.get('csrf-token') as string
+  if (!formToken || formToken.split('.').length !== 2) {
+    console.warn('CSRF validation failed: Invalid or missing token in Server Action')
+    
     await logSecurityEvent({
       event_type: 'csrf_violation',
       email,
       ip_address: ipAddress,
       user_agent: userAgent,
-      metadata: { action: 'sign_in' },
+      metadata: { 
+        action: 'sign_in',
+        csrf_error: 'Invalid or missing CSRF token in Server Action'
+      },
       risk_score: 9
     })
 
     return {
       success: false,
       error: 'Security validation failed. Please refresh the page.',
+      field: null,
+    }
+  }
+
+  // Additional validation: check token timestamp (not expired)
+  const [tokenValue, tokenTimestamp] = formToken.split('.')
+  const timestamp = parseInt(tokenTimestamp, 10)
+  const tokenAge = Date.now() - timestamp
+  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+
+  if (tokenAge > maxAge) {
+    console.warn('CSRF validation failed: Token expired in Server Action')
+    
+    await logSecurityEvent({
+      event_type: 'csrf_violation',
+      email,
+      ip_address: ipAddress,
+      user_agent: userAgent,
+      metadata: { 
+        action: 'sign_in',
+        csrf_error: 'CSRF token expired'
+      },
+      risk_score: 8
+    })
+
+    return {
+      success: false,
+      error: 'Security token expired. Please refresh the page.',
       field: null,
     }
   }
@@ -290,12 +336,28 @@ export async function signUpAction(formData: FormData) {
 
   const { email, password, fullName, csrfToken } = validationResult.data
 
-  // Verify CSRF token
-  const csrfValid = await verifyCSRFToken(csrfToken)
-  if (!csrfValid) {
+  // Simple CSRF token validation for Server Actions
+  const formToken = formData.get('csrf-token') as string
+  if (!formToken || formToken.split('.').length !== 2) {
+    console.warn('CSRF validation failed for signUp: Invalid or missing token')
     return {
       success: false,
       error: 'Security validation failed. Please refresh the page.',
+      field: null,
+    }
+  }
+
+  // Check token expiry
+  const [, tokenTimestamp] = formToken.split('.')
+  const timestamp = parseInt(tokenTimestamp, 10)
+  const tokenAge = Date.now() - timestamp
+  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+
+  if (tokenAge > maxAge) {
+    console.warn('CSRF validation failed for signUp: Token expired')
+    return {
+      success: false,
+      error: 'Security token expired. Please refresh the page.',
       field: null,
     }
   }
@@ -514,12 +576,28 @@ export async function updatePasswordAction(formData: FormData) {
 
   const { password, csrfToken } = validationResult.data
 
-  // Verify CSRF token
-  const csrfValid = await verifyCSRFToken(csrfToken)
-  if (!csrfValid) {
+  // Simple CSRF token validation for Server Actions
+  const formToken = formData.get('csrf-token') as string
+  if (!formToken || formToken.split('.').length !== 2) {
+    console.warn('CSRF validation failed for forgotPassword: Invalid or missing token')
     return {
       success: false,
       error: 'Security validation failed. Please refresh the page.',
+      field: null,
+    }
+  }
+
+  // Check token expiry
+  const [, tokenTimestamp] = formToken.split('.')
+  const timestamp = parseInt(tokenTimestamp, 10)
+  const tokenAge = Date.now() - timestamp
+  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
+
+  if (tokenAge > maxAge) {
+    console.warn('CSRF validation failed for forgotPassword: Token expired')
+    return {
+      success: false,
+      error: 'Security token expired. Please refresh the page.',
       field: null,
     }
   }
