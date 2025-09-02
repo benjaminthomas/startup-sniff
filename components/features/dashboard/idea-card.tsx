@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { validateIdea } from '@/server/actions/ideas';
+import { validateExistingIdea } from '@/lib/actions/validation';
+import { UpgradeModal } from '@/components/ui/upgrade-modal';
+import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { 
   TrendingUp, 
   DollarSign, 
@@ -14,7 +17,8 @@ import {
   CheckCircle,
   AlertTriangle,
   Loader2,
-  BarChart3
+  BarChart3,
+  Crown
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -22,37 +26,61 @@ interface IdeaCardProps {
   idea: {
     id: string;
     title: string;
-    description: string;
-    target_market: string;
-    revenue_models: string[] | null;
-    estimated_cost: string;
-    time_to_market: string;
-    validation_score: number | null;
+    problem_statement: string;
+    target_market: {
+      description: string;
+      size: string;
+    } | null;
+    solution: {
+      description: string;
+      unique_value_proposition: string;
+      revenue_model: string;
+    } | null;
+    implementation: {
+      estimated_cost: string;
+      time_to_market: string;
+      next_steps: string;
+    } | null;
     validation_data: any;
+    is_validated: boolean | null;
+    ai_confidence_score: number | null;
     created_at: string;
   };
 }
 
 export function IdeaCard({ idea }: IdeaCardProps) {
   const [isValidating, setIsValidating] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { isAtLimit, getRemainingLimit, planType, usage, refreshUsage } = useServerPlanLimits();
 
   const handleValidate = async () => {
+    if (isAtLimit('validations')) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     setIsValidating(true);
     
     // Show loading toast with detailed message
     const loadingToast = toast.loading("🔍 AI is analyzing market feasibility, competition, and potential...");
     
     try {
-      await validateIdea(idea.id);
-      toast.success("✅ Validation complete! Your idea has been scored and analyzed.", {
-        id: loadingToast
-      });
-      
-      // Add small delay before reload for better UX
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-      
+      const result = await validateExistingIdea(idea.id);
+      if (result.success) {
+        toast.success("✅ Validation complete! Your idea has been scored and analyzed.", {
+          id: loadingToast
+        });
+        
+        // Refresh usage data and reload page for better UX
+        await refreshUsage();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        toast.error(result.error || "Failed to validate idea. Please try again.", {
+          id: loadingToast
+        });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Failed to validate idea. Please try again.",
@@ -64,146 +92,164 @@ export function IdeaCard({ idea }: IdeaCardProps) {
   };
 
   const getValidationColor = (score: number) => {
-    if (score >= 8) return 'text-green-600';
-    if (score >= 6) return 'text-yellow-600';
+    if (score >= 80) return 'text-green-600';
+    if (score >= 65) return 'text-blue-600';
+    if (score >= 50) return 'text-yellow-600';
     return 'text-red-600';
   };
 
   const getValidationLabel = (score: number) => {
-    if (score >= 8) return 'High Potential';
-    if (score >= 6) return 'Moderate Potential';
+    if (score >= 80) return 'High Potential';
+    if (score >= 65) return 'Good Idea';
+    if (score >= 50) return 'Worth Exploring';
     return 'Needs Work';
   };
 
   return (
-    <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg line-clamp-2">{idea.title}</CardTitle>
-          {idea.validation_score ? (
-            <Badge 
-              variant="outline" 
-              className={`ml-2 ${getValidationColor(idea.validation_score)}`}
-            >
-              <CheckCircle className="w-3 h-3 mr-1" />
-              {idea.validation_score}/10
-            </Badge>
-          ) : (
-            <Badge variant="secondary">
-              <AlertTriangle className="w-3 h-3 mr-1" />
-              Unvalidated
-            </Badge>
-          )}
-        </div>
-        <p className="text-sm text-muted-foreground line-clamp-3 mt-2">
-          {idea.description}
-        </p>
-      </CardHeader>
-
-      <CardContent className="flex-1 flex flex-col space-y-4">
-        <div className="space-y-3 text-sm">
-          <div className="flex items-center space-x-2">
-            <Target className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Target:</span>
-            <span className="font-medium line-clamp-1">{idea.target_market}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <DollarSign className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Revenue:</span>
-            <span className="font-medium line-clamp-1">
-              {idea.revenue_models?.join(', ') || 'TBD'}
-            </span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Clock className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Timeline:</span>
-            <span className="font-medium">{idea.time_to_market}</span>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4 text-muted-foreground" />
-            <span className="text-muted-foreground">Cost:</span>
-            <span className="font-medium">{idea.estimated_cost}</span>
-          </div>
-        </div>
-
-        {idea.validation_score && idea.validation_data && (
-          <div className="space-y-3 p-3 bg-muted/30 rounded-md">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Validation Results</span>
-              <span className={`font-semibold ${getValidationColor(idea.validation_score)}`}>
-                {getValidationLabel(idea.validation_score)}
-              </span>
-            </div>
-            
-            <div className="space-y-2">
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Feasibility</span>
-                  <span>{idea.validation_data.feasibilityScore}/10</span>
-                </div>
-                <Progress 
-                  value={idea.validation_data.feasibilityScore * 10} 
-                  className="h-2"
-                />
-              </div>
-              
-              <div>
-                <div className="flex justify-between text-xs mb-1">
-                  <span>Market Potential</span>
-                  <span>{idea.validation_data.marketPotential}/10</span>
-                </div>
-                <Progress 
-                  value={idea.validation_data.marketPotential * 10} 
-                  className="h-2"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="mt-auto pt-4">
-          {!idea.validation_score ? (
-            <Button 
-              onClick={handleValidate}
-              disabled={isValidating}
-              variant="outline"
-              className="w-full"
-              size="sm"
-            >
-              {isValidating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Validating...
-                </>
+    <>
+      <Link href={`/dashboard/ideas/${idea.id}`} className="block">
+        <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border-2 hover:border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <CardTitle className="text-lg leading-tight pr-2">{idea.title}</CardTitle>
+              {idea.is_validated ? (
+                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 py-2">
+                  <CheckCircle className="mr-1 h-3 w-3" />
+                  {idea.ai_confidence_score ? `${idea.ai_confidence_score}%` : 'Validated'}
+                </Badge>
               ) : (
-                <>
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Validate Idea
-                </>
+                <Badge variant="outline" className="border-amber-300 text-amber-600 bg-amber-50 hover:bg-amber-100 py-2">
+                  <AlertTriangle className="mr-1 h-3 w-3" />
+                  Not Validated
+                </Badge>
               )}
-            </Button>
-          ) : (
-            <Button 
-              variant="ghost"
-              className="w-full"
-              size="sm"
-              onClick={() => {
-                // TODO: Open detailed view modal or navigate to detail page
-                console.log('View details for idea:', idea.id);
-              }}
-            >
-              View Details
-            </Button>
-          )}
-        </div>
+            </div>
+          </CardHeader>
 
-        <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-          Created {new Date(idea.created_at).toLocaleDateString()}
-        </div>
-      </CardContent>
-    </Card>
+          <CardContent className="space-y-4 flex flex-col h-full">
+            <p className="text-muted-foreground text-sm line-clamp-3 flex-grow">
+              {idea.problem_statement}
+            </p>
+
+            {/* Key Metrics */}
+            <div className="grid grid-cols-1 2xl:grid-cols-3 gap-3 text-sm">
+              <div className="text-center p-3 bg-blue-50 dark:bg-blue-950/10 rounded-lg">
+                <Target className="h-4 w-4 mx-auto mb-1 text-blue-600" />
+                <div className="font-medium">Target</div>
+                <div className="text-xs text-muted-foreground">
+                  {idea.is_validated && idea.target_market 
+                    ? (idea.target_market as any)?.primary_demographic || (idea.target_market as any)?.description || 'TBD'
+                    : (idea.target_market as any)?.primary_demographic || (idea.target_market as any)?.description || 'TBD'}
+                </div>
+              </div>
+              <div className="text-center p-3 bg-green-50 dark:bg-green-950/10 rounded-lg">
+                <DollarSign className="h-4 w-4 mx-auto mb-1 text-green-600" />
+                <div className="font-medium">Revenue</div>
+                <div className="text-xs text-muted-foreground">
+                  {idea.is_validated && idea.solution
+                    ? (idea.solution as any)?.business_model || (idea.solution as any)?.revenue_model || 'TBD'
+                    : (idea.solution as any)?.business_model || (idea.solution as any)?.revenue_model || 'TBD'}
+                </div>
+              </div>
+              <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/10 rounded-lg">
+                <Clock className="h-4 w-4 mx-auto mb-1 text-purple-600" />
+                <div className="font-medium">Cost</div>
+                <div className="text-xs text-muted-foreground">
+                  {idea.is_validated && idea.implementation
+                    ? (idea.implementation as any)?.estimated_cost || 'TBD'
+                    : (idea.implementation as any)?.estimated_cost || 'TBD'}
+                </div>
+              </div>
+            </div>
+
+            {/* Validation Progress */}
+            {idea.is_validated && idea.ai_confidence_score && (
+              <div className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/10 dark:to-emerald-950/10 p-3 rounded-lg">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium">Market Validation</span>
+                  <span className={`text-sm font-bold ${getValidationColor(idea.ai_confidence_score)}`}>
+                    {idea.ai_confidence_score}%
+                  </span>
+                </div>
+                <Progress value={idea.ai_confidence_score} className="h-2" />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {getValidationLabel(idea.ai_confidence_score)}
+                </p>
+              </div>
+            )}
+
+          {/* Validation/Action Section */}
+          <div className="mt-auto pt-4 space-y-2">
+            {!idea.is_validated ? (
+              <>
+                <Button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleValidate();
+                  }}
+                  disabled={isValidating}
+                  variant={isAtLimit('validations') ? "default" : "outline"}
+                  className={isAtLimit('validations') 
+                    ? "w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700" 
+                    : "w-full"
+                  }
+                  size="sm"
+                >
+                  {isValidating ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Validating...
+                    </>
+                  ) : isAtLimit('validations') ? (
+                    <>
+                      <Crown className="mr-2 h-4 w-4" />
+                      Upgrade to Validate
+                    </>
+                  ) : (
+                    <>
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      Validate Idea
+                    </>
+                  )}
+                </Button>
+                <div className="text-xs text-center text-muted-foreground">
+                  {isAtLimit('validations') ? (
+                    <span className="text-amber-600 dark:text-amber-400">
+                      🚀 {planType === 'explorer' ? 'Free plan: 1 validation used' : 'Validation limit reached'}
+                    </span>
+                  ) : (
+                    '📊 Get market analysis, competition insights & success metrics'
+                  )}
+                </div>
+              </>
+            ) : (
+              <Badge variant="secondary" className="w-full justify-center py-2 bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Validated ✨
+              </Badge>
+            )}
+          </div>
+
+          <div className="text-xs text-muted-foreground text-center pt-2 border-t">
+            Created {new Date(idea.created_at).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'short', 
+              day: 'numeric' 
+            })}
+          </div>
+        </CardContent>
+        </Card>
+      </Link>
+
+      <UpgradeModal
+        isVisible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        featureType="validations"
+        currentPlan={planType as any}
+        usedCount={usage.validations_used || 0}
+        limitCount={planType === 'explorer' ? 1 : planType === 'founder' ? 10 : -1}
+      />
+    </>
   );
 }

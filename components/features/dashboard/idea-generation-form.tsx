@@ -52,7 +52,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { usePlanLimits } from '@/lib/hooks/use-plan-limits';
+import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { UnlockOverlay } from '@/components/ui/unlock-overlay';
 
 const industries = [
@@ -107,7 +107,7 @@ export function IdeaGenerationForm() {
   const [showUnlockOverlay, setShowUnlockOverlay] = useState(false);
   const router = useRouter();
 
-  // Plan limits integration
+  // Plan limits integration using server-side hook
   const {
     planType,
     usage,
@@ -115,8 +115,8 @@ export function IdeaGenerationForm() {
     getRemainingLimit,
     getUsagePercentage,
     isAtLimit,
-    incrementUsage,
-  } = usePlanLimits();
+    refreshUsage,
+  } = useServerPlanLimits();
 
   const steps = [
     { 
@@ -213,8 +213,8 @@ export function IdeaGenerationForm() {
       const result = await generateIdea(submitFormData);
       
       if (result.success && result.idea) {
-        // Increment usage after successful generation
-        await incrementUsage('ideas');
+        // Refresh usage data after successful generation
+        await refreshUsage();
         
         setGeneratedIdea(result.idea);
         toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, { 
