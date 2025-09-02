@@ -111,19 +111,31 @@ export async function generateIdea(formData: FormData) {
       throw new Error('Failed to save generated idea');
     }
 
-    // Update usage limits
-    if (usageData) {
+    // Update usage limits - count actual ideas to ensure accuracy
+    const { data: allIdeas, error: countError } = await supabase
+      .from('startup_ideas')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+
+    if (!countError) {
+      const actualIdeasCount = allIdeas.length || 0
+      console.log(`📊 Updating usage limits: ${actualIdeasCount} ideas generated`)
+      
       const { error: updateError } = await supabase
         .from('usage_limits')
         .update({
-          ideas_generated: usageData.ideas_generated + 1,
+          ideas_generated: actualIdeasCount,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id);
 
       if (updateError) {
-        console.error('Error updating usage limits:', updateError);
+        console.error('❌ Usage limits update error:', updateError);
+      } else {
+        console.log('✅ Usage limits updated with actual count:', actualIdeasCount)
       }
+    } else {
+      console.error('❌ Error counting ideas:', countError);
     }
 
     // Revalidate the dashboard page
@@ -198,8 +210,14 @@ export async function getUserIdeas(limit: number = 10) {
   
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
+    console.log('❌ getUserIdeas: No authenticated user');
     return [];
   }
+
+  console.log('🔍 getUserIdeas called for user:', { 
+    userId: user?.id, 
+    userEmail: user?.email 
+  });
 
   try {
     const { data: ideas, error } = await supabase
@@ -208,6 +226,8 @@ export async function getUserIdeas(limit: number = 10) {
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    console.log(`📋 Found ${ideas?.length || 0} ideas for user ${user.id}`);
 
     if (error) {
       console.error('Error fetching ideas:', error);
