@@ -82,18 +82,18 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Get current session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    // Get current user (secure method - authenticates with Supabase Auth server)
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
 
-    // Handle session errors
-    if (sessionError) {
-      console.error('Session error:', sessionError)
+    // Handle user authentication errors
+    if (userError) {
+      console.error('User authentication error:', userError)
       // Clear potentially corrupted session
       await supabase.auth.signOut()
       response.cookies.delete('csrf-token')
     }
 
-    const isAuthenticated = !!session?.user
+    const isAuthenticated = !!user
     const isPublicRoute = PUBLIC_ROUTES.some(route => 
       pathname === route || pathname.startsWith(`${route}/`)
     )

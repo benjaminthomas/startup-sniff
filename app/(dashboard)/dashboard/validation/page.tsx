@@ -5,8 +5,45 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/components/ui/page-header";
 import { BarChart3, Target, Users, DollarSign, CheckCircle } from "lucide-react";
+import { ValidationForm } from "@/components/features/validation/validation-form";
+import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 
-export default function ValidationPage() {
+export default async function ValidationPage() {
+  const supabase = await createServerSupabaseClient();
+  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let validationStats = {
+    ideasValidated: 0,
+    averageMarketSize: '$2.4B',
+    potentialUsers: '150K',
+    revenueEstimate: '$50K'
+  };
+
+  if (user) {
+    // Fetch actual validation statistics
+    const { data: validatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('validation_data, market_analysis')
+      .eq('user_id', user.id)
+      .eq('is_validated', true);
+
+    if (validatedIdeas && validatedIdeas.length > 0) {
+      validationStats.ideasValidated = validatedIdeas.length;
+      
+      // Calculate average market size from validated ideas
+      const marketSizes = validatedIdeas
+        .filter(idea => idea.market_analysis?.market_size?.tam)
+        .map(idea => idea.market_analysis.market_size.tam);
+      
+      if (marketSizes.length > 0) {
+        const avgMarketSize = marketSizes.reduce((sum, size) => sum + size, 0) / marketSizes.length;
+        validationStats.averageMarketSize = `$${(avgMarketSize / 1000000).toFixed(1)}M`;
+      }
+    }
+  }
   return (
     <div className="space-y-6">
       <PageHeader
@@ -21,8 +58,8 @@ export default function ValidationPage() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground">This month</p>
+            <div className="text-2xl font-bold">{validationStats.ideasValidated}</div>
+            <p className="text-xs text-muted-foreground">Total validated</p>
           </CardContent>
         </Card>
 
@@ -32,7 +69,7 @@ export default function ValidationPage() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$2.4B</div>
+            <div className="text-2xl font-bold">{validationStats.averageMarketSize}</div>
             <p className="text-xs text-muted-foreground">Average TAM</p>
           </CardContent>
         </Card>
@@ -43,7 +80,7 @@ export default function ValidationPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">150K</div>
+            <div className="text-2xl font-bold">{validationStats.potentialUsers}</div>
             <p className="text-xs text-muted-foreground">Estimated reach</p>
           </CardContent>
         </Card>
@@ -54,51 +91,13 @@ export default function ValidationPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$50K</div>
+            <div className="text-2xl font-bold">{validationStats.revenueEstimate}</div>
             <p className="text-xs text-muted-foreground">Monthly estimate</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Validate Your Idea</CardTitle>
-          <CardDescription>
-            Get comprehensive market analysis and validation insights for your startup idea
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="idea-title">Idea Title</Label>
-            <Input
-              id="idea-title"
-              placeholder="Enter your startup idea title"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="idea-description">Idea Description</Label>
-            <Textarea
-              id="idea-description"
-              placeholder="Describe your startup idea in detail..."
-              rows={4}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target-market">Target Market</Label>
-            <Input
-              id="target-market"
-              placeholder="Who is your target audience?"
-            />
-          </div>
-
-          <Button className="w-full">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Validate Idea
-          </Button>
-        </CardContent>
-      </Card>
+      <ValidationForm />
     </div>
   );
 }

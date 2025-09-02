@@ -31,6 +31,14 @@ export const logSecurityEvent = async (event: SecurityEvent): Promise<void> => {
       }])
 
     if (error) {
+      // Check if table doesn't exist
+      if (error.code === 'PGRST205' && error.message.includes("security_events")) {
+        console.warn('Security events table not found, skipping database logging in development')
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Security Event (console only):', JSON.stringify(event, null, 2))
+          return // Don't throw error in development
+        }
+      }
       console.error('Failed to log security event:', error)
       // Fallback to console logging if database fails
       console.warn('Security Event:', JSON.stringify(event, null, 2))

@@ -61,10 +61,10 @@ export default async function IdeasPage() {
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="text-xs">
-                {ideas.filter(idea => idea.validation_score).length} Validated
+                {ideas.filter(idea => idea.is_validated).length} Validated
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {ideas.length - ideas.filter(idea => idea.validation_score).length} Pending
+                {ideas.length - ideas.filter(idea => idea.is_validated).length} Pending
               </Badge>
             </div>
           </div>

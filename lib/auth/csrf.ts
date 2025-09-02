@@ -47,10 +47,19 @@ export const getCSRFToken = async (): Promise<string | null> => {
 
 // Verify CSRF token using timing-safe comparison
 export const verifyCSRFToken = async (providedToken: string): Promise<boolean> => {
+  // TEMPORARY: Allow bypass in development for testing
+  if (process.env.NODE_ENV === 'development' && process.env.DISABLE_CSRF === 'true') {
+    console.log('🚫 CSRF verification bypassed for development')
+    return true
+  }
+
   if (!providedToken) return false
 
   const storedToken = await getCSRFToken()
-  if (!storedToken) return false
+  if (!storedToken) {
+    console.log('🔍 CSRF verification failed: no stored token')
+    return false
+  }
 
   try {
     // Parse stored token

@@ -51,9 +51,8 @@ export function usePlanLimits(): PlanLimitsState {
   console.log('🚀 HOOK CALLED: usePlanLimits function executed');
   
   const [planType, setPlanType] = useState<PlanType>('explorer');
-  // TEMPORARY FIX: Hardcode the correct usage to test the UI
   const [usage, setUsage] = useState<UsageStats>({
-    ideas_used: 3,  // Changed from 0 to 3 to match database
+    ideas_used: 0,
     validations_used: 0,
     content_used: 0,
     last_reset: new Date().toISOString()
@@ -80,7 +79,11 @@ export function usePlanLimits(): PlanLimitsState {
         const supabase = createClient();
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        console.log('👤 User auth result:', { user: user?.id, userError });
+        console.log('👤 User auth result:', { 
+          userId: user?.id, 
+          userEmail: user?.email,
+          userError 
+        });
 
         if (!mounted || !user || userError) {
           console.log('❌ Early exit: no user or error');
@@ -110,26 +113,73 @@ export function usePlanLimits(): PlanLimitsState {
           setPlanType(newPlanType);
         }
 
-        // Set usage data
+        // Set usage data with validation against actual data
         if (usageLimitsResult.data && !usageLimitsResult.error) {
+          // Get actual counts from startup_ideas to validate usage_limits data
+          const [ideasResult, validatedIdeasResult] = await Promise.all([
+            supabase
+              .from('startup_ideas')
+              .select('id', { count: 'exact' })
+              .eq('user_id', user.id),
+            supabase
+              .from('startup_ideas')
+              .select('id', { count: 'exact' })
+              .eq('user_id', user.id)
+              .eq('is_validated', true)
+          ]);
+
+          const actualIdeasCount = ideasResult.count || 0;
+          const actualValidatedCount = validatedIdeasResult.count || 0;
+          const recordedIdeasCount = Number(usageLimitsResult.data.ideas_generated || 0);
+          const recordedValidatedCount = Number(usageLimitsResult.data.validations_completed || 0);
+
+          // Check for data inconsistency and fix it
+          if (actualIdeasCount !== recordedIdeasCount || actualValidatedCount !== recordedValidatedCount) {
+            console.log('🔧 Data inconsistency detected, fixing usage_limits:', {
+              actual: { ideas: actualIdeasCount, validated: actualValidatedCount },
+              recorded: { ideas: recordedIdeasCount, validated: recordedValidatedCount }
+            });
+
+            // Update usage_limits with correct data
+            await supabase
+              .from('usage_limits')
+              .update({
+                ideas_generated: actualIdeasCount,
+                validations_completed: actualValidatedCount,
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', user.id);
+
+            console.log('✅ Usage counters fixed in database');
+          }
+
           const newUsage = {
-            ideas_used: Number(usageLimitsResult.data.ideas_generated || 0),
-            validations_used: Number(usageLimitsResult.data.validations_completed || 0),
+            ideas_used: actualIdeasCount,
+            validations_used: actualValidatedCount,
             content_used: Number(usageLimitsResult.data.content_generated || 0),
             last_reset: usageLimitsResult.data.created_at || new Date().toISOString()
           };
-          console.log('✅ Setting usage from usage_limits:', newUsage);
+          console.log('✅ Setting usage from usage_limits (validated):', newUsage);
           setUsage(newUsage);
         } else {
           console.log('⚠️ No usage_limits record, counting from startup_ideas');
-          const ideasResult = await supabase
-            .from('startup_ideas')
-            .select('id', { count: 'exact' })
-            .eq('user_id', user.id);
+          
+          // Get actual counts from startup_ideas
+          const [ideasResult, validatedIdeasResult] = await Promise.all([
+            supabase
+              .from('startup_ideas')
+              .select('id', { count: 'exact' })
+              .eq('user_id', user.id),
+            supabase
+              .from('startup_ideas')
+              .select('id', { count: 'exact' })
+              .eq('user_id', user.id)
+              .eq('is_validated', true)
+          ]);
             
           const newUsage = {
             ideas_used: ideasResult.count || 0,
-            validations_used: 0,
+            validations_used: validatedIdeasResult.count || 0,
             content_used: 0,
             last_reset: new Date().toISOString()
           };
