@@ -1,12 +1,12 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { FileText, PenTool, Share2, Copy } from "lucide-react";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
+import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
+import { getUserIdeas } from '@/server/actions/ideas';
+import { getUserContent } from '@/server/actions/content';
+import { CONTENT_TEMPLATES } from '@/constants';
 
 export default async function ContentPage() {
   const supabase = await createServerSupabaseClient();
@@ -19,7 +19,7 @@ export default async function ContentPage() {
     contentCreated: 0,
     blogPosts: 0,
     socialPosts: 0,
-    templates: 12, // This could be a fixed number of available templates
+    templates: CONTENT_TEMPLATES.length, // Actual number of available templates
   };
 
   if (user) {
@@ -30,13 +30,23 @@ export default async function ContentPage() {
       .eq('user_id', user.id);
 
     if (generatedContent) {
-      contentStats.contentCreated = generatedContent.length;
-      contentStats.blogPosts = generatedContent.filter(content => content.content_type === 'blog_post').length;
-      contentStats.socialPosts = generatedContent.filter(content => 
-        content.content_type === 'tweet' || content.content_type === 'social_media'
-      ).length;
+      contentStats = {
+        ...contentStats,
+        contentCreated: generatedContent.length,
+        blogPosts: generatedContent.filter(content => content.content_type === 'blog_post').length,
+        socialPosts: generatedContent.filter(content => 
+          content.content_type === 'tweet' || content.content_type === 'social_media'
+        ).length,
+      };
     }
   }
+
+  // Get user's startup ideas for content generation
+  const userIdeas = user ? await getUserIdeas(10) : [];
+  
+  // Get user's generated content
+  const userContent = user ? await getUserContent(20) : [];
+  
   return (
     <div className="space-y-6">
       <PageHeader
@@ -90,79 +100,9 @@ export default async function ContentPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Content</CardTitle>
-          <CardDescription>
-            Create marketing content tailored to your startup and audience
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="content-type">Content Type</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select content type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="blog-post">Blog Post</SelectItem>
-                  <SelectItem value="social-media">Social Media Post</SelectItem>
-                  <SelectItem value="email">Email Campaign</SelectItem>
-                  <SelectItem value="landing-page">Landing Page Copy</SelectItem>
-                  <SelectItem value="press-release">Press Release</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      <ContentGenerationForm userIdeas={userIdeas} />
 
-            <div className="space-y-2">
-              <Label htmlFor="tone">Tone & Style</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="exciting">Exciting</SelectItem>
-                  <SelectItem value="authoritative">Authoritative</SelectItem>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="topic">Topic/Subject</Label>
-            <Input
-              id="topic"
-              placeholder="What do you want to write about?"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="key-points">Key Points</Label>
-            <Textarea
-              id="key-points"
-              placeholder="List the main points you want to cover..."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target-audience">Target Audience</Label>
-            <Input
-              id="target-audience"
-              placeholder="Who is this content for?"
-            />
-          </div>
-
-          <Button className="w-full">
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Content
-          </Button>
-        </CardContent>
-      </Card>
+      <GeneratedContentShowcase content={userContent} />
     </div>
   );
 }
