@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { validateExistingIdea } from '@/lib/actions/validation';
+import { toggleFavorite } from '@/server/actions/ideas';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { 
@@ -18,7 +19,8 @@ import {
   AlertTriangle,
   Loader2,
   BarChart3,
-  Crown
+  Crown,
+  Heart
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -43,6 +45,7 @@ interface IdeaCardProps {
     } | null;
     validation_data: any;
     is_validated: boolean | null;
+    is_favorite: boolean | null;
     ai_confidence_score: number | null;
     created_at: string;
   };
@@ -51,6 +54,8 @@ interface IdeaCardProps {
 export function IdeaCard({ idea }: IdeaCardProps) {
   const [isValidating, setIsValidating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(idea.is_favorite || false);
+  const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
   const { isAtLimit, getRemainingLimit, planType, usage, refreshUsage } = useServerPlanLimits();
 
   const handleValidate = async () => {
@@ -91,6 +96,23 @@ export function IdeaCard({ idea }: IdeaCardProps) {
     }
   };
 
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsTogglingFavorite(true);
+    try {
+      const result = await toggleFavorite(idea.id);
+      setIsFavorite(result.is_favorite);
+      toast.success(result.is_favorite ? 'Added to favorites!' : 'Removed from favorites');
+    } catch (error) {
+      console.error('Toggle favorite error:', error);
+      toast.error('Failed to update favorite status');
+    } finally {
+      setIsTogglingFavorite(false);
+    }
+  };
+
   const getValidationColor = (score: number) => {
     if (score >= 80) return 'text-green-600';
     if (score >= 65) return 'text-blue-600';
@@ -112,17 +134,34 @@ export function IdeaCard({ idea }: IdeaCardProps) {
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <CardTitle className="text-lg leading-tight pr-2">{idea.title}</CardTitle>
-              {idea.is_validated ? (
-                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 py-2">
-                  <CheckCircle className="mr-1 h-3 w-3" />
-                  {idea.ai_confidence_score ? `${idea.ai_confidence_score}%` : 'Validated'}
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="border-amber-300 text-amber-600 bg-amber-50 hover:bg-amber-100 py-2">
-                  <AlertTriangle className="mr-1 h-3 w-3" />
-                  Not Validated
-                </Badge>
-              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleToggleFavorite}
+                  disabled={isTogglingFavorite}
+                  className="p-2 h-auto"
+                >
+                  <Heart 
+                    className={`h-4 w-4 transition-colors ${
+                      isFavorite 
+                        ? 'text-red-500 fill-red-500' 
+                        : 'text-muted-foreground hover:text-red-500'
+                    }`} 
+                  />
+                </Button>
+                {idea.is_validated ? (
+                  <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100 py-2">
+                    <CheckCircle className="mr-1 h-3 w-3" />
+                    {idea.ai_confidence_score ? `${idea.ai_confidence_score}%` : 'Validated'}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="border-amber-300 text-amber-600 bg-amber-50 hover:bg-amber-100 py-2">
+                    <AlertTriangle className="mr-1 h-3 w-3" />
+                    Not Validated
+                  </Badge>
+                )}
+              </div>
             </div>
           </CardHeader>
 

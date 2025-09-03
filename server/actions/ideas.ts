@@ -15,6 +15,56 @@ const generateIdeaSchema = z.object({
   userPrompt: z.string().optional(),
 });
 
+// Favorites functionality
+export async function toggleFavorite(ideaId: string) {
+  const supabase = await createServerSupabaseClient();
+  
+  // Check authentication
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new Error('Authentication required');
+  }
+
+  try {
+    // Get current favorite status
+    const { data: currentIdea, error: fetchError } = await supabase
+      .from('startup_ideas')
+      .select('is_favorite')
+      .eq('id', ideaId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (fetchError) {
+      throw new Error('Idea not found or access denied');
+    }
+
+    // Toggle favorite status
+    const newFavoriteStatus = !currentIdea.is_favorite;
+    
+    const { error: updateError } = await supabase
+      .from('startup_ideas')
+      .update({ is_favorite: newFavoriteStatus })
+      .eq('id', ideaId)
+      .eq('user_id', user.id);
+
+    if (updateError) {
+      throw new Error('Failed to update favorite status');
+    }
+
+    // Revalidate the ideas page to show updated state
+    revalidatePath('/dashboard/ideas');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      is_favorite: newFavoriteStatus
+    };
+  } catch (error) {
+    console.error('Toggle favorite error:', error);
+    throw new Error('Failed to toggle favorite');
+  }
+}
+
 export async function generateIdea(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   
