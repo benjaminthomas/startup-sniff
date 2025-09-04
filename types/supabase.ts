@@ -1,3 +1,6 @@
+// Updated TypeScript types for Reddit Trend Engine
+// Generated based on the new database schema migrations
+
 export type Json =
   | string
   | number
@@ -6,272 +9,300 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type Database = {
+export interface Database {
   public: {
     Tables: {
-      generated_content: {
+      posts: {
         Row: {
-          brand_voice: string | null
-          content: string
-          content_type: string
-          created_at: string
           id: string
-          seo_keywords: string[] | null
-          startup_idea_id: string | null
+          subreddit: string
           title: string
+          body: string | null
+          url: string | null
+          author: string
+          score: number
+          comments: number
+          created_utc: string
+          sentiment: number | null
+          intent_flags: string[]
+          hash: string
+          user_id: string | null
+          created_at: string
           updated_at: string
-          user_id: string
         }
         Insert: {
-          brand_voice?: string | null
-          content: string
-          content_type: string
-          created_at?: string
           id?: string
-          seo_keywords?: string[] | null
-          startup_idea_id?: string | null
+          subreddit: string
           title: string
+          body?: string | null
+          url?: string | null
+          author: string
+          score?: number
+          comments?: number
+          created_utc: string
+          sentiment?: number | null
+          intent_flags?: string[]
+          hash: string
+          user_id?: string | null
+          created_at?: string
           updated_at?: string
-          user_id: string
         }
         Update: {
-          brand_voice?: string | null
-          content?: string
-          content_type?: string
-          created_at?: string
           id?: string
-          seo_keywords?: string[] | null
-          startup_idea_id?: string | null
+          subreddit?: string
           title?: string
+          body?: string | null
+          url?: string | null
+          author?: string
+          score?: number
+          comments?: number
+          created_utc?: string
+          sentiment?: number | null
+          intent_flags?: string[]
+          hash?: string
+          user_id?: string | null
+          created_at?: string
           updated_at?: string
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "generated_content_startup_idea_id_fkey"
-            columns: ["startup_idea_id"]
-            isOneToOne: false
-            referencedRelation: "startup_ideas"
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      topics: {
+        Row: {
+          id: string
+          label: string
+          keywords: string[]
+          description: string | null
+          last_seen_utc: string
+          user_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          label: string
+          keywords: string[]
+          description?: string | null
+          last_seen_utc: string
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          label?: string
+          keywords?: string[]
+          description?: string | null
+          last_seen_utc?: string
+          user_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_user_id_fkey"
+            columns: ["user_id"]
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      topic_posts: {
+        Row: {
+          topic_id: string
+          post_id: string
+          similarity: number
+          created_at: string
+        }
+        Insert: {
+          topic_id: string
+          post_id: string
+          similarity?: number
+          created_at?: string
+        }
+        Update: {
+          topic_id?: string
+          post_id?: string
+          similarity?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_posts_topic_id_fkey"
+            columns: ["topic_id"]
+            referencedRelation: "topics"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "generated_content_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            foreignKeyName: "topic_posts_post_id_fkey"
+            columns: ["post_id"]
+            referencedRelation: "posts"
             referencedColumns: ["id"]
-          },
+          }
         ]
+      }
+      topic_stats: {
+        Row: {
+          id: string
+          topic_id: string
+          time_window: '24h' | '7d' | '30d'
+          post_count: number
+          velocity: number
+          sentiment_avg: number | null
+          engagement_score: number
+          final_score: number
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          topic_id: string
+          time_window: '24h' | '7d' | '30d'
+          post_count?: number
+          velocity?: number
+          sentiment_avg?: number | null
+          engagement_score?: number
+          final_score?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          topic_id?: string
+          time_window?: '24h' | '7d' | '30d'
+          post_count?: number
+          velocity?: number
+          sentiment_avg?: number | null
+          engagement_score?: number
+          final_score?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_stats_topic_id_fkey"
+            columns: ["topic_id"]
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      users: {
+        Row: {
+          id: string
+          email: string
+          name: string | null
+          avatar_url: string | null
+          plan_type: 'free' | 'starter' | 'founder' | null
+          stripe_customer_id: string | null
+          created_at: string
+          updated_at: string
+          keyword_tracks: string[]
+          last_trend_check: string | null
+          trend_notifications_enabled: boolean
+        }
+        Insert: {
+          id: string
+          email: string
+          name?: string | null
+          avatar_url?: string | null
+          plan_type?: 'free' | 'starter' | 'founder' | null
+          stripe_customer_id?: string | null
+          created_at?: string
+          updated_at?: string
+          keyword_tracks?: string[]
+          last_trend_check?: string | null
+          trend_notifications_enabled?: boolean
+        }
+        Update: {
+          id?: string
+          email?: string
+          name?: string | null
+          avatar_url?: string | null
+          plan_type?: 'free' | 'starter' | 'founder' | null
+          stripe_customer_id?: string | null
+          created_at?: string
+          updated_at?: string
+          keyword_tracks?: string[]
+          last_trend_check?: string | null
+          trend_notifications_enabled?: boolean
+        }
+        Relationships: []
       }
       startup_ideas: {
         Row: {
-          ai_confidence_score: number | null
-          created_at: string
           id: string
-          implementation: Json
-          is_favorite: boolean | null
-          is_validated: boolean | null
-          market_analysis: Json
-          problem_statement: string
-          solution: Json
-          source_data: Json | null
-          success_metrics: Json
-          target_market: Json
-          title: string
-          updated_at: string
           user_id: string
-          validation_data: Json | null
+          title: string
+          problem_statement: string
+          target_market: Json | null
+          solution: Json | null
+          market_analysis: Json | null
+          implementation: Json | null
+          success_metrics: Json | null
+          ai_confidence_score: number | null
+          trends: Json | null
+          created_at: string
+          updated_at: string
+          source_topic_id: string | null
+          trend_context: Json | null
+          trend_explanation: string | null
         }
         Insert: {
-          ai_confidence_score?: number | null
-          created_at?: string
           id?: string
-          implementation: Json
-          is_favorite?: boolean | null
-          is_validated?: boolean | null
-          market_analysis: Json
-          problem_statement: string
-          solution: Json
-          source_data?: Json | null
-          success_metrics: Json
-          target_market: Json
-          title: string
-          updated_at?: string
           user_id: string
-          validation_data?: Json | null
+          title: string
+          problem_statement: string
+          target_market?: Json | null
+          solution?: Json | null
+          market_analysis?: Json | null
+          implementation?: Json | null
+          success_metrics?: Json | null
+          ai_confidence_score?: number | null
+          trends?: Json | null
+          created_at?: string
+          updated_at?: string
+          source_topic_id?: string | null
+          trend_context?: Json | null
+          trend_explanation?: string | null
         }
         Update: {
-          ai_confidence_score?: number | null
-          created_at?: string
           id?: string
-          implementation?: Json
-          is_favorite?: boolean | null
-          is_validated?: boolean | null
-          market_analysis?: Json
-          problem_statement?: string
-          solution?: Json
-          source_data?: Json | null
-          success_metrics?: Json
-          target_market?: Json
-          title?: string
-          updated_at?: string
           user_id?: string
-          validation_data?: Json | null
+          title?: string
+          problem_statement?: string
+          target_market?: Json | null
+          solution?: Json | null
+          market_analysis?: Json | null
+          implementation?: Json | null
+          success_metrics?: Json | null
+          ai_confidence_score?: number | null
+          trends?: Json | null
+          created_at?: string
+          updated_at?: string
+          source_topic_id?: string | null
+          trend_context?: Json | null
+          trend_explanation?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "startup_ideas_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
-        ]
-      }
-      subscriptions: {
-        Row: {
-          cancel_at_period_end: boolean | null
-          created_at: string
-          current_period_end: string | null
-          current_period_start: string | null
-          id: string
-          plan_type: Database["public"]["Enums"]["plan_type"]
-          status: Database["public"]["Enums"]["subscription_status"] | null
-          stripe_price_id: string
-          stripe_subscription_id: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cancel_at_period_end?: boolean | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          plan_type: Database["public"]["Enums"]["plan_type"]
-          status?: Database["public"]["Enums"]["subscription_status"] | null
-          stripe_price_id: string
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cancel_at_period_end?: boolean | null
-          created_at?: string
-          current_period_end?: string | null
-          current_period_start?: string | null
-          id?: string
-          plan_type?: Database["public"]["Enums"]["plan_type"]
-          status?: Database["public"]["Enums"]["subscription_status"] | null
-          stripe_price_id?: string
-          stripe_subscription_id?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
           {
-            foreignKeyName: "subscriptions_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
+            foreignKeyName: "startup_ideas_source_topic_id_fkey"
+            columns: ["source_topic_id"]
+            referencedRelation: "topics"
             referencedColumns: ["id"]
-          },
+          }
         ]
       }
-      usage_limits: {
-        Row: {
-          created_at: string
-          id: string
-          ideas_generated: number | null
-          monthly_limit_ideas: number
-          monthly_limit_validations: number
-          plan_type: Database["public"]["Enums"]["plan_type"]
-          reset_date: string
-          updated_at: string
-          user_id: string
-          validations_completed: number | null
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          ideas_generated?: number | null
-          monthly_limit_ideas: number
-          monthly_limit_validations: number
-          plan_type: Database["public"]["Enums"]["plan_type"]
-          reset_date?: string
-          updated_at?: string
-          user_id: string
-          validations_completed?: number | null
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          ideas_generated?: number | null
-          monthly_limit_ideas?: number
-          monthly_limit_validations?: number
-          plan_type?: Database["public"]["Enums"]["plan_type"]
-          reset_date?: string
-          updated_at?: string
-          user_id?: string
-          validations_completed?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "usage_limits_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      users: {
-        Row: {
-          avatar_url: string | null
-          created_at: string
-          email: string
-          full_name: string | null
-          id: string
-          plan_type: Database["public"]["Enums"]["plan_type"] | null
-          stripe_customer_id: string | null
-          subscription_status: Database["public"]["Enums"]["subscription_status"] | null
-          trial_ends_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          avatar_url?: string | null
-          created_at?: string
-          email: string
-          full_name?: string | null
-          id: string
-          plan_type?: Database["public"]["Enums"]["plan_type"] | null
-          stripe_customer_id?: string | null
-          subscription_status?: Database["public"]["Enums"]["subscription_status"] | null
-          trial_ends_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          avatar_url?: string | null
-          created_at?: string
-          email?: string
-          full_name?: string | null
-          id?: string
-          plan_type?: Database["public"]["Enums"]["plan_type"] | null
-          stripe_customer_id?: string | null
-          subscription_status?: Database["public"]["Enums"]["subscription_status"] | null
-          trial_ends_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "users_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+      // Add other existing tables as needed...
     }
     Views: {
       [_ in never]: never
@@ -280,11 +311,50 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      plan_type: "explorer" | "founder" | "growth"
-      subscription_status: "trial" | "active" | "inactive" | "cancelled"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
     }
   }
 }
+
+// Helper types for Reddit Trend Engine
+export type RedditPost = Database['public']['Tables']['posts']['Row']
+export type RedditPostInsert = Database['public']['Tables']['posts']['Insert']
+export type RedditPostUpdate = Database['public']['Tables']['posts']['Update']
+
+export type TrendingTopic = Database['public']['Tables']['topics']['Row']
+export type TrendingTopicInsert = Database['public']['Tables']['topics']['Insert']
+export type TrendingTopicUpdate = Database['public']['Tables']['topics']['Update']
+
+export type TopicPost = Database['public']['Tables']['topic_posts']['Row']
+export type TopicPostInsert = Database['public']['Tables']['topic_posts']['Insert']
+
+export type TopicStats = Database['public']['Tables']['topic_stats']['Row']
+export type TopicStatsInsert = Database['public']['Tables']['topic_stats']['Insert']
+export type TopicStatsUpdate = Database['public']['Tables']['topic_stats']['Update']
+
+export type TimeWindow = '24h' | '7d' | '30d'
+export type PlanType = 'free' | 'starter' | 'founder'
+
+// Enhanced StartupIdea type with trend integration
+export type StartupIdea = Database['public']['Tables']['startup_ideas']['Row']
+export type StartupIdeaInsert = Database['public']['Tables']['startup_ideas']['Insert']
+export type StartupIdeaUpdate = Database['public']['Tables']['startup_ideas']['Update']
+
+// Trend context structure for startup ideas
+export interface TrendContext {
+  velocity: number
+  sentiment_avg: number
+  post_count: number
+  sample_posts: {
+    title: string
+    score: number
+    url?: string
+  }[]
+  trending_keywords: string[]
+}
+
+// User with trend preferences
+export type UserWithTrends = Database['public']['Tables']['users']['Row']
