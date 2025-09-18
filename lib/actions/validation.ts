@@ -10,12 +10,15 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 })
 
-// Validation form schema
+// Validation form schema (legacy - for backward compatibility)
 const validationSchema = z.object({
   ideaTitle: z.string().min(1, 'Idea title is required').max(100, 'Title too long'),
   ideaDescription: z.string().min(10, 'Description must be at least 10 characters').max(1000, 'Description too long'),
   targetMarket: z.string().min(1, 'Target market is required').max(200, 'Target market description too long')
 })
+
+// Generated idea ID validation schema
+const ideaIdSchema = z.string().uuid('Invalid idea ID format')
 
 // AI validation response schema
 const validationResponseSchema = z.object({

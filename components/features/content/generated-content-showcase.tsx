@@ -6,22 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
-  FileText, 
-  MessageCircle, 
-  Mail, 
-  Globe, 
-  Copy, 
-  Download, 
-  Share2,
-  Eye,
+import {
+  FileText,
+  MessageCircle,
+  Mail,
+  Globe,
+  Copy,
   Calendar,
   Target,
   Sparkles,
-  BarChart3,
-  X,
-  Clock,
-  TrendingUp
+  Clock
 } from "lucide-react";
 import { toast } from 'sonner';
 
@@ -124,27 +118,11 @@ export function GeneratedContentShowcase({ content }: GeneratedContentShowcasePr
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(contentByType).map(([type, items]) => (
-          <Card key={type} className="border-l-4 border-l-primary">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                {getContentIcon(type)}
-                <span className="text-sm font-medium">{getContentTypeLabel(type)}</span>
-              </div>
-              <div className="text-2xl font-bold text-primary">{items.length}</div>
-              <div className="text-xs text-muted-foreground">pieces created</div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {/* Content Showcase */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
             Generated Content Library
           </CardTitle>
           <CardDescription>
@@ -153,20 +131,57 @@ export function GeneratedContentShowcase({ content }: GeneratedContentShowcasePr
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="all">All ({content.length})</TabsTrigger>
-              <TabsTrigger value="blog_post">Blog Posts</TabsTrigger>
-              <TabsTrigger value="tweet">Twitter</TabsTrigger>
-              <TabsTrigger value="email">Email</TabsTrigger>
-              <TabsTrigger value="landing_page">Landing Pages</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5 bg-muted/30 p-1 rounded-xl h-12">
+              <TabsTrigger
+                value="all"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+              >
+                <Sparkles className="h-4 w-4" />
+                All ({content.length})
+              </TabsTrigger>
+              <TabsTrigger
+                value="blog_post"
+                className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-1"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Blog Posts</span>
+                <span className="sm:hidden">Blogs</span>
+                {contentByType.blog_post && `(${contentByType.blog_post.length})`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="tweet"
+                className="data-[state=active]:bg-sky-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-1"
+              >
+                <MessageCircle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Twitter</span>
+                <span className="sm:hidden">X</span>
+                {contentByType.tweet && `(${contentByType.tweet.length})`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="email"
+                className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-1"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Email</span>
+                {contentByType.email && `(${contentByType.email.length})`}
+              </TabsTrigger>
+              <TabsTrigger
+                value="landing_page"
+                className="data-[state=active]:bg-purple-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-1"
+              >
+                <Globe className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Landing</span>
+                <span className="sm:hidden">LP</span>
+                {contentByType.landing_page && `(${contentByType.landing_page.length})`}
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="all" className="mt-6">
-              <div className="grid gap-4">
-                {content.slice(0, 6).map((item) => (
-                  <ContentCard 
-                    key={item.id} 
-                    content={item} 
+            <TabsContent value="all" className="mt-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                {content.slice(0, 9).map((item) => (
+                  <ContentCard
+                    key={item.id}
+                    content={item}
                     onCopy={handleCopy}
                     onView={() => {
                       setSelectedContent(item)
@@ -175,15 +190,29 @@ export function GeneratedContentShowcase({ content }: GeneratedContentShowcasePr
                   />
                 ))}
               </div>
+              {content.length > 9 && (
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Showing 9 of {content.length} pieces. View individual tabs to see all content by type.
+                  </p>
+                </div>
+              )}
             </TabsContent>
 
             {Object.entries(contentByType).map(([type, items]) => (
-              <TabsContent key={type} value={type} className="mt-6">
-                <div className="grid gap-4">
+              <TabsContent key={type} value={type} className="mt-8">
+                <div className="mb-4 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getContentIcon(type)}
+                    <h3 className="text-lg font-semibold">{getContentTypeLabel(type)}</h3>
+                    <Badge variant="secondary">{items.length} pieces</Badge>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {items.map((item) => (
-                    <ContentCard 
-                      key={item.id} 
-                      content={item} 
+                    <ContentCard
+                      key={item.id}
+                      content={item}
                       onCopy={handleCopy}
                       onView={() => {
                         setSelectedContent(item)
@@ -327,7 +356,7 @@ function ContentCard({ content, onCopy, onView }: ContentCardProps) {
   const getBrandVoiceIcon = (voice: string) => {
     switch (voice) {
       case 'technical': return <Target className="h-3 w-3" />;
-      case 'growth_hacker': return <TrendingUp className="h-3 w-3" />;
+      case 'growth_hacker': return <Target className="h-3 w-3" />;
       case 'storyteller': return <MessageCircle className="h-3 w-3" />;
       case 'educator': return <FileText className="h-3 w-3" />;
       case 'contrarian': return <Sparkles className="h-3 w-3" />;
@@ -336,93 +365,125 @@ function ContentCard({ content, onCopy, onView }: ContentCardProps) {
   };
 
   return (
-    <Card 
-      className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border-2 hover:border-primary/20"
-      onClick={onView}
-    >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <CardTitle className="text-lg leading-tight pr-2 line-clamp-1">{content.title}</CardTitle>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className={getContentTypeColor(content.content_type)}>
-              {getContentIcon(content.content_type)}
-              <span className="ml-1">{getContentTypeLabel(content.content_type)}</span>
-            </Badge>
-          </div>
-        </div>
-        {content.brand_voice && (
-          <div className="flex items-center gap-2 mt-2">
-            <Badge variant="outline" className="text-xs py-1">
-              {getBrandVoiceIcon(content.brand_voice)}
-              <span className="ml-1 capitalize">{content.brand_voice.replace('_', ' ')}</span>
-            </Badge>
-          </div>
-        )}
-      </CardHeader>
+    <Card className="group relative overflow-hidden bg-gradient-to-br from-background to-background/50 hover:shadow-xl transition-all duration-300 cursor-pointer border hover:border-primary/30">
+      {/* Header with enhanced styling */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/60"></div>
 
-      <CardContent className="space-y-4 flex flex-col h-full">
-        <p className="text-muted-foreground text-sm line-clamp-3 flex-grow">
-          {content.content.slice(0, 200)}...
-        </p>
+      <CardHeader className="pb-4 relative">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <CardTitle
+              className="text-lg font-bold leading-tight text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2 mb-2"
+              onClick={onView}
+            >
+              {content.title}
+            </CardTitle>
 
-        {/* Key Metrics - Left aligned with SEO keywords on right */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 text-xs text-muted-foreground bg-slate-50 dark:bg-slate-950/20 p-3 rounded-lg">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1">
-              <FileText className="h-3 w-3" />
-              <span>{Math.ceil(content.content.length / 5)} words</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              <span>{Math.ceil(content.content.length / 1000)} min read</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Target className="h-3 w-3" />
-              <span>{content.seo_keywords?.length || 0} keywords</span>
-            </div>
-          </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Badge variant="default" className={`${getContentTypeColor(content.content_type)} font-medium shadow-sm`}>
+                {getContentIcon(content.content_type)}
+                <span className="ml-1.5">{getContentTypeLabel(content.content_type)}</span>
+              </Badge>
 
-          {/* SEO Keywords on the right for larger screens */}
-          {content.seo_keywords && content.seo_keywords.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {content.seo_keywords.slice(0, 2).map((keyword, index) => (
-                <Badge key={index} variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  #{keyword}
-                </Badge>
-              ))}
-              {content.seo_keywords.length > 2 && (
-                <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                  +{content.seo_keywords.length - 2}
+              {content.brand_voice && (
+                <Badge variant="outline" className="text-xs border-primary/20 bg-primary/5 text-primary">
+                  {getBrandVoiceIcon(content.brand_voice)}
+                  <span className="ml-1 capitalize font-medium">
+                    {content.brand_voice.replace('_', ' ')}
+                  </span>
                 </Badge>
               )}
             </div>
-          )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4 pb-6" onClick={onView}>
+        {/* Enhanced content preview */}
+        <div className="relative">
+          <p className="text-muted-foreground text-sm leading-relaxed line-clamp-4 border-l-4 border-primary/20 pl-4 bg-muted/30 p-3 rounded-r-lg">
+            {content.content.slice(0, 280)}...
+          </p>
         </div>
 
-        {/* Quick Copy Action */}
-        <div className="mt-auto pt-4">
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              onCopy(content.content);
-            }}
-            variant="ghost"
-            className="w-full"
-            size="sm"
-          >
-            <Copy className="mr-2 h-4 w-4" />
-            Quick Copy
-          </Button>
+        {/* Interactive metrics with hover effects */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800/30">
+            <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+              <FileText className="h-4 w-4" />
+              <span className="font-semibold text-lg">{Math.ceil(content.content.length / 5)}</span>
+            </div>
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">words</p>
+          </div>
+
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 p-3 rounded-lg border border-emerald-200 dark:border-emerald-800/30">
+            <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+              <Target className="h-4 w-4" />
+              <span className="font-semibold text-lg">{content.seo_keywords?.length || 0}</span>
+            </div>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">keywords</p>
+          </div>
         </div>
 
-        <div className="text-xs text-muted-foreground text-center pt-2 border-t">
-          Created {new Date(content.created_at).toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-          })}
+        {/* SEO Keywords showcase */}
+        {content.seo_keywords && content.seo_keywords.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Keywords</p>
+            <div className="flex flex-wrap gap-1.5">
+              {content.seo_keywords.slice(0, 3).map((keyword, index) => (
+                <Badge
+                  key={index}
+                  variant="secondary"
+                  className="text-xs bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-700 border-emerald-200 dark:from-emerald-900/30 dark:to-emerald-900/10 dark:text-emerald-300 dark:border-emerald-800/30 px-2 py-1"
+                >
+                  #{keyword}
+                </Badge>
+              ))}
+              {content.seo_keywords.length > 3 && (
+                <Badge
+                  variant="outline"
+                  className="text-xs border-dashed bg-muted/50 hover:bg-muted px-2 py-1"
+                >
+                  +{content.seo_keywords.length - 3} more
+                </Badge>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced reading time and date */}
+        <div className="flex items-center justify-between pt-3 border-t border-border/50">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">
+              {Math.ceil(content.content.length / 1000)} min read
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {new Date(content.created_at).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric'
+            })}
+          </span>
         </div>
       </CardContent>
+
+      {/* Floating action button */}
+      <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+        <Button
+          onClick={(e) => {
+            e.stopPropagation();
+            onCopy(content.content);
+          }}
+          size="sm"
+          className="rounded-full shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Subtle hover effect overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
     </Card>
   );
 }

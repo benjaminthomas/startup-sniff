@@ -10,6 +10,9 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ValidationButton } from '@/components/features/validation/validation-button';
 import { ValidationMessage } from '@/components/features/validation/validation-message';
 import { ValidationStatusAlert } from '@/components/features/validation/validation-status-alert';
+import { RedditSources } from '@/components/features/ideas/reddit-sources';
+import { FavoriteButton } from '@/components/features/ideas/favorite-button';
+import { ExportPDFButton } from '@/components/features/ideas/export-pdf-button';
 import { 
   Heart, 
   TrendingUp, 
@@ -104,6 +107,19 @@ export default async function IdeaDetailPage({
     notFound();
   }
 
+  // Fetch Reddit sources if they exist
+  let redditSources: any[] = [];
+  const painPointSources = idea.source_data?.pain_point_sources || [];
+
+  if (painPointSources.length > 0) {
+    const { data: redditPosts } = await supabase
+      .from('reddit_posts')
+      .select('reddit_id, subreddit, title, content, url, score, comments, author, created_utc')
+      .in('reddit_id', painPointSources);
+
+    redditSources = redditPosts || [];
+  }
+
   const confidenceScore = idea.ai_confidence_score || 0;
   const confidenceLevel = getConfidenceLevel(confidenceScore);
   const colors = getConfidenceColors(confidenceLevel);
@@ -120,14 +136,14 @@ export default async function IdeaDetailPage({
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
-            <Heart className={cn("h-4 w-4 mr-2", idea.is_favorite ? "text-red-500 fill-current" : "")} />
-            {idea.is_favorite ? "Favorited" : "Add to Favorites"}
-          </Button>
-          <Button variant="outline" size="sm">
-            <FileText className="h-4 w-4 mr-2" />
-            Export PDF
-          </Button>
+          <FavoriteButton
+            ideaId={idea.id}
+            initialFavoriteState={idea.is_favorite || false}
+          />
+          <ExportPDFButton
+            ideaId={idea.id}
+            ideaTitle={idea.title}
+          />
         </div>
       </div>
 
@@ -174,6 +190,18 @@ export default async function IdeaDetailPage({
 
       {/* Status Alert */}
       <ValidationStatusAlert ideaId={idea.id} isValidated={idea.is_validated} />
+
+      {/* Reddit Sources Section */}
+      {redditSources.length > 0 && (
+        <Card className="border border-orange-200 bg-orange-50/30 dark:border-orange-800 dark:bg-orange-950/10">
+          <CardContent className="p-6">
+            <RedditSources
+              sources={redditSources}
+              title="Inspiration from Reddit Discussions"
+            />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Main Content - Three Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

@@ -84,21 +84,6 @@ async function SignInPageContent({ searchParams }: SignInPageProps) {
             redirectTo={params.redirectTo}
           />
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          {/* OAuth providers would go here */}
-          <div className="text-center text-sm text-muted-foreground">
-            OAuth providers coming soon...
-          </div>
 
           <div className="text-center text-sm text-muted-foreground">
             Don't have an account?{' '}

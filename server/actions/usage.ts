@@ -72,8 +72,8 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     let usageData;
 
     if (usageLimitsResult.data && !usageLimitsResult.error) {
-      // Get actual counts from startup_ideas to validate usage_limits data
-      const [ideasResult, validatedIdeasResult] = await Promise.all([
+      // Get actual counts from all relevant tables to validate usage_limits data
+      const [ideasResult, validatedIdeasResult, contentResult] = await Promise.all([
         supabase
           .from('startup_ideas')
           .select('id', { count: 'exact' })
@@ -82,16 +82,21 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
           .from('startup_ideas')
           .select('id', { count: 'exact' })
           .eq('user_id', user.id)
-          .eq('is_validated', true)
+          .eq('is_validated', true),
+        supabase
+          .from('generated_content')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user.id)
       ]);
 
       const actualIdeasCount = ideasResult.count || 0;
       const actualValidatedCount = validatedIdeasResult.count || 0;
+      const actualContentCount = contentResult.count || 0;
       const recordedIdeasCount = Number(usageLimitsResult.data.ideas_generated || 0);
       const recordedValidatedCount = Number(usageLimitsResult.data.validations_completed || 0);
 
       console.log('🔍 Comparing actual vs recorded usage:', {
-        actual: { ideas: actualIdeasCount, validated: actualValidatedCount },
+        actual: { ideas: actualIdeasCount, validated: actualValidatedCount, content: actualContentCount },
         recorded: { ideas: recordedIdeasCount, validated: recordedValidatedCount }
       });
 
@@ -99,12 +104,12 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       usageData = {
         ideas_used: actualIdeasCount,
         validations_used: actualValidatedCount,
-        content_used: Number(usageLimitsResult.data.content_generated || 0),
+        content_used: actualContentCount,
         last_reset: usageLimitsResult.data.created_at || new Date().toISOString()
       };
     } else {
-      // Fallback: count directly from startup_ideas
-      const [ideasResult, validatedIdeasResult] = await Promise.all([
+      // Fallback: count directly from all tables
+      const [ideasResult, validatedIdeasResult, contentResult] = await Promise.all([
         supabase
           .from('startup_ideas')
           .select('id', { count: 'exact' })
@@ -113,13 +118,17 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
           .from('startup_ideas')
           .select('id', { count: 'exact' })
           .eq('user_id', user.id)
-          .eq('is_validated', true)
+          .eq('is_validated', true),
+        supabase
+          .from('generated_content')
+          .select('id', { count: 'exact' })
+          .eq('user_id', user.id)
       ]);
 
       usageData = {
         ideas_used: ideasResult.count || 0,
         validations_used: validatedIdeasResult.count || 0,
-        content_used: 0,
+        content_used: contentResult.count || 0,
         last_reset: new Date().toISOString()
       };
     }

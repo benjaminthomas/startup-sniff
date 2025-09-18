@@ -17,9 +17,9 @@ export default async function ValidationPage() {
 
   let validationStats = {
     ideasValidated: 0,
-    averageMarketSize: '$2.4B',
-    potentialUsers: '150K',
-    revenueEstimate: '$50K'
+    averageMarketSize: '-',
+    potentialUsers: '-',
+    revenueEstimate: '-'
   };
 
   if (user) {
@@ -32,15 +32,39 @@ export default async function ValidationPage() {
 
     if (validatedIdeas && validatedIdeas.length > 0) {
       validationStats.ideasValidated = validatedIdeas.length;
-      
+
       // Calculate average market size from validated ideas
       const marketSizes = validatedIdeas
         .filter(idea => idea.market_analysis?.market_size?.tam)
         .map(idea => idea.market_analysis.market_size.tam);
-      
+
       if (marketSizes.length > 0) {
         const avgMarketSize = marketSizes.reduce((sum, size) => sum + size, 0) / marketSizes.length;
         validationStats.averageMarketSize = `$${(avgMarketSize / 1000000).toFixed(1)}M`;
+      }
+
+      // Calculate potential users from validated ideas
+      const userEstimates = validatedIdeas
+        .filter(idea => idea.market_analysis?.market_size?.sam)
+        .map(idea => idea.market_analysis.market_size.sam);
+
+      if (userEstimates.length > 0) {
+        const avgUsers = userEstimates.reduce((sum, users) => sum + users, 0) / userEstimates.length;
+        validationStats.potentialUsers = avgUsers > 1000000
+          ? `${(avgUsers / 1000000).toFixed(1)}M`
+          : `${Math.round(avgUsers / 1000)}K`;
+      }
+
+      // Calculate revenue estimate from validated ideas
+      const revenueEstimates = validatedIdeas
+        .filter(idea => idea.market_analysis?.revenue_potential?.monthly)
+        .map(idea => idea.market_analysis.revenue_potential.monthly);
+
+      if (revenueEstimates.length > 0) {
+        const avgRevenue = revenueEstimates.reduce((sum, rev) => sum + rev, 0) / revenueEstimates.length;
+        validationStats.revenueEstimate = avgRevenue > 1000
+          ? `$${Math.round(avgRevenue / 1000)}K`
+          : `$${Math.round(avgRevenue)}`;
       }
     }
   }

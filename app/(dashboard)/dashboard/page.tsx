@@ -6,6 +6,7 @@ import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { QuickActions } from '@/components/features/dashboard/quick-actions';
 import { UsageLimits } from '@/components/features/dashboard/usage-limits';
 import { UsageTracker } from '@/components/ui/usage-tracker';
+import { getCurrentUserUsage } from '@/server/actions/usage';
 
 export const metadata: Metadata = {
   title: 'Dashboard | StartupSniff',
@@ -19,10 +20,11 @@ export default async function DashboardPage() {
   let ideas: any[] = [];
   let limits = null;
   let user = null;
+  let usageData = null;
 
   try {
     const { data: { user: authUser } } = await supabase.auth.getUser();
-    
+
     if (authUser) {
       // Try to fetch user profile data
       const { data: profile } = await supabase
@@ -30,7 +32,7 @@ export default async function DashboardPage() {
         .select('*')
         .eq('id', authUser.id)
         .single();
-      
+
       user = profile || {
         id: authUser.id,
         email: authUser.email,
@@ -38,6 +40,9 @@ export default async function DashboardPage() {
         plan_type: 'explorer',
       };
     }
+
+    // Get accurate usage data using the same function as content page
+    usageData = await getCurrentUserUsage();
 
     const [startupIdeas, usageLimits] = await Promise.allSettled([
       supabase
@@ -90,14 +95,14 @@ export default async function DashboardPage() {
             
             <div className="space-y-6">
               <UsageLimits limits={limits} />
-              <UsageTracker 
-                planType={user?.plan_type || 'explorer'}
-                usage={{
+              <UsageTracker
+                planType={usageData?.planType || user?.plan_type || 'explorer'}
+                usage={usageData?.usage || {
                   ideas_used: ideas.length,
                   validations_used: ideas.filter(idea => idea?.is_validated).length,
-                  content_used: 0, // This would come from generated_content table
+                  content_used: 0,
                 }}
-                limits={{
+                limits={usageData?.limits || {
                   ideas_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 25 : -1,
                   validations_per_month: user?.plan_type === 'explorer' ? 1 : user?.plan_type === 'founder' ? 10 : -1,
                   content_per_month: user?.plan_type === 'explorer' ? 5 : user?.plan_type === 'founder' ? 50 : -1,

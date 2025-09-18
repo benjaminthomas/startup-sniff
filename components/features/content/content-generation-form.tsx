@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { FileText, Loader2, Lightbulb, Sparkles, Crown } from "lucide-react";
+import { FileText, Loader2, Lightbulb, Sparkles, Crown, Plus } from "lucide-react";
 import { generateContent } from '@/server/actions/content';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
@@ -28,6 +29,7 @@ interface ContentGenerationFormProps {
 }
 
 export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormProps) {
+  const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [selectedIdea, setSelectedIdea] = useState<string>('');
@@ -46,7 +48,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
 
   // Auto-populate form when an idea is selected
   useEffect(() => {
-    if (selectedIdea && selectedIdea !== 'manual' && userIdeas.length > 0) {
+    if (selectedIdea && userIdeas.length > 0) {
       const idea = userIdeas.find(i => i.id === selectedIdea);
       if (idea) {
         setFormData(prev => ({
@@ -91,6 +93,11 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
       return;
     }
     
+    if (!selectedIdea) {
+      toast.error('Please select a startup idea to base your content on');
+      return;
+    }
+
     if (!formData.contentType || !formData.topic) {
       toast.error('Please fill in required fields');
       return;
@@ -124,8 +131,8 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
           startupIdea: '',
           template: '',
         });
-        setSelectedIdea('manual');
-        setSelectedTemplate('custom');
+        setSelectedIdea('');
+        setSelectedTemplate('');
         
         // Refresh usage and reload page to show updated stats and content
         await refreshUsage();
@@ -149,6 +156,25 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
 
   const remainingContent = getRemainingLimit('content');
   const isContentAtLimit = isAtLimit('content');
+
+  // Show empty state if no generated ideas
+  if (userIdeas.length === 0) {
+    return (
+      <Card className="border-2 border-dashed border-muted-foreground/25">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Lightbulb className="h-12 w-12 text-muted-foreground mb-4" />
+          <h3 className="font-semibold text-lg mb-2">No Generated Ideas Found</h3>
+          <p className="text-sm text-muted-foreground text-center mb-4 max-w-md">
+            Content generation works with your AI-generated startup ideas. Generate some ideas first to create compelling marketing content.
+          </p>
+          <Button onClick={() => router.push('/dashboard/generate')} className="flex items-center gap-2">
+            <Plus className="h-4 w-4" />
+            Generate Ideas First
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <>
@@ -210,7 +236,6 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                     <SelectValue placeholder="Choose a startup idea to auto-populate content..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="manual">💡 Manual entry (no auto-fill)</SelectItem>
                     {userIdeas.map((idea) => (
                       <SelectItem key={idea.id} value={idea.id} className="group focus:bg-accent focus:text-accent-foreground data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground">
                         <div className="flex items-center gap-2">
@@ -245,7 +270,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                     ))}
                   </SelectContent>
                 </Select>
-                {selectedIdea && selectedIdea !== 'manual' && (
+                {selectedIdea && (
                   <div className="mt-2 text-xs text-amber-700 dark:text-amber-300 flex items-center gap-1">
                     <Sparkles className="h-3 w-3" />
                     Content will be automatically tailored to your selected startup idea

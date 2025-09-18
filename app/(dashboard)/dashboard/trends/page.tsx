@@ -5,8 +5,8 @@ export default function TrendsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Reddit Trends Analysis"
-        description="Discover trending topics and emerging opportunities from Reddit communities"
+        title="Pain Point Discovery"
+        description="Find real user problems and emerging market opportunities from Reddit communities - perfect for your next startup idea"
       />
 
       <RedditTrends />

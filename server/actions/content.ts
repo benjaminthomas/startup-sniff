@@ -107,72 +107,114 @@ export async function generateContent(formData: FormData) {
 
 async function generateContentWithAI(params: z.infer<typeof generateContentSchema>) {
   const contentPrompts = {
-    blog_post: `Write a comprehensive blog post about "${params.topic}". 
-    Target audience: ${params.targetAudience}
-    Key points to cover: ${params.keyPoints}
-    Tone: ${params.tone}
-    
-    Structure the post with:
-    - Compelling headline
-    - Introduction hook
-    - Main content with subheadings
-    - Conclusion with call-to-action
-    
-    Make it SEO-friendly and engaging.`,
+    blog_post: `Write a deeply engaging, story-driven blog post about "${params.topic}" that feels like a conversation with a knowledgeable friend.
 
-    tweet: `Create a Twitter thread about "${params.topic}".
     Target audience: ${params.targetAudience}
-    Key points: ${params.keyPoints}
-    Tone: ${params.tone}
-    
-    Create 5-8 tweets that:
-    - Start with a hook
-    - Include relevant hashtags
-    - End with engagement question
-    - Use line breaks for readability`,
+    Key insights to weave in naturally: ${params.keyPoints}
+    Voice and tone: ${params.tone}
 
-    email: `Write an email campaign about "${params.topic}".
-    Target audience: ${params.targetAudience}
-    Key points: ${params.keyPoints}
-    Tone: ${params.tone}
-    
-    Include:
-    - Compelling subject line
-    - Personal greeting
-    - Value-driven content
-    - Clear call-to-action
-    - Professional signature`,
+    Create a blog post that:
+    - Opens with a relatable scenario, question, or surprising insight that hooks readers immediately
+    - Uses storytelling techniques with real examples, case studies, or personal anecdotes
+    - Breaks complex concepts into digestible, actionable steps
+    - Includes conversational transitions like "Here's the thing..." or "But wait, there's more..."
+    - Uses subheadings that create curiosity and maintain reading momentum
+    - Incorporates bullet points and lists for scanability
+    - Addresses common objections and concerns naturally
+    - Ends with a compelling call-to-action that feels helpful rather than pushy
+    - Includes strategic questions to engage readers and encourage comments
 
-    landing_page: `Create landing page copy for "${params.topic}".
+    Make it feel authentic, valuable, and genuinely helpful.`,
+
+    tweet: `Create a captivating Twitter thread about "${params.topic}" that sparks genuine conversation and engagement.
+
     Target audience: ${params.targetAudience}
-    Key points: ${params.keyPoints}
+    Core insights: ${params.keyPoints}
+    Voice: ${params.tone} but always authentic and relatable
+
+    Craft 6-10 tweets that:
+    - Start with a scroll-stopping hook that makes people want to read more
+    - Tell a mini-story or share a surprising insight in the first tweet
+    - Use natural, conversational language (avoid corporate speak)
+    - Include personal touches, opinions, or behind-the-scenes moments
+    - Break up longer thoughts with strategic line breaks and emojis
+    - Add relevant hashtags that feel natural, not forced
+    - Include a call-to-action that invites genuine discussion
+    - End with an engaging question or invitation to share experiences
+    - Use thread numbering (1/X, 2/X) for easy following
+
+    Make each tweet valuable on its own while building toward a powerful conclusion.`,
+
+    email: `Write a compelling email about "${params.topic}" that feels like it's coming from a trusted friend or advisor.
+
+    Target audience: ${params.targetAudience}
+    Key value points: ${params.keyPoints}
     Tone: ${params.tone}
-    
-    Structure:
-    - Powerful headline
-    - Subheadline
-    - Benefits list
-    - Social proof section
-    - Strong call-to-action
-    - FAQ section`
+
+    Create an email that:
+    - Uses a curiosity-driven subject line that feels personal, not promotional
+    - Opens with a warm, conversational greeting and quick personal connection
+    - Tells a brief story or shares a relatable experience that leads into the main topic
+    - Presents information in a helpful, non-salesy way
+    - Uses short paragraphs and plenty of white space for easy reading
+    - Includes specific, actionable advice they can implement immediately
+    - Addresses potential concerns or questions naturally in the flow
+    - Ends with a soft, helpful call-to-action that provides genuine value
+    - Closes with a warm, authentic signature that invites response
+
+    Make it feel like a valuable message from someone who genuinely cares about their success.`,
+
+    landing_page: `Create persuasive landing page copy for "${params.topic}" that converts through authentic value rather than hype.
+
+    Target audience: ${params.targetAudience}
+    Core benefits: ${params.keyPoints}
+    Brand voice: ${params.tone}
+
+    Structure compelling copy with:
+    - A headline that immediately communicates the core benefit and speaks to their specific pain point
+    - A subheadline that adds context and builds on the promise
+    - An opening section that acknowledges their current struggle and positions your solution empathetically
+    - Benefit-focused bullet points that paint a picture of their improved future state
+    - Social proof section with realistic, specific testimonials (you can create plausible examples)
+    - A clear value proposition that explains why this solution is different and better
+    - Risk-reversal elements that address their concerns about making a decision
+    - Multiple call-to-action buttons with action-oriented, benefit-focused text
+    - FAQ section that addresses the most common objections and concerns
+
+    Make every word work toward building trust and demonstrating value.`
   };
 
-  const systemPrompt = `You are an expert content marketing writer with deep knowledge of startup marketing, copywriting, and content strategy. 
+  const systemPrompt = `You are a world-class content marketing writer and storyteller who creates authentic, human-centered content that genuinely connects with people. You have deep expertise in startup marketing, copywriting, psychology, and persuasive communication.
 
-Create high-quality, engaging content that:
-- Resonates with the target audience
-- Includes relevant keywords naturally
-- Has a clear value proposition
-- Drives action/engagement
-- Follows best practices for the content type
+Create compelling, humanized content that feels genuine and conversational by:
+- Writing like you're talking to a close friend or trusted advisor
+- Using personal anecdotes, relatable examples, and stories when appropriate
+- Including emotional hooks and authentic vulnerability
+- Avoiding corporate jargon and overly salesy language
+- Adding personality, humor, and warmth where suitable
+- Using "you" language to make it personal and direct
+- Including specific, actionable insights rather than generic advice
+- Making complex topics accessible and easy to understand
+- Adding conversational transitions and natural flow
+- Including relevant data/statistics to support claims
 
-IMPORTANT: Return a valid JSON object with the following structure:
+Write content that:
+- Resonates deeply with the target audience's pain points and aspirations
+- Includes relevant keywords naturally and conversationally
+- Has a clear, compelling value proposition
+- Drives genuine engagement and action
+- Follows industry best practices while maintaining authenticity
+- Feels like it was written by a real human with expertise and empathy
+
+IMPORTANT: Return a valid JSON object with this exact structure:
 {
-  "title": "Compelling title for the content",
-  "content": "The full content piece",
-  "seoKeywords": ["keyword1", "keyword2", "keyword3"],
+  "title": "Compelling, benefit-focused title that speaks directly to the reader",
+  "content": "The full humanized content piece with natural flow and personality",
+  "seoKeywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
   "estimatedReadTime": "X min read",
-  "contentType": "${params.contentType}"
+  "contentType": "${params.contentType}",
+  "engagementScore": 85,
+  "wordCount": 1250
 }`;
 
   try {
@@ -222,7 +264,9 @@ IMPORTANT: Return a valid JSON object with the following structure:
       content: parsedContent.content,
       seoKeywords: parsedContent.seoKeywords,
       estimatedReadTime: parsedContent.estimatedReadTime || '3 min read',
-      contentType: params.contentType
+      contentType: params.contentType,
+      engagementScore: parsedContent.engagementScore || 75,
+      wordCount: parsedContent.wordCount || Math.ceil(parsedContent.content.length / 5)
     };
   } catch (error) {
     console.error('Error generating content with AI:', error);
@@ -246,99 +290,169 @@ IMPORTANT: Return a valid JSON object with the following structure:
 function generateMockContent(params: z.infer<typeof generateContentSchema>) {
   const mockContent = {
     blog_post: {
-      title: `The Ultimate Guide to ${params.topic}`,
-      content: `# The Ultimate Guide to ${params.topic}
+      title: `What I Learned About ${params.topic} (And Why It Changed Everything)`,
+      content: `# What I Learned About ${params.topic} (And Why It Changed Everything)
 
-## Introduction
+*This isn't another generic guide. This is what actually works.*
 
-In today's competitive landscape, understanding ${params.topic} is crucial for success. This comprehensive guide will walk you through everything you need to know.
+## Here's the thing nobody tells you...
 
-## Why ${params.topic} Matters
+When I first started exploring ${params.topic}, I thought it would be straightforward. Boy, was I wrong.
 
-${params.keyPoints}
+After countless hours, failed attempts, and conversations with ${params.targetAudience}, I've learned something crucial: ${params.keyPoints}
 
-## Key Strategies
+## The "Aha!" moments that changed my perspective
 
-1. **Strategy One**: Focus on your target audience - ${params.targetAudience}
-2. **Strategy Two**: Implement best practices consistently
-3. **Strategy Three**: Monitor and optimize your results
+Let me share what really clicked for me:
 
-## Conclusion
+### 1. Stop overthinking it
+Here's what I wish someone had told me from day one: perfection is the enemy of progress. When working with ${params.targetAudience}, I discovered that authenticity beats polish every single time.
 
-By following these guidelines, you'll be well-equipped to master ${params.topic} and achieve your goals.
+### 2. Listen more than you speak
+The breakthrough came when I started really paying attention to what ${params.targetAudience} were actually saying. Not what I thought they needed, but what they were desperately asking for.
 
-*Ready to get started? Take action today!*`,
-      seoKeywords: [params.topic.toLowerCase(), 'startup', 'guide'],
+### 3. Small wins compound
+Instead of trying to do everything at once, I focused on tiny, consistent improvements. The results? Mind-blowing.
+
+## What this means for you
+
+If you're feeling overwhelmed by ${params.topic}, you're not alone. Every expert was once a beginner who refused to give up.
+
+The key is starting where you are, with what you have. Don't wait for the perfect moment—it doesn't exist.
+
+**Your turn:** What's one small step you can take today? I'd love to hear about it in the comments below.
+
+*P.S. - If this helped you, share it with someone who needs to read it. Sometimes we all need a reminder that we're not alone in this journey.*`,
+      seoKeywords: [params.topic.toLowerCase(), 'startup guide', 'practical tips', 'beginners', 'strategy'],
     },
     tweet: {
-      title: `Twitter Thread: ${params.topic}`,
-      content: `🧵 Thread: Everything you need to know about ${params.topic}
+      title: `Real Talk About ${params.topic}`,
+      content: `🧵 THREAD: The uncomfortable truth about ${params.topic} that nobody talks about
 
-1/ ${params.topic} is becoming increasingly important for ${params.targetAudience}
+1/ Everyone makes it look easy on social media, but here's what's really happening behind the scenes...
 
-2/ Key insights:
-${params.keyPoints}
+${params.targetAudience} are struggling with the same challenges you are. You're not behind. You're not failing. You're human.
 
-3/ The biggest mistake? Not starting early enough.
+2/ The game-changer for me wasn't some secret strategy or expensive tool.
 
-4/ Pro tip: Focus on one thing at a time and execute well.
+It was this simple shift: ${params.keyPoints}
 
-5/ What questions do you have about ${params.topic}? Drop them below! 👇
+3/ Plot twist: The experts didn't start as experts.
 
-#startup #${params.topic.replace(/\s+/g, '').toLowerCase()}`,
-      seoKeywords: [params.topic.toLowerCase(), 'twitter', 'thread'],
+They started as confused beginners who kept showing up despite feeling like frauds. Sound familiar?
+
+4/ Here's what actually works:
+→ Start messy
+→ Iterate quickly
+→ Listen to real feedback
+→ Ignore the noise
+
+5/ The biggest lie we tell ourselves? "I'll start when I'm ready."
+
+Ready is a myth. Prepared is achievable.
+
+6/ What's one thing you've been putting off because it doesn't feel "perfect" yet?
+
+Drop it below. Let's normalize starting before we're ready. 👇
+
+#startup #${params.topic.replace(/\s+/g, '').toLowerCase()} #entrepreneurship #realttalk`,
+      seoKeywords: [params.topic.toLowerCase(), 'entrepreneurship', 'startup tips', 'motivation'],
     },
     email: {
-      title: `Email: ${params.topic}`,
-      content: `Subject: The ${params.topic} strategy that's changing everything
+      title: `The ${params.topic} Mistake I Made (So You Don't Have To)`,
+      content: `Subject: The ${params.topic} mistake I made (so you don't have to)
 
-Hi there,
+Hey there,
 
-I wanted to share something exciting about ${params.topic} that could transform your approach.
+I made a $10,000 mistake last month.
 
-${params.keyPoints}
+And honestly? I'm kind of grateful for it.
 
-This approach has been game-changing for ${params.targetAudience}, and I thought you'd want to know about it.
+Here's what happened...
 
-Want to learn more? Reply to this email and let's discuss!
+I was so focused on getting ${params.topic} "right" that I spent three months planning instead of doing. Three months of research, competitor analysis, and strategy documents that never saw the light of day.
 
-Best,
-Your StartupSniff Team`,
-      seoKeywords: [params.topic.toLowerCase(), 'email', 'marketing'],
+The wake-up call? A conversation with someone from ${params.targetAudience} who said, "I wish someone would just START helping us with this stuff instead of talking about it."
+
+Ouch. But also... exactly what I needed to hear.
+
+The lesson that changed everything: ${params.keyPoints}
+
+Since then, I've completely shifted my approach. Instead of waiting for perfect, I ship messy. Instead of guessing what people want, I ask them directly.
+
+The results have been incredible.
+
+Here's what I'm curious about: What's something you've been overthinking lately? Hit reply and tell me about it. I read every email personally.
+
+Sometimes we just need someone to remind us that done is better than perfect.
+
+Cheering you on,
+
+[Your name]
+
+P.S. - If this email resonated with you, would you mind forwarding it to one person who might need to read it too? We're all in this together.`,
+      seoKeywords: [params.topic.toLowerCase(), 'entrepreneur lessons', 'business mistakes', 'startup journey'],
     },
     landing_page: {
-      title: `Landing Page: ${params.topic}`,
-      content: `# Transform Your Business with ${params.topic}
+      title: `Finally, ${params.topic} That Actually Works for ${params.targetAudience}`,
+      content: `# Finally, ${params.topic} That Actually Works for ${params.targetAudience}
 
-## The Solution ${params.targetAudience} Have Been Waiting For
+## Tired of cookie-cutter solutions that don't fit your reality?
 
-${params.keyPoints}
+You're not alone. Most ${params.targetAudience} are drowning in generic advice that sounds great in theory but falls apart in practice.
 
-### Why Choose Us?
-✅ Proven results
-✅ Expert guidance  
-✅ 24/7 support
+Here's the truth: ${params.keyPoints}
 
-### What Our Customers Say
-"This changed everything for our business!" - Happy Customer
+### What makes this different?
 
-### Ready to Get Started?
+❌ **Other solutions:** One-size-fits-all approaches that ignore your specific challenges
+✅ **Our approach:** Customized strategies built for real businesses with real constraints
 
-[Get Started Now] [Learn More]
+❌ **Other solutions:** Complicated systems that require a PhD to implement
+✅ **Our approach:** Simple, actionable steps you can implement this week
 
-*Join thousands of satisfied customers today*`,
-      seoKeywords: [params.topic.toLowerCase(), 'landing page', 'conversion'],
+❌ **Other solutions:** Promise overnight success (spoiler: it doesn't exist)
+✅ **Our approach:** Honest timeline with measurable milestones along the way
+
+### Here's what Sarah from TechFlow said:
+*"I was skeptical at first—I'd tried everything. But within 30 days, I saw results I hadn't experienced in two years of trying other methods. Finally, something that works for actual businesses, not just case studies."*
+
+### Ready to stop spinning your wheels?
+
+This isn't about perfection. It's about progress.
+This isn't about overnight success. It's about sustainable growth.
+This isn't about following someone else's playbook. It's about building your own.
+
+**[Get Started Today - Risk-Free]**
+
+### Still have questions? (Of course you do.)
+
+**Q: Is this another "guru" program?**
+A: Nope. This is practical, tested-in-the-trenches guidance from someone who's made all the mistakes so you don't have to.
+
+**Q: How quickly will I see results?**
+A: Most people see their first meaningful result within 2-3 weeks. But we're building something sustainable, not chasing quick wins.
+
+**Q: What if it doesn't work for my situation?**
+A: If you don't see measurable progress within 60 days, we'll refund every penny. No questions, no hassle.
+
+**[Start Your Journey Today]**
+
+*Join 2,847 ${params.targetAudience} who are finally making progress that matters.*`,
+      seoKeywords: [params.topic.toLowerCase(), 'solutions for startups', 'business growth', 'proven results'],
     }
   };
 
   const template = mockContent[params.contentType];
-  
+
   return {
     title: template.title,
     content: template.content,
     seoKeywords: template.seoKeywords,
-    estimatedReadTime: '3 min read',
-    contentType: params.contentType
+    estimatedReadTime: `${Math.ceil(template.content.length / 1000)} min read`,
+    contentType: params.contentType,
+    engagementScore: Math.floor(Math.random() * 20) + 75, // 75-95
+    wordCount: Math.ceil(template.content.length / 5)
   };
 }
 
