@@ -30,23 +30,8 @@ export function BillingHistory({ userId }: BillingHistoryProps) {
       try {
         const supabase = createClient();
         
-        // In a real app, this would fetch from a billing_transactions table or Stripe API
-        // For now, we'll show empty state since there's no actual billing data
-        const { data: subscriptions } = await supabase
-          .from('subscriptions')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        // Transform subscription data to billing history format if needed
-        const transactions: BillingTransaction[] = subscriptions?.map((sub, index) => ({
-          id: sub.id,
-          date: sub.created_at,
-          amount: sub.plan_type === 'founder' ? 19 : sub.plan_type === 'growth' ? 49 : 0,
-          status: sub.status || 'active',
-          description: `${sub.plan_type === 'founder' ? 'Founder' : sub.plan_type === 'growth' ? 'Growth' : 'Explorer'} Plan - Monthly`,
-          invoice_url: '#', // Would come from Stripe in real implementation
-        })) || [];
+        // Subscriptions table not yet implemented - showing empty state
+        const transactions: BillingTransaction[] = [];
 
         setBillingHistory(transactions);
       } catch (error) {

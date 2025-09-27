@@ -20,8 +20,16 @@ interface StartupIdea {
   id: string;
   title: string;
   problem_statement: string;
-  target_market: any;
-  solution: any;
+  target_market: {
+    primary: string;
+    secondary?: string;
+    demographics?: Record<string, unknown>;
+  };
+  solution: {
+    description: string;
+    features?: string[];
+    tech_requirements?: Record<string, unknown>;
+  };
 }
 
 interface ContentGenerationFormProps {
@@ -55,8 +63,8 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
           ...prev,
           topic: idea.title,
           keyPoints: idea.problem_statement,
-          targetAudience: idea.target_market?.description || idea.target_market?.demographic || '',
-          startupIdea: `Title: ${idea.title}\nProblem: ${idea.problem_statement}\nSolution: ${idea.solution?.description || ''}\nTarget Market: ${idea.target_market?.description || ''}`
+          targetAudience: (idea.target_market as any)?.description || (idea.target_market as any)?.demographic || '',
+          startupIdea: `Title: ${idea.title}\nProblem: ${idea.problem_statement}\nSolution: ${(idea.solution as any)?.description || ''}\nTarget Market: ${(idea.target_market as any)?.description || ''}`
         }));
       }
     }
@@ -247,9 +255,9 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                             if (typeof idea.target_market === 'string') {
                               targetText = idea.target_market;
                             } else {
-                              targetText = idea.target_market?.description || 
-                                         idea.target_market?.demographic || 
-                                         idea.target_market?.primary_demographic || 
+                              targetText = (idea.target_market as any)?.description ||
+                                         (idea.target_market as any)?.demographic ||
+                                         (idea.target_market as any)?.primary_demographic ||
                                          '';
                             }
                             

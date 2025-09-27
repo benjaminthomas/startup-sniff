@@ -15,7 +15,7 @@ interface PricingCardsProps {
   userId: string;
 }
 
-export function PricingCards({ currentPlanId, userId }: PricingCardsProps) {
+export function PricingCards({ currentPlanId }: PricingCardsProps) {
   const [isPending, startTransition] = useTransition();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 

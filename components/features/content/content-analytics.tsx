@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   PieChart,
   Users,
@@ -15,7 +15,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, PieChart as RechartsPieChart, Cell, Pie } from "recharts";
+import { Bar, BarChart, XAxis, YAxis, PieChart as RechartsPieChart, Cell, Pie } from "recharts";
 
 interface GeneratedContent {
   id: string;

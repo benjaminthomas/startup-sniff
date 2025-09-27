@@ -91,7 +91,7 @@ export function GeneratedContentShowcase({ content }: GeneratedContentShowcasePr
     try {
       await navigator.clipboard.writeText(text);
       toast.success('Content copied to clipboard!');
-    } catch (err) {
+    } catch {
       toast.error('Failed to copy content');
     }
   };
