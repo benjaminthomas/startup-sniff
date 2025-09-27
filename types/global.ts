@@ -67,9 +67,24 @@ export interface StartupIdea {
   implementation: Implementation;
   success_metrics: SuccessMetrics;
   ai_confidence_score?: number;
-  source_data?: any;
+  source_data?: {
+    pain_point_sources?: string[];
+    research_urls?: string[];
+    [key: string]: unknown;
+  };
   is_validated?: boolean;
-  validation_data?: any;
+  validation_data?: {
+    market_size?: {
+      tam?: number;
+      sam?: number;
+    };
+    revenue_potential?: {
+      monthly?: number;
+      annual?: number;
+    };
+    validation_score?: number;
+    [key: string]: unknown;
+  };
   is_favorite?: boolean;
   created_at: string;
   updated_at: string;
