@@ -84,7 +84,7 @@ export class RedditDatabaseInserter {
     let totalUpdated = 0
     let totalSkipped = 0
     let totalFailed = 0
-    let totalErrors: string[] = []
+    const totalErrors: string[] = []
 
     for (let i = 0; i < batches.length; i++) {
       const batch = batches[i]

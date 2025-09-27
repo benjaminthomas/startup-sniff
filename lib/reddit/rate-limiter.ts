@@ -291,8 +291,8 @@ export class RedditRateLimiter {
       const keys = await this.redis.keys(pattern)
       
       // Calculate aggregated metrics
-      let totalUtilization = 0
-      let peakUsage = 0
+      const totalUtilization = 0
+      const peakUsage = 0
       let totalRejections = 0
       let totalRequests = 0
       

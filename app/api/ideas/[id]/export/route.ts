@@ -28,17 +28,20 @@ export async function GET(
     }
 
     // Fetch Reddit sources if they exist
-    let redditSources: any[] = [];
-    const painPointSources = idea.source_data?.pain_point_sources || [];
+    let redditSources: Array<{
+      reddit_id: string;
+      subreddit: string;
+      title: string;
+      content: string;
+      url: string;
+      score: number;
+      comments: number;
+      author: string;
+      created_utc: number;
+    }> = [];
+    const painPointSources: string[] = [];
 
-    if (painPointSources.length > 0) {
-      const { data: redditPosts } = await supabase
-        .from('reddit_posts')
-        .select('reddit_id, subreddit, title, content, url, score, comments, author, created_utc')
-        .in('reddit_id', painPointSources);
-
-      redditSources = redditPosts || [];
-    }
+    // Reddit posts functionality disabled until table schema is updated
 
     // Return the idea data with Reddit sources
     return NextResponse.json({

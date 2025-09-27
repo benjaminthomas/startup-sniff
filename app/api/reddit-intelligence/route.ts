@@ -46,9 +46,9 @@ export async function GET(request: NextRequest) {
         })
 
       case 'generate-ideas':
-        const focusArea = searchParams.get('focus') as any
-        const complexity = searchParams.get('complexity') as any
-        const budget = searchParams.get('budget') as any
+        const focusArea = searchParams.get('focus') || 'any'
+        const complexity = searchParams.get('complexity') || 'medium'
+        const budget = searchParams.get('budget') || 'bootstrap'
 
         const ideaResult = await generateIdeasFromPainPoints({
           focusArea,

@@ -69,7 +69,7 @@ export const createServerAdminClient = () => {
 
 // Middleware client for session management
 export const createMiddlewareSupabaseClient = (request: NextRequest) => {
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: { headers: request.headers },
   })
 

@@ -89,8 +89,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     stripe_price_id: priceId,
     status: subscription.status === 'active' ? 'active' : 'trial',
     plan_type: plan.id,
-    current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-    current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+    current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
   });
 
   if (error) {
@@ -126,9 +126,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
       status: subscription.status === 'active' ? 'active' : 
               subscription.status === 'canceled' ? 'cancelled' : 
               subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
+      current_period_start: new Date((subscription as any).current_period_start * 1000).toISOString(),
+      current_period_end: new Date((subscription as any).current_period_end * 1000).toISOString(),
+      cancel_at_period_end: (subscription as any).cancel_at_period_end,
     })
     .eq('stripe_subscription_id', subscription.id);
 
@@ -193,25 +193,25 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
+  if ((invoice as any).subscription) {
     // Update subscription status to active
     await supabaseAdmin
       .from('subscriptions')
       .update({ status: 'active' })
-      .eq('stripe_subscription_id', invoice.subscription);
+      .eq('stripe_subscription_id', (invoice as any).subscription);
 
-    console.log(`Payment succeeded for subscription: ${invoice.subscription}`);
+    console.log(`Payment succeeded for subscription: ${(invoice as any).subscription}`);
   }
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
+  if ((invoice as any).subscription) {
     // Update subscription status to inactive
     await supabaseAdmin
       .from('subscriptions')
       .update({ status: 'inactive' })
-      .eq('stripe_subscription_id', invoice.subscription);
+      .eq('stripe_subscription_id', (invoice as any).subscription);
 
-    console.log(`Payment failed for subscription: ${invoice.subscription}`);
+    console.log(`Payment failed for subscription: ${(invoice as any).subscription}`);
   }
 }

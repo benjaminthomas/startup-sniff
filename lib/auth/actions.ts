@@ -90,7 +90,7 @@ async function getClientIdentifier(): Promise<string> {
   const ip = forwarded?.split(',')[0] || realIp || 'unknown'
   const userAgent = headersList.get('user-agent') || 'unknown'
   
-  const crypto = require('crypto')
+  const crypto = await import('crypto')
   return crypto
     .createHash('sha256')
     .update(`${ip}:${userAgent}`)
