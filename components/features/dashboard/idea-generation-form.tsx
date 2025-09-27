@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -15,12 +13,10 @@ import {
   Loader2, 
   Sparkles, 
   AlertCircle, 
-  ChevronRight, 
-  Zap, 
-  Target, 
-  Users, 
+  Zap,
+  Target,
+  Users,
   DollarSign,
-  Clock,
   Lightbulb,
   Brain,
   TrendingUp,
@@ -101,9 +97,8 @@ export function IdeaGenerationForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({});
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedIdea, setGeneratedIdea] = useState<any>(null);
+  const [generatedIdea, setGeneratedIdea] = useState<Record<string, unknown> | null>(null);
   const [error, setError] = useState<string>('');
-  const [isPending, startTransition] = useTransition();
   const [showUnlockOverlay, setShowUnlockOverlay] = useState(false);
   const router = useRouter();
 
@@ -217,8 +212,9 @@ export function IdeaGenerationForm() {
         await refreshUsage();
         
         setGeneratedIdea(result.idea);
-        toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, { 
-          id: loadingToast 
+        toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
+          id: loadingToast,
+          duration: 5000
         });
 
         // Show usage progress
@@ -232,8 +228,9 @@ export function IdeaGenerationForm() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate idea';
       setError(errorMessage);
-      toast.error(`${errorMessage}`, { 
-        id: loadingToast 
+      toast.error(`${errorMessage}`, {
+        id: loadingToast,
+        duration: 5000
       });
     } finally {
       setIsGenerating(false);
@@ -268,11 +265,11 @@ export function IdeaGenerationForm() {
           </div>
           <CardTitle className="text-xl text-primary flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            {generatedIdea.title}
+            {String((generatedIdea as any).title)}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground leading-relaxed">{generatedIdea.description}</p>
+          <p className="text-muted-foreground leading-relaxed">{String((generatedIdea as any).description)}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-background/50 rounded-lg">
@@ -752,7 +749,7 @@ export function IdeaGenerationForm() {
               </div>
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li>• Mention your skills and experience</li>
-                <li>• Share what problems you've personally experienced</li>
+                <li>• Share what problems you&apos;ve personally experienced</li>
                 <li>• Include any market insights you have</li>
                 <li>• Tell us about your ideal work style</li>
               </ul>

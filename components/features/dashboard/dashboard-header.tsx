@@ -1,7 +1,12 @@
 'use client';
 
 interface DashboardHeaderProps {
-  user: any;
+  user: {
+    id: string;
+    email: string;
+    full_name?: string | null;
+    plan_type?: string;
+  };
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
@@ -13,7 +18,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             Welcome back{user?.full_name ? `, ${user.full_name.split(' ')[0]}` : ''}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your startup ideas today.
+            Here&apos;s what&apos;s happening with your startup ideas today.
           </p>
         </div>
         <div className="text-right">

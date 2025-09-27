@@ -10,11 +10,10 @@ import { validateExistingIdea } from '@/lib/actions/validation';
 import { toggleFavorite } from '@/server/actions/ideas';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Clock, 
-  Target, 
+import {
+  DollarSign,
+  Clock,
+  Target,
   CheckCircle,
   AlertTriangle,
   Loader2,
@@ -43,7 +42,7 @@ interface IdeaCardProps {
       time_to_market: string;
       next_steps: string;
     } | null;
-    validation_data: any;
+    validation_data: Record<string, unknown> | null;
     is_validated: boolean | null;
     is_favorite: boolean | null;
     ai_confidence_score: number | null;
@@ -56,7 +55,7 @@ export function IdeaCard({ idea }: IdeaCardProps) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(idea.is_favorite || false);
   const [isTogglingFavorite, setIsTogglingFavorite] = useState(false);
-  const { isAtLimit, getRemainingLimit, planType, usage, refreshUsage } = useServerPlanLimits();
+  const { isAtLimit, planType, usage, refreshUsage } = useServerPlanLimits();
 
   const handleValidate = async () => {
     if (isAtLimit('validations')) {
@@ -176,27 +175,21 @@ export function IdeaCard({ idea }: IdeaCardProps) {
                 <Target className="h-4 w-4 mx-auto mb-1 text-blue-600" />
                 <div className="font-medium">Target</div>
                 <div className="text-xs text-muted-foreground">
-                  {idea.is_validated && idea.target_market 
-                    ? (idea.target_market as any)?.primary_demographic || (idea.target_market as any)?.description || 'TBD'
-                    : (idea.target_market as any)?.primary_demographic || (idea.target_market as any)?.description || 'TBD'}
+                  {String((idea.target_market as Record<string, unknown>)?.primary_demographic || (idea.target_market as Record<string, unknown>)?.description || 'TBD')}
                 </div>
               </div>
               <div className="text-center p-3 bg-green-50 dark:bg-green-950/10 rounded-lg">
                 <DollarSign className="h-4 w-4 mx-auto mb-1 text-green-600" />
                 <div className="font-medium">Revenue</div>
                 <div className="text-xs text-muted-foreground">
-                  {idea.is_validated && idea.solution
-                    ? (idea.solution as any)?.business_model || (idea.solution as any)?.revenue_model || 'TBD'
-                    : (idea.solution as any)?.business_model || (idea.solution as any)?.revenue_model || 'TBD'}
+                  {String((idea.solution as Record<string, unknown>)?.business_model || (idea.solution as Record<string, unknown>)?.revenue_model || 'TBD')}
                 </div>
               </div>
               <div className="text-center p-3 bg-purple-50 dark:bg-purple-950/10 rounded-lg">
                 <Clock className="h-4 w-4 mx-auto mb-1 text-purple-600" />
                 <div className="font-medium">Cost</div>
                 <div className="text-xs text-muted-foreground">
-                  {idea.is_validated && idea.implementation
-                    ? (idea.implementation as any)?.estimated_cost || 'TBD'
-                    : (idea.implementation as any)?.estimated_cost || 'TBD'}
+                  {String((idea.implementation as Record<string, unknown>)?.estimated_cost || 'TBD')}
                 </div>
               </div>
             </div>
@@ -285,7 +278,7 @@ export function IdeaCard({ idea }: IdeaCardProps) {
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureType="validations"
-        currentPlan={planType as any}
+        currentPlan={planType as 'explorer' | 'founder' | 'growth'}
         usedCount={usage.validations_used || 0}
         limitCount={planType === 'explorer' ? 1 : planType === 'founder' ? 10 : -1}
       />
