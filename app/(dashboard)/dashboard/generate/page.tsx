@@ -1,13 +1,11 @@
-import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generation-form';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { getUserIdeas } from '@/server/actions/ideas';
-import { Sparkles } from 'lucide-react';
 
 export default async function GeneratePage() {
-  let recentIdeas = [];
+  let recentIdeas: any[] = [];
   
   try {
     recentIdeas = await getUserIdeas(3);

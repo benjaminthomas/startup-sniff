@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
@@ -61,10 +61,10 @@ export default async function IdeasPage() {
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="text-xs">
-                {ideas.filter(idea => idea.is_validated).length} Validated
+                {ideas.filter(idea => (idea as any).is_validated).length} Validated
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {ideas.length - ideas.filter(idea => idea.is_validated).length} Pending
+                {ideas.length - ideas.filter(idea => (idea as any).is_validated).length} Pending
               </Badge>
             </div>
           </div>
@@ -77,7 +77,7 @@ export default async function IdeasPage() {
                   <div className="animate-pulse bg-muted h-64 rounded-lg" />
                 }
               >
-                <IdeaCard idea={idea} />
+                <IdeaCard idea={idea as any} />
               </Suspense>
             ))}
           </div>

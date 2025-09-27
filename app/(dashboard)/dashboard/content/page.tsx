@@ -1,14 +1,12 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, PenTool, Share2, Copy, Sparkles, BarChart3, Library } from "lucide-react";
+import { Sparkles, BarChart3, Library } from "lucide-react";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
 import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
 import { ContentAnalytics } from '@/components/features/content/content-analytics';
 import { getUserIdeas } from '@/server/actions/ideas';
 import { getUserContent } from '@/server/actions/content';
-import { CONTENT_TEMPLATES } from '@/constants';
 
 export default async function ContentPage() {
   const supabase = await createServerSupabaseClient();
@@ -17,37 +15,20 @@ export default async function ContentPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let contentStats = {
-    contentCreated: 0,
-    blogPosts: 0,
-    socialPosts: 0,
-    templates: CONTENT_TEMPLATES.length, // Actual number of available templates
-  };
-
-  if (user) {
-    // Fetch actual content generation statistics
-    const { data: generatedContent } = await supabase
-      .from('generated_content')
-      .select('content_type, created_at')
-      .eq('user_id', user.id);
-
-    if (generatedContent) {
-      contentStats = {
-        ...contentStats,
-        contentCreated: generatedContent.length,
-        blogPosts: generatedContent.filter(content => content.content_type === 'blog_post').length,
-        socialPosts: generatedContent.filter(content => 
-          content.content_type === 'tweet' || content.content_type === 'social_media'
-        ).length,
-      };
-    }
-  }
+  // Note: Content stats calculation removed - not currently displayed in UI
+  // Can be re-added when analytics dashboard is implemented
 
   // Get user's startup ideas for content generation
   const userIdeas = user ? await getUserIdeas(10) : [];
+
+  // Type cast for compatibility with StartupIdea interface
+  const typedUserIdeas = userIdeas as any[];
   
   // Get user's generated content
   const userContent = user ? await getUserContent(20) : [];
+
+  // Type cast for compatibility with GeneratedContent interface
+  const typedUserContent = userContent as any[];
   
   return (
     <div className="space-y-6">
@@ -84,18 +65,18 @@ export default async function ContentPage() {
         {/* Create Content Tab */}
         <TabsContent value="create" className="mt-8">
           <div className="space-y-6">
-            <ContentGenerationForm userIdeas={userIdeas} />
+            <ContentGenerationForm userIdeas={typedUserIdeas} />
           </div>
         </TabsContent>
 
         {/* My Library Tab */}
         <TabsContent value="library" className="mt-8">
-          <GeneratedContentShowcase content={userContent} />
+          <GeneratedContentShowcase content={typedUserContent} />
         </TabsContent>
 
         {/* Analytics Tab */}
         <TabsContent value="analytics" className="mt-8">
-          <ContentAnalytics content={userContent} />
+          <ContentAnalytics content={typedUserContent} />
         </TabsContent>
       </Tabs>
     </div>

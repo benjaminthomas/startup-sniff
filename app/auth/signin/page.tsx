@@ -17,7 +17,6 @@ import { getCurrentUser } from '@/lib/auth/actions'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
 import { SignInForm } from '@/components/auth/signin-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 
 export const metadata: Metadata = {
   title: 'Sign In | StartupSniff',
@@ -86,7 +85,7 @@ async function SignInPageContent({ searchParams }: SignInPageProps) {
 
 
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               href="/auth/signup"
               className="font-medium text-primary hover:underline transition-colors"

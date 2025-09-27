@@ -1,10 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { BarChart3, Target, Users, DollarSign, CheckCircle } from "lucide-react";
+import { Target, Users, DollarSign, CheckCircle } from "lucide-react";
 import { ValidationForm } from "@/components/features/validation/validation-form";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 
@@ -15,7 +11,7 @@ export default async function ValidationPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let validationStats = {
+  const validationStats = {
     ideasValidated: 0,
     averageMarketSize: '-',
     potentialUsers: '-',
@@ -26,7 +22,7 @@ export default async function ValidationPage() {
     // Fetch actual validation statistics
     const { data: validatedIdeas } = await supabase
       .from('startup_ideas')
-      .select('validation_data, market_analysis')
+      .select('market_analysis')
       .eq('user_id', user.id)
       .eq('is_validated', true);
 
@@ -35,8 +31,8 @@ export default async function ValidationPage() {
 
       // Calculate average market size from validated ideas
       const marketSizes = validatedIdeas
-        .filter(idea => idea.market_analysis?.market_size?.tam)
-        .map(idea => idea.market_analysis.market_size.tam);
+        .filter(idea => (idea.market_analysis as any)?.market_size?.tam)
+        .map(idea => (idea.market_analysis as any).market_size.tam);
 
       if (marketSizes.length > 0) {
         const avgMarketSize = marketSizes.reduce((sum, size) => sum + size, 0) / marketSizes.length;
@@ -45,8 +41,8 @@ export default async function ValidationPage() {
 
       // Calculate potential users from validated ideas
       const userEstimates = validatedIdeas
-        .filter(idea => idea.market_analysis?.market_size?.sam)
-        .map(idea => idea.market_analysis.market_size.sam);
+        .filter(idea => (idea.market_analysis as any)?.market_size?.sam)
+        .map(idea => (idea.market_analysis as any).market_size.sam);
 
       if (userEstimates.length > 0) {
         const avgUsers = userEstimates.reduce((sum, users) => sum + users, 0) / userEstimates.length;
@@ -57,8 +53,8 @@ export default async function ValidationPage() {
 
       // Calculate revenue estimate from validated ideas
       const revenueEstimates = validatedIdeas
-        .filter(idea => idea.market_analysis?.revenue_potential?.monthly)
-        .map(idea => idea.market_analysis.revenue_potential.monthly);
+        .filter(idea => (idea.market_analysis as any)?.revenue_potential?.monthly)
+        .map(idea => (idea.market_analysis as any).revenue_potential.monthly);
 
       if (revenueEstimates.length > 0) {
         const avgRevenue = revenueEstimates.reduce((sum, rev) => sum + rev, 0) / revenueEstimates.length;
