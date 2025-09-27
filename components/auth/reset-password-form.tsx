@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -137,7 +137,7 @@ export function ResetPasswordForm({ csrfToken, recoveryToken }: ResetPasswordFor
         }
       } catch (err) {
         // Don't show error for successful redirects
-        if (err instanceof Error && err.digest?.startsWith('NEXT_REDIRECT')) {
+        if (err instanceof Error && (err as any).digest?.startsWith('NEXT_REDIRECT')) {
           return
         }
         

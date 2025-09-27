@@ -62,10 +62,10 @@ export function ForgotPasswordForm({ csrfToken }: ForgotPasswordFormProps) {
         const result = await resetPasswordAction(formData)
         
         if (!result.success) {
-          setError(result.error)
+          setError(result.error || 'An error occurred')
           toast.error(result.error)
         } else {
-          setSuccess(result.message)
+          setSuccess(result.message || 'Reset link sent successfully')
           toast.success('Reset link sent!')
         }
       } catch (err) {

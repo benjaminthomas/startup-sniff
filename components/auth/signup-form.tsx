@@ -111,7 +111,7 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
         const result = await signUpAction(formData)
         
         if (!result.success) {
-          setError(result.error)
+          setError(result.error || 'An error occurred')
           
           // Focus the field with the error
           if (result.field && form.setFocus) {
@@ -141,7 +141,7 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
         <div>
           <h3 className="text-lg font-semibold">Check your email</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            We've sent a confirmation email to verify your account. 
+            We&apos;ve sent a confirmation email to verify your account.
             Please check your inbox and click the verification link to complete your registration.
           </p>
         </div>

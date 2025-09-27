@@ -22,7 +22,6 @@ import { toast } from 'sonner'
 import { signInAction } from '@/lib/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
@@ -99,7 +98,7 @@ export function SignInForm({ csrfToken, redirectTo }: SignInFormProps) {
         }
       } catch (err) {
         // Don't show error for successful redirects
-        if (err instanceof Error && err.digest?.startsWith('NEXT_REDIRECT')) {
+        if (err instanceof Error && (err as any).digest?.startsWith('NEXT_REDIRECT')) {
           return
         }
         
