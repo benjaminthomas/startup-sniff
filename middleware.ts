@@ -128,7 +128,26 @@ export async function middleware(request: NextRequest) {
     // Ensure CSRF token exists for all users accessing forms
     if (request.method === 'GET' && (pathname.startsWith('/auth/') || isAuthenticated)) {
       const existingToken = request.cookies.get('csrf-token')
-      if (!existingToken) {
+      let needsNewToken = !existingToken
+
+      // Check if existing token is valid and not expired
+      if (existingToken) {
+        try {
+          const [, storedTimestamp] = existingToken.value.split('.')
+          const timestamp = parseInt(storedTimestamp, 10)
+          const tokenAge = Date.now() - timestamp
+          const maxAge = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+
+          if (tokenAge > maxAge) {
+            needsNewToken = true
+          }
+        } catch {
+          // Invalid token format
+          needsNewToken = true
+        }
+      }
+
+      if (needsNewToken) {
         const newToken = generateCSRFToken()
         response.cookies.set('csrf-token', newToken, {
           httpOnly: true,
@@ -137,6 +156,7 @@ export async function middleware(request: NextRequest) {
           path: '/',
           maxAge: 24 * 60 * 60, // 24 hours
         })
+        console.log('🔐 Set new CSRF token for', pathname)
       }
     }
 

@@ -55,6 +55,7 @@ export const verifyCSRFToken = async (providedToken: string): Promise<boolean> =
   const storedToken = await getCSRFToken()
   if (!storedToken) {
     console.log('🔍 CSRF verification failed: no stored token')
+    // For missing tokens, allow middleware to handle token generation
     return false
   }
 
@@ -109,7 +110,8 @@ export const generateFormCSRFToken = async (): Promise<string> => {
   return token
 }
 
-// Get existing CSRF token or generate a new one (safe for Server Components)
+// Get existing CSRF token (safe for Server Components)
+// Middleware ensures tokens exist for auth pages
 export const getOrGenerateCSRFToken = async (): Promise<string> => {
   const existingToken = await getCSRFToken()
   if (existingToken) {
@@ -121,14 +123,14 @@ export const getOrGenerateCSRFToken = async (): Promise<string> => {
         return existingToken
       }
     } catch {
-      // Invalid token format, continue to generate new one
+      // Invalid token format, fall through to generate new one
     }
   }
 
-  // Generate a new token and set it in cookies
-  const newToken = generateCSRFToken()
-  await setCSRFToken(newToken)
-  return newToken
+  // If no valid token exists, return a temporary one
+  // Middleware should have set this, but fallback to ensure forms can render
+  const tempToken = generateCSRFToken()
+  return tempToken
 }
 
 // Middleware helper to extract and verify CSRF token from request
