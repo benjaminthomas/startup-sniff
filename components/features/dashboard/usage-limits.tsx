@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Zap, Lightbulb, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import { UsageLimits as UsageLimitsType } from '@/types/global';
 
 interface UsageLimitsProps {
-  limits: any;
+  limits: UsageLimitsType | null;
 }
 
 export function UsageLimits({ limits }: UsageLimitsProps) {
@@ -83,7 +84,7 @@ export function UsageLimits({ limits }: UsageLimitsProps) {
             {(ideasProgress > 80 || validationsProgress > 80) && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
                 <p className="text-xs text-yellow-800">
-                  You're approaching your monthly limit. Consider upgrading for unlimited access.
+                  You&apos;re approaching your monthly limit. Consider upgrading for unlimited access.
                 </p>
               </div>
             )}

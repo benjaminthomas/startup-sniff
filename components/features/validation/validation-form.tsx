@@ -17,9 +17,8 @@ import { createClient } from '@/lib/auth/supabase-client'
 interface GeneratedIdea {
   id: string
   title: string
-  description: string
-  industry: string
-  is_validated: boolean
+  problem_statement: string
+  is_validated: boolean | null
   created_at: string
 }
 
@@ -50,7 +49,7 @@ export function ValidationForm() {
 
       const { data: ideas, error } = await supabase
         .from('startup_ideas')
-        .select('id, title, description, industry, is_validated, created_at')
+        .select('id, title, problem_statement, is_validated, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
@@ -188,12 +187,9 @@ export function ValidationForm() {
                       <Badge variant={idea.is_validated ? "default" : "secondary"}>
                         {idea.is_validated ? "Validated" : "Not Validated"}
                       </Badge>
-                      <Badge variant="outline" className="text-xs">
-                        {idea.industry}
-                      </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">
-                      {idea.description}
+                      {idea.problem_statement}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       Generated on {new Date(idea.created_at).toLocaleDateString()}
@@ -241,7 +237,7 @@ export function ValidationForm() {
           <div className="bg-muted/30 p-4 rounded-lg">
             <h4 className="font-semibold mb-2 flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-green-500" />
-              What's included in validation:
+              What&apos;s included in validation:
             </h4>
             <ul className="text-sm space-y-1 text-muted-foreground ml-6">
               <li>• Market size analysis (TAM, SAM, SOM)</li>

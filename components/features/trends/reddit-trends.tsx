@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
@@ -13,11 +12,10 @@ import {
   ExternalLink,
   RefreshCw,
   Target,
-  Users,
   Activity,
   ChevronRight
 } from "lucide-react";
-import { analyzeRedditTrends, getRedditTrendsSummary } from "@/lib/actions/reddit";
+import { getRedditTrendsSummary } from "@/lib/actions/reddit";
 
 interface RedditTrendAnalysis {
   subreddit: string;
@@ -41,16 +39,18 @@ interface RedditTrendAnalysis {
   }>;
 }
 
+interface TrendOpportunity {
+  subreddit: string;
+  opportunityScore: number;
+  trendingTopics: string[];
+  topPost: Record<string, unknown> | null;
+}
+
 interface TrendsSummary {
   totalTopics: number;
   activeCommunities: number;
   weeklyGrowth: string;
-  topOpportunities: Array<{
-    subreddit: string;
-    opportunityScore: number;
-    trendingTopics: string[];
-    topPost: any;
-  }>;
+  topOpportunities: TrendOpportunity[];
   fullAnalysis?: RedditTrendAnalysis[];
 }
 
@@ -98,10 +98,10 @@ export function RedditTrends() {
   };
 
   // Generate meaningful titles from trending topics and posts
-  const generateMeaningfulTitle = (opportunity: any) => {
+  const generateMeaningfulTitle = (opportunity: TrendOpportunity) => {
     if (opportunity.topPost?.title) {
       // Extract the main problem/pain point from the post title
-      const title = opportunity.topPost.title;
+      const title = opportunity.topPost.title as string;
       if (title.length > 60) {
         return title.substring(0, 57) + '...';
       }
@@ -118,13 +118,13 @@ export function RedditTrends() {
     return `${opportunity.subreddit} Community Opportunities`;
   };
 
-  const generateAnalysisTitle = (analysis: any) => {
+  const generateAnalysisTitle = (analysis: RedditTrendAnalysis) => {
     if (analysis.top_posts && analysis.top_posts.length > 0) {
       const topPost = analysis.top_posts[0];
-      if (topPost.title.length > 50) {
-        return topPost.title.substring(0, 47) + '...';
+      if ((topPost.title as string).length > 50) {
+        return (topPost.title as string).substring(0, 47) + '...';
       }
-      return topPost.title;
+      return topPost.title as string;
     }
 
     if (analysis.trending_topics && analysis.trending_topics.length > 0) {
@@ -245,7 +245,7 @@ export function RedditTrends() {
                           </div>
                           {opportunity.topPost && (
                             <p className="text-xs text-muted-foreground line-clamp-2">
-                              "{opportunity.topPost.title}"
+                              &ldquo;{opportunity.topPost.title as string}&rdquo;
                             </p>
                           )}
                         </div>

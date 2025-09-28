@@ -9,10 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { generateIdea } from '@/server/actions/ideas';
-import { 
-  Loader2, 
-  Sparkles, 
-  AlertCircle, 
+import {
+  Loader2,
+  Sparkles,
+  AlertCircle,
   Zap,
   Target,
   Users,
@@ -50,6 +50,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { UnlockOverlay } from '@/components/ui/unlock-overlay';
+import { StartupIdea, StartupIdeaRow, IdeaGenerationFormData, mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 
 const industries = [
   { id: 'technology', label: 'Technology', icon: Monitor, description: 'Software, AI, hardware' },
@@ -84,20 +85,14 @@ const audiences = [
   { id: 'seniors', label: 'Seniors', icon: UserX, description: '65+ demographic' },
 ];
 
-type FormData = {
-  industry?: string;
-  problemArea?: string;
-  targetAudience?: string;
-  budget?: string;
-  timeframe?: string;
-  userPrompt?: string;
-}
+// Use the imported type
+type FormData = IdeaGenerationFormData;
 
 export function IdeaGenerationForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({});
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedIdea, setGeneratedIdea] = useState<Record<string, unknown> | null>(null);
+  const [generatedIdea, setGeneratedIdea] = useState<StartupIdea | null>(null);
   const [error, setError] = useState<string>('');
   const [showUnlockOverlay, setShowUnlockOverlay] = useState(false);
   const router = useRouter();
@@ -210,8 +205,10 @@ export function IdeaGenerationForm() {
       if (result.success && result.idea) {
         // Refresh usage data after successful generation
         await refreshUsage();
-        
-        setGeneratedIdea(result.idea);
+
+        // Convert database row to properly typed StartupIdea
+        const typedIdea = result.idea ? mapDatabaseRowToStartupIdea(result.idea as unknown as StartupIdeaRow) : null;
+        setGeneratedIdea(typedIdea);
         toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
           id: loadingToast,
           duration: 5000
@@ -265,11 +262,11 @@ export function IdeaGenerationForm() {
           </div>
           <CardTitle className="text-xl text-primary flex items-center gap-2">
             <Zap className="w-5 h-5" />
-            {String((generatedIdea as any).title)}
+            {generatedIdea.title}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground leading-relaxed">{String((generatedIdea as any).description)}</p>
+          <p className="text-muted-foreground leading-relaxed">{generatedIdea.problem_statement}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-background/50 rounded-lg">
@@ -278,10 +275,7 @@ export function IdeaGenerationForm() {
                 Target Market:
               </span>
               <p className="text-muted-foreground mt-1">
-                {typeof generatedIdea.target_market === 'object' 
-                  ? generatedIdea.target_market?.description || 'Not specified'
-                  : generatedIdea.target_market || 'Not specified'
-                }
+                {generatedIdea.target_market.description || 'Not specified'}
               </p>
             </div>
             <div className="p-3 bg-background/50 rounded-lg">
@@ -290,10 +284,7 @@ export function IdeaGenerationForm() {
                 Revenue Model:
               </span>
               <p className="text-muted-foreground mt-1">
-                {Array.isArray(generatedIdea.solution?.revenue_model) 
-                  ? generatedIdea.solution.revenue_model.join(', ')
-                  : generatedIdea.revenue_models?.join?.(', ') || 'Not specified'
-                }
+                {generatedIdea.solution.revenue_model?.join(', ') || 'Not specified'}
               </p>
             </div>
           </div>

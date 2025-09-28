@@ -31,8 +31,8 @@ export default async function ValidationPage() {
 
       // Calculate average market size from validated ideas
       const marketSizes = validatedIdeas
-        .filter(idea => (idea.market_analysis as any)?.market_size?.tam)
-        .map(idea => (idea.market_analysis as any).market_size.tam);
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.tam)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).tam as number);
 
       if (marketSizes.length > 0) {
         const avgMarketSize = marketSizes.reduce((sum, size) => sum + size, 0) / marketSizes.length;
@@ -41,8 +41,8 @@ export default async function ValidationPage() {
 
       // Calculate potential users from validated ideas
       const userEstimates = validatedIdeas
-        .filter(idea => (idea.market_analysis as any)?.market_size?.sam)
-        .map(idea => (idea.market_analysis as any).market_size.sam);
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.sam)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).sam as number);
 
       if (userEstimates.length > 0) {
         const avgUsers = userEstimates.reduce((sum, users) => sum + users, 0) / userEstimates.length;
@@ -53,8 +53,8 @@ export default async function ValidationPage() {
 
       // Calculate revenue estimate from validated ideas
       const revenueEstimates = validatedIdeas
-        .filter(idea => (idea.market_analysis as any)?.revenue_potential?.monthly)
-        .map(idea => (idea.market_analysis as any).revenue_potential.monthly);
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.revenue_potential && ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>)?.monthly)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>).monthly as number);
 
       if (revenueEstimates.length > 0) {
         const avgRevenue = revenueEstimates.reduce((sum, rev) => sum + rev, 0) / revenueEstimates.length;

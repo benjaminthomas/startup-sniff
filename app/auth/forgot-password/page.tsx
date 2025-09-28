@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   description: 'Reset your StartupSniff account password securely',
 }
 
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
+
 export default async function ForgotPasswordPage() {
   // Check if user is already authenticated
   const user = await getCurrentUser()

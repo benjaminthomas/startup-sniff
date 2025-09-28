@@ -42,10 +42,13 @@ export default async function DashboardPage() {
         profile = {
           ...profileRaw,
           avatar_url: typeof profileRaw.avatar_url === 'string' ? profileRaw.avatar_url : undefined,
+          full_name: profileRaw.full_name || undefined,
           plan_type: typeof profileRaw.plan_type === 'string' && ['explorer', 'founder', 'growth'].includes(profileRaw.plan_type)
             ? profileRaw.plan_type as 'explorer' | 'founder' | 'growth'
             : undefined,
           stripe_customer_id: typeof profileRaw.stripe_customer_id === 'string' ? profileRaw.stripe_customer_id : undefined,
+          subscription_status: profileRaw.subscription_status || undefined,
+          trial_ends_at: profileRaw.trial_ends_at || undefined,
         };
       }
       user = profile || {
@@ -117,7 +120,7 @@ export default async function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
               <QuickActions />
-              <RecentIdeas ideas={ideas as any[]} />
+              <RecentIdeas ideas={ideas} />
             </div>
             
             <div className="space-y-6">

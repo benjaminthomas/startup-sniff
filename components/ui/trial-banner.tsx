@@ -28,27 +28,34 @@ export function TrialBanner({ className }: TrialBannerProps) {
         }
 
         // Get user profile to check trial status
-        const { data: profile } = await supabase
+        const { data: profile, error } = await supabase
           .from('users')
           .select('plan_type, trial_ends_at, created_at')
           .eq('id', user.id)
           .single();
 
-        if (!profile) {
+        if (error || !profile) {
+          console.error('Error fetching user profile:', error);
+          setIsLoading(false);
+          return;
+        }
+
+        // Type guard to ensure we have proper profile data
+        if (typeof profile !== 'object' || !profile || typeof (profile as Record<string, unknown>).plan_type !== 'string') {
           setIsLoading(false);
           return;
         }
 
         // Only show banner for trial users (explorer plan)
-        if (profile.plan_type !== 'explorer') {
+        if ((profile as Record<string, unknown>).plan_type !== 'explorer') {
           setIsLoading(false);
           return;
         }
 
-        // Calculate trial end date (14 days from creation or trial_ends_at if set)
-        const trialEndDate = profile.trial_ends_at 
-          ? new Date(profile.trial_ends_at)
-          : new Date(new Date(profile.created_at).getTime() + 14 * 24 * 60 * 60 * 1000);
+        // Calculate trial end date (7 days from creation or trial_ends_at if set)
+        const trialEndDate = (profile as Record<string, unknown>).trial_ends_at
+          ? new Date((profile as Record<string, unknown>).trial_ends_at as string)
+          : new Date(new Date((profile as Record<string, unknown>).created_at as string).getTime() + 7 * 24 * 60 * 60 * 1000);
 
         const now = new Date();
         const timeDiff = trialEndDate.getTime() - now.getTime();

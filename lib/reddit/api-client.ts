@@ -1,6 +1,6 @@
-import { RedditRateLimiter, RateLimitResult } from './rate-limiter'
-import { validateRedditPost, sanitizeContent, generatePostHash, RedditPostValidator } from './data-validator'
-import type { RedditPostRaw, RedditPostInsert } from '@/types/supabase'
+import { RedditRateLimiter } from './rate-limiter'
+import { RedditPostValidator } from './data-validator'
+import type { RedditPost, RedditPostInsert } from '@/types/supabase'
 
 // Reddit API configuration interface
 export interface RedditApiConfig {
@@ -28,7 +28,7 @@ export interface RedditListingResponse {
   data: {
     children: Array<{
       kind: string
-      data: RedditPostRaw
+      data: RedditPost
     }>
     after?: string
     before?: string
@@ -54,10 +54,10 @@ export interface FetchOptions {
 }
 
 export interface Logger {
-  info(message: string, ...args: any[]): void
-  warn(message: string, ...args: any[]): void
-  error(message: string, ...args: any[]): void
-  debug(message: string, ...args: any[]): void
+  info(message: string, ...args: unknown[]): void
+  warn(message: string, ...args: unknown[]): void
+  error(message: string, ...args: unknown[]): void
+  debug(message: string, ...args: unknown[]): void
 }
 
 export class RedditApiClient {
@@ -166,7 +166,7 @@ export class RedditApiClient {
       }
 
       // Check rate limits
-      const rateLimitResult = await this.rateLimiter.checkLimit('reddit-api', 60, 60 * 1000)
+      const rateLimitResult = await this.rateLimiter.checkLimit('reddit-api', 60, 'medium')
       
       if (!rateLimitResult.allowed) {
         this.logger.warn(`Reddit API rate limit exceeded. Next reset: ${new Date(rateLimitResult.resetTime || Date.now() + 60000)}`)
@@ -213,7 +213,11 @@ export class RedditApiClient {
       return {
         success: true,
         data,
-        rateLimit
+        rateLimit: {
+          remaining: rateLimit.remaining || 0,
+          resetTime: rateLimit.resetTime || new Date(),
+          used: rateLimit.used || 0
+        }
       }
     } catch (error) {
       this.logger.error('Reddit API request failed:', error)
@@ -506,7 +510,7 @@ export class RedditApiClient {
     rateLimitRemaining: number
     lastError: string | null
   }> {
-    const rateLimitStatus = await this.rateLimiter.checkLimit('reddit-api', 60, 60 * 1000)
+    const rateLimitStatus = await this.rateLimiter.checkLimit('reddit-api', 60, 'medium')
     
     return {
       authenticated: this.isTokenValid(),

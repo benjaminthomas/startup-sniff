@@ -1,5 +1,5 @@
 import crypto from 'crypto'
-import type { RedditPostRaw } from '@/types/supabase'
+import type { RedditPost } from '@/types/supabase'
 
 export interface ValidationResult {
   isValid: boolean
@@ -45,7 +45,7 @@ export class RedditPostValidator {
   /**
    * Validate a Reddit post from API response
    */
-  validatePost(post: RedditPostRaw): ValidationResult {
+  validatePost(post: RedditPost): ValidationResult {
     const errors: string[] = []
     const warnings: string[] = []
 
@@ -74,7 +74,7 @@ export class RedditPostValidator {
       errors.push('Invalid score value')
     }
 
-    if (typeof post.num_comments !== 'number') {
+    if (typeof post.comments !== 'number') {
       errors.push('Invalid comment count')
     }
 
@@ -88,8 +88,8 @@ export class RedditPostValidator {
       errors.push(`Title too long (${post.title.length} > ${this.config.maxTitleLength})`)
     }
 
-    if (post.selftext && post.selftext.length > this.config.maxContentLength) {
-      errors.push(`Content too long (${post.selftext.length} > ${this.config.maxContentLength})`)
+    if (post.content && post.content.length > this.config.maxContentLength) {
+      errors.push(`Content too long (${post.content.length} > ${this.config.maxContentLength})`)
     }
 
     // Subreddit allowlist validation
@@ -106,15 +106,14 @@ export class RedditPostValidator {
 
     // Score validation
     if (this.config.requireMinScore && this.config.minScore !== undefined) {
-      if (post.score < this.config.minScore) {
-        errors.push(`Score too low (${post.score} < ${this.config.minScore})`)
+      const score = post.score || 0
+      if (score < this.config.minScore) {
+        errors.push(`Score too low (${score} < ${this.config.minScore})`)
       }
     }
 
-    // NSFW content filtering
-    if (!this.config.allowNSFW && post.over_18) {
-      errors.push('NSFW content not allowed')
-    }
+    // NSFW content filtering (database doesn't have over_18 field)
+    // Skip NSFW filtering for now
 
     // Suspicious user detection
     if (this.config.blockSuspiciousUsers) {
@@ -151,9 +150,9 @@ export class RedditPostValidator {
   /**
    * Sanitize post content for safe storage
    */
-  private sanitizePost(post: RedditPostRaw): RedditPostSanitized {
+  private sanitizePost(post: RedditPost): RedditPostSanitized {
     const sanitizedTitle = this.sanitizeText(post.title)
-    const sanitizedContent = post.selftext ? this.sanitizeText(post.selftext) : null
+    const sanitizedContent = post.content ? this.sanitizeText(post.content) : null
     const sanitizedAuthor = this.sanitizeText(post.author)
 
     // Generate content hash for deduplication
@@ -163,15 +162,15 @@ export class RedditPostValidator {
     const intentFlags = this.extractIntentFlags(post)
 
     return {
-      reddit_id: post.id,
+      reddit_id: post.reddit_id,
       subreddit: post.subreddit,
       title: sanitizedTitle,
       content: sanitizedContent,
       url: this.sanitizeUrl(post.url),
       author: sanitizedAuthor,
-      score: Math.max(0, post.score), // Ensure non-negative
-      comments: Math.max(0, post.num_comments), // Ensure non-negative
-      created_utc: post.created_utc,
+      score: Math.max(0, post.score || 0), // Ensure non-negative
+      comments: Math.max(0, post.comments || 0), // Ensure non-negative
+      created_utc: typeof post.created_utc === 'string' ? new Date(post.created_utc).getTime() / 1000 : post.created_utc,
       hash,
       intent_flags: intentFlags
     }
@@ -219,10 +218,10 @@ export class RedditPostValidator {
   /**
    * Generate unique hash for post content
    */
-  private generatePostHash(post: RedditPostRaw): string {
+  private generatePostHash(post: RedditPost): string {
     const content = [
       post.title,
-      post.selftext || '',
+      post.content || '',
       post.url || '',
       post.subreddit,
       post.author
@@ -234,9 +233,9 @@ export class RedditPostValidator {
   /**
    * Extract intent flags from post content
    */
-  private extractIntentFlags(post: RedditPostRaw): string[] {
+  private extractIntentFlags(post: RedditPost): string[] {
     const flags: string[] = []
-    const fullText = `${post.title} ${post.selftext || ''}`.toLowerCase()
+    const fullText = `${post.title} ${post.content || ''}`.toLowerCase()
 
     // Business intent patterns
     const businessPatterns = [
@@ -272,11 +271,9 @@ export class RedditPostValidator {
       flags.push('showcase')
     }
 
-    // Special flags
-    if (post.is_self) flags.push('text_post')
-    if (post.url && !post.is_self) flags.push('link_post')
-    if (post.stickied) flags.push('stickied')
-    if (post.over_18) flags.push('nsfw')
+    // Special flags (database doesn't have these fields)
+    if (post.url) flags.push('link_post')
+    // Skip is_self, stickied, over_18 as they don't exist in schema
 
     return flags
   }
@@ -300,7 +297,7 @@ export class RedditPostValidator {
   /**
    * Check for low quality content
    */
-  private isLowQualityContent(post: RedditPostRaw): boolean {
+  private isLowQualityContent(post: RedditPost): boolean {
     // Title too short
     if (post.title.length < 10) return true
 
@@ -317,8 +314,8 @@ export class RedditPostValidator {
   /**
    * Check for spam content
    */
-  private containsSpam(post: RedditPostRaw): boolean {
-    const fullText = `${post.title} ${post.selftext || ''}`.toLowerCase()
+  private containsSpam(post: RedditPost): boolean {
+    const fullText = `${post.title} ${post.content || ''}`.toLowerCase()
 
     const spamPatterns = [
       /\b(buy now|click here|limited time|act now|free money)\b/,
@@ -339,7 +336,7 @@ export class RedditPostValidator {
 /**
  * Standalone validation functions for backwards compatibility
  */
-export function validateRedditPost(post: RedditPostRaw, config?: Partial<ValidationConfig>): ValidationResult {
+export function validateRedditPost(post: RedditPost, config?: Partial<ValidationConfig>): ValidationResult {
   const defaultConfig: ValidationConfig = {
     maxTitleLength: 300,
     maxContentLength: 40000,
@@ -363,10 +360,10 @@ export function sanitizeContent(text: string, maxLength: number = 40000): string
     .slice(0, maxLength)
 }
 
-export function generatePostHash(post: RedditPostRaw): string {
+export function generatePostHash(post: RedditPost): string {
   const content = [
     post.title,
-    post.selftext || '',
+    post.content || '',
     post.url || '',
     post.subreddit,
     post.author

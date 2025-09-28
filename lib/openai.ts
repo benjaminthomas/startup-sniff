@@ -152,7 +152,7 @@ Return a JSON object with these exact fields:
       return generateMockIdea(params);
     }
 
-    const completion = await openai.chat.completions.create({
+    const completion = await openai!.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -172,7 +172,7 @@ Return a JSON object with these exact fields:
     let parsedIdea: GeneratedIdea;
     try {
       parsedIdea = JSON.parse(response) as GeneratedIdea;
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response as JSON:', response);
       throw new Error('Invalid JSON response from AI');
     }
@@ -232,7 +232,7 @@ Provide:
 - recommendations: Array of 3-5 actionable next steps`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await openai!.chat.completions.create({
       model: 'gpt-4o',
       messages: [
         { role: 'system', content: systemPrompt },

@@ -13,7 +13,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface ValidationButtonProps {
@@ -26,7 +25,6 @@ export function ValidationButton({ ideaId, isValidated, className }: ValidationB
   const [isValidating, setIsValidating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { isAtLimit, planType, usage } = useServerPlanLimits();
-  const router = useRouter();
 
   const handleValidate = async () => {
     if (isAtLimit('validations')) {
@@ -126,7 +124,7 @@ export function ValidationButton({ ideaId, isValidated, className }: ValidationB
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureType="validations"
-        currentPlan={planType as any}
+        currentPlan={planType as "founder" | "explorer" | "growth"}
         usedCount={usage.validations_used || 0}
         limitCount={planType === 'explorer' ? 1 : planType === 'founder' ? 10 : -1}
       />

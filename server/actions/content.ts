@@ -243,7 +243,11 @@ IMPORTANT: Return a valid JSON object with this exact structure:
     }
 
     // Parse and validate the JSON response
-    let parsedContent: any;
+    let parsedContent: {
+      title: string;
+      content: string;
+      seo_keywords?: string[];
+    };
     try {
       parsedContent = JSON.parse(response);
     } catch (parseError) {
@@ -252,9 +256,9 @@ IMPORTANT: Return a valid JSON object with this exact structure:
     }
 
     // Validate required fields
-    const requiredFields = ['title', 'content', 'seoKeywords'];
+    const requiredFields = ['title', 'content', 'seoKeywords'] as const;
     for (const field of requiredFields) {
-      if (!parsedContent[field]) {
+      if (!(parsedContent as Record<string, unknown>)[field]) {
         throw new Error(`Missing required field: ${field}`);
       }
     }
@@ -262,11 +266,11 @@ IMPORTANT: Return a valid JSON object with this exact structure:
     return {
       title: parsedContent.title,
       content: parsedContent.content,
-      seoKeywords: parsedContent.seoKeywords,
-      estimatedReadTime: parsedContent.estimatedReadTime || '3 min read',
+      seoKeywords: (parsedContent as Record<string, unknown>).seoKeywords as string[],
+      estimatedReadTime: (parsedContent as Record<string, unknown>).estimatedReadTime as string || '3 min read',
       contentType: params.contentType,
-      engagementScore: parsedContent.engagementScore || 75,
-      wordCount: parsedContent.wordCount || Math.ceil(parsedContent.content.length / 5)
+      engagementScore: (parsedContent as Record<string, unknown>).engagementScore as number || 75,
+      wordCount: (parsedContent as Record<string, unknown>).wordCount as number || Math.ceil(parsedContent.content.length / 5)
     };
   } catch (error) {
     console.error('Error generating content with AI:', error);

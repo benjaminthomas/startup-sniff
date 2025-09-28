@@ -10,7 +10,7 @@ interface StatsCardsProps {
   planType: string;
 }
 
-export function StatsCards({ totalIdeas, validatedIdeas, favoriteIdeas, planType }: StatsCardsProps) {
+export function StatsCards({ totalIdeas, validatedIdeas, favoriteIdeas }: StatsCardsProps) {
   const stats = [
     {
       title: "Total Ideas",

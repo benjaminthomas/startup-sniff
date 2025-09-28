@@ -3,9 +3,9 @@
  * Replaces mock data with real Reddit Trend Engine
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import Redis from 'ioredis'
-import { createRedditEngine } from '../reddit'
+import { createRedditEngine, RedditTrendEngine } from '../reddit'
 import type { RedditEngineConfig } from '../reddit'
 import type { Database } from '@/types/supabase'
 
@@ -41,14 +41,14 @@ export interface TrendsSummary {
     subreddit: string
     opportunityScore: number
     trendingTopics: string[]
-    topPost: any
+    topPost: Record<string, unknown> | null
   }>
   fullAnalysis?: RedditTrendAnalysis[]
 }
 
 class RedditIntegrationService {
-  private engine?: any
-  private supabase: any
+  private engine?: RedditTrendEngine
+  private supabase: SupabaseClient<Database>
   private redis?: Redis
   private initialized = false
 
@@ -69,9 +69,7 @@ class RedditIntegrationService {
         this.redis = new Redis(process.env.REDIS_URL)
         console.log('✅ Redis connected for Reddit integration')
       } else {
-        console.warn('⚠️  No Redis URL provided, using in-memory fallback')
-        // Create a simple in-memory Redis mock for development
-        this.redis = this.createRedisMock()
+        throw new Error('Redis URL is required for production. Please configure REDIS_URL environment variable.')
       }
 
       // Configure Reddit Trend Engine
@@ -87,7 +85,7 @@ class RedditIntegrationService {
           key: process.env.SUPABASE_SERVICE_ROLE_KEY!
         },
         openai: {
-          apiKey: process.env.OPENAI_API_KEY
+          apiKey: process.env.OPENAI_API_KEY || ''
         }
       }
 
@@ -97,8 +95,7 @@ class RedditIntegrationService {
           redis: this.redis!,
           enableScheduling: false, // Disable for now
           enableMonitoring: false, // Disable monitoring to avoid Redis rate limit checks
-          enableFallbacks: true,
-          skipRedisRateLimit: true // Skip Redis-dependent rate limiting
+          enableFallbacks: true
         })
         console.log('✅ Reddit Trend Engine initialized (development mode)')
       } else {
@@ -112,43 +109,6 @@ class RedditIntegrationService {
     }
   }
 
-  private createRedisMock() {
-    // Simple in-memory mock for development
-    const storage = new Map()
-
-    return {
-      get: async (key: string) => storage.get(key) || null,
-      set: async (key: string, value: string) => storage.set(key, value),
-      setex: async (key: string, seconds: number, value: string) => {
-        storage.set(key, value)
-        setTimeout(() => storage.delete(key), seconds * 1000)
-      },
-      del: async (key: string) => storage.delete(key),
-      incr: async (key: string) => {
-        const current = parseInt(storage.get(key) || '0')
-        const newValue = current + 1
-        storage.set(key, newValue.toString())
-        return newValue
-      },
-      expire: async (key: string, seconds: number) => {
-        setTimeout(() => storage.delete(key), seconds * 1000)
-        return 1
-      },
-      ttl: async (key: string) => 60, // Default TTL
-      keys: async (pattern: string) => Array.from(storage.keys()),
-      exists: async (key: string) => storage.has(key) ? 1 : 0,
-      pipeline: () => ({
-        zadd: () => ({ exec: async () => [] }),
-        zremrangebyscore: () => ({ exec: async () => [] })
-      }),
-      zadd: async () => 1,
-      zcount: async () => 0,
-      zrange: async () => [],
-      zrem: async () => 1,
-      lpush: async () => 1,
-      rpop: async () => null
-    } as any
-  }
 
   /**
    * Collect fresh Reddit data from configured subreddits
@@ -171,20 +131,20 @@ class RedditIntegrationService {
 
       console.log(`🔄 Collecting Reddit data from ${targetSubreddits.length} subreddits...`)
 
-      const result = await this.engine.collectPosts(targetSubreddits, {
+      const result = await this.engine!.collectPosts(targetSubreddits, {
         limit: 25,
         processWithAI: !!process.env.OPENAI_API_KEY,
         priority: 'medium'
       })
 
-      if (result.success) {
-        console.log(`✅ Successfully collected ${result.inserted} Reddit posts`)
+      if ((result as Record<string, unknown>).success) {
+        console.log(`✅ Successfully collected ${(result as Record<string, unknown>).inserted} Reddit posts`)
         return {
           success: true,
-          message: `Collected ${result.inserted} posts from ${targetSubreddits.length} subreddits`
+          message: `Collected ${(result as Record<string, unknown>).inserted} posts from ${targetSubreddits.length} subreddits`
         }
       } else {
-        console.error('❌ Reddit collection failed:', result.errors)
+        console.error('❌ Reddit collection failed:', (result as Record<string, unknown>).errors)
         return {
           success: false,
           message: 'Failed to collect Reddit data. Check logs for details.'
@@ -226,8 +186,8 @@ class RedditIntegrationService {
         title: post.title,
         content: post.content || '',
         subreddit: post.subreddit,
-        score: post.score,
-        num_comments: post.comments,
+        score: post.score || 0,
+        num_comments: post.comments || 0,
         created_at: post.created_utc,
         url: post.url || `https://reddit.com/r/${post.subreddit}/comments/${post.reddit_id}`
       })) || []
@@ -255,9 +215,9 @@ class RedditIntegrationService {
       if (updatedPosts.length > 0) {
         return this.generateTrendAnalysis(updatedPosts)
       } else {
-        // Fall back to mock data if no real data available
-        console.warn('⚠️  No Reddit data available, using fallback analysis')
-        return this.generateFallbackAnalysis()
+        // No fallback data in production - return empty analysis
+        console.warn('⚠️  No Reddit data available')
+        return []
       }
     }
 
@@ -287,20 +247,21 @@ class RedditIntegrationService {
     }
   }
 
-  private generateTrendAnalysis(posts: any[]): RedditTrendAnalysis[] {
+  private generateTrendAnalysis(posts: Record<string, unknown>[]): RedditTrendAnalysis[] {
     // Group posts by subreddit
     const postsBySubreddit = posts.reduce((acc, post) => {
-      if (!acc[post.subreddit]) {
-        acc[post.subreddit] = []
+      const subreddit = post.subreddit as string
+      if (!acc[subreddit]) {
+        acc[subreddit] = []
       }
-      acc[post.subreddit].push(post)
+      (acc[subreddit] as Record<string, unknown>[]).push(post)
       return acc
-    }, {} as Record<string, any[]>)
+    }, {} as Record<string, Record<string, unknown>[]>)
 
     const analyses: RedditTrendAnalysis[] = []
 
     for (const [subreddit, subredditPosts] of Object.entries(postsBySubreddit)) {
-      const analysis = this.analyzeSubreddit(subreddit, subredditPosts)
+      const analysis = this.analyzeSubreddit(subreddit, subredditPosts as Record<string, unknown>[])
       analyses.push(analysis)
     }
 
@@ -308,20 +269,21 @@ class RedditIntegrationService {
     return analyses.sort((a, b) => b.opportunity_score - a.opportunity_score)
   }
 
-  private analyzeSubreddit(subreddit: string, posts: any[]): RedditTrendAnalysis {
+  private analyzeSubreddit(subreddit: string, posts: Record<string, unknown>[]): RedditTrendAnalysis {
     // Extract trending topics from intent flags and titles
     const topicCounts = new Map<string, number>()
 
     posts.forEach(post => {
       // Count intent flags
-      if (post.intent_flags) {
-        post.intent_flags.forEach((flag: string) => {
+      const intentFlags = post.intent_flags as string[] | null
+      if (intentFlags) {
+        intentFlags.forEach((flag: string) => {
           topicCounts.set(flag, (topicCounts.get(flag) || 0) + 1)
         })
       }
 
       // Extract keywords from title
-      const keywords = this.extractKeywords(post.title)
+      const keywords = this.extractKeywords(post.title as string)
       keywords.forEach(keyword => {
         topicCounts.set(keyword, (topicCounts.get(keyword) || 0) + 1)
       })
@@ -330,11 +292,11 @@ class RedditIntegrationService {
     const trending_topics = Array.from(topicCounts.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
-      .map(([topic, _]) => topic)
+      .map(([topic]) => topic)
 
     // Calculate metrics
-    const totalScore = posts.reduce((sum, post) => sum + (post.score || 0), 0)
-    const totalComments = posts.reduce((sum, post) => sum + (post.comments || 0), 0)
+    const totalScore = posts.reduce((sum, post) => sum + ((post.score as number) || 0), 0)
+    const totalComments = posts.reduce((sum, post) => sum + ((post.comments as number) || 0), 0)
 
     const engagement_metrics = {
       avg_score: Math.round(totalScore / posts.length),
@@ -345,7 +307,7 @@ class RedditIntegrationService {
     // Calculate sentiment from stored data or estimate
     const avgSentiment = posts
       .filter(post => post.sentiment !== null)
-      .reduce((sum, post) => sum + (post.sentiment || 0), 0) / posts.length || 0
+      .reduce((sum, post) => sum + ((post.sentiment as number) || 0), 0) / posts.length || 0
 
     const sentiment_score = Math.round(((avgSentiment + 1) / 2) * 100) // Convert -1,1 to 0-100
 
@@ -354,17 +316,17 @@ class RedditIntegrationService {
 
     // Get top posts
     const top_posts = posts
-      .sort((a, b) => (b.score || 0) - (a.score || 0))
+      .sort((a, b) => ((b.score as number) || 0) - ((a.score as number) || 0))
       .slice(0, 3)
       .map(post => ({
-        id: post.reddit_id,
-        title: post.title,
-        content: post.content || '',
-        subreddit: post.subreddit,
-        score: post.score || 0,
-        num_comments: post.comments || 0,
-        created_at: post.created_utc,
-        url: post.url || `https://reddit.com/r/${post.subreddit}/comments/${post.reddit_id}`
+        id: post.reddit_id as string,
+        title: post.title as string,
+        content: (post.content as string) || '',
+        subreddit: post.subreddit as string,
+        score: (post.score as number) || 0,
+        num_comments: (post.comments as number) || 0,
+        created_at: post.created_utc as string,
+        url: (post.url as string) || `https://reddit.com/r/${post.subreddit}/comments/${post.reddit_id}`
       }))
 
     return {
@@ -389,12 +351,12 @@ class RedditIntegrationService {
     )
   }
 
-  private calculateOpportunityScore(posts: any[], topics: string[]): number {
+  private calculateOpportunityScore(posts: Record<string, unknown>[], topics: string[]): number {
     const avgEngagement = posts.reduce((sum, post) =>
-      sum + (post.score || 0) + (post.comments || 0), 0) / posts.length
+      sum + ((post.score as number) || 0) + ((post.comments as number) || 0), 0) / posts.length
 
     const recentPostsCount = posts.filter(post => {
-      const postDate = new Date(post.created_utc)
+      const postDate = new Date(post.created_utc as string)
       const hoursDiff = (Date.now() - postDate.getTime()) / (1000 * 60 * 60)
       return hoursDiff <= 24 // Posts from last 24 hours
     }).length
@@ -406,23 +368,6 @@ class RedditIntegrationService {
     return Math.round(engagementScore + topicScore + freshnessScore)
   }
 
-  private generateFallbackAnalysis(): RedditTrendAnalysis[] {
-    // Minimal fallback when no data is available
-    const fallbackSubreddits = ['entrepreneur', 'startups', 'SaaS']
-
-    return fallbackSubreddits.map(subreddit => ({
-      subreddit,
-      trending_topics: ['startup', 'business', 'growth'],
-      sentiment_score: 65,
-      engagement_metrics: {
-        avg_score: 50,
-        avg_comments: 15,
-        total_posts: 0
-      },
-      opportunity_score: 45,
-      top_posts: []
-    }))
-  }
 
   /**
    * Get trends summary for the dashboard
@@ -447,7 +392,7 @@ class RedditIntegrationService {
         subreddit: analysis.subreddit,
         opportunityScore: analysis.opportunity_score,
         trendingTopics: analysis.trending_topics,
-        topPost: analysis.top_posts[0] || null
+        topPost: (analysis.top_posts[0] as unknown as Record<string, unknown>) || null
       }))
 
     return {
@@ -479,8 +424,8 @@ class RedditIntegrationService {
 
       // Test Reddit API if configured
       if (this.engine) {
-        const engineHealth = await this.engine.getHealthStatus()
-        health.reddit_api = engineHealth.status !== 'unhealthy'
+        const engineHealth = await ((this.engine as unknown as Record<string, unknown>).getHealthStatus as () => Promise<Record<string, unknown>>)()
+        health.reddit_api = (engineHealth as Record<string, unknown>).status !== 'unhealthy'
       }
 
       // Test Redis if available
@@ -504,5 +449,3 @@ class RedditIntegrationService {
 // Export singleton instance
 export const redditIntegrationService = new RedditIntegrationService()
 
-// Export types
-export type { RedditTrendAnalysis, TrendsSummary }

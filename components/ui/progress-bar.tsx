@@ -40,39 +40,11 @@ export function ProgressBar() {
   const pathname = usePathname();
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    const handleStart = () => {
-      setLoading(true);
-      setProgress(0);
-      setGlobalLoading(true);
-      
-      // Simulate progress
-      interval = setInterval(() => {
-        setProgress(prev => {
-          if (prev >= 90) return prev;
-          return prev + Math.random() * 10;
-        });
-      }, 200);
-    };
-
-    const handleComplete = () => {
-      setProgress(100);
-      setTimeout(() => {
-        setLoading(false);
-        setProgress(0);
-        setGlobalLoading(false);
-      }, 200);
-      
-      if (interval) clearInterval(interval);
-    };
-
     // Only start loading if we're actually navigating
     // For now, just ensure loading is false by default
     setGlobalLoading(false);
 
     return () => {
-      if (interval) clearInterval(interval);
       setLoading(false);
       setProgress(0);
       setGlobalLoading(false);

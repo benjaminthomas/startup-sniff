@@ -63,8 +63,8 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
           ...prev,
           topic: idea.title,
           keyPoints: idea.problem_statement,
-          targetAudience: (idea.target_market as any)?.description || (idea.target_market as any)?.demographic || '',
-          startupIdea: `Title: ${idea.title}\nProblem: ${idea.problem_statement}\nSolution: ${(idea.solution as any)?.description || ''}\nTarget Market: ${(idea.target_market as any)?.description || ''}`
+          targetAudience: ((idea.target_market as Record<string, unknown>)?.description || (idea.target_market as Record<string, unknown>)?.demographic || '') as string,
+          startupIdea: `Title: ${idea.title}\nProblem: ${idea.problem_statement}\nSolution: ${(idea.solution as Record<string, unknown>)?.description || ''}\nTarget Market: ${(idea.target_market as Record<string, unknown>)?.description || ''}`
         }));
       }
     }
@@ -255,9 +255,9 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                             if (typeof idea.target_market === 'string') {
                               targetText = idea.target_market;
                             } else {
-                              targetText = (idea.target_market as any)?.description ||
-                                         (idea.target_market as any)?.demographic ||
-                                         (idea.target_market as any)?.primary_demographic ||
+                              targetText = (idea.target_market as Record<string, unknown>)?.description as string ||
+                                         (idea.target_market as Record<string, unknown>)?.demographic as string ||
+                                         (idea.target_market as Record<string, unknown>)?.primary_demographic as string ||
                                          '';
                             }
                             

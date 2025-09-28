@@ -1,6 +1,4 @@
 import { RedditApiClient, FetchOptions, Logger } from './api-client'
-import { RedditRateLimiter } from './rate-limiter'
-import { RedditPostValidator, ValidationConfig } from './data-validator'
 import type { RedditPostInsert } from '@/types/supabase'
 import type { Redis } from 'ioredis'
 
@@ -9,7 +7,7 @@ export interface SubredditConfig {
   enabled: boolean
   priority: 'high' | 'medium' | 'low'
   fetchOptions: FetchOptions
-  customValidation?: Partial<ValidationConfig>
+  customValidation?: Record<string, unknown>
 }
 
 export interface FetcherConfig {
@@ -505,7 +503,7 @@ export class SubredditFetcher {
     healthy: boolean
     subredditStatus: Record<string, boolean>
     lastHealthCheck: Date
-    apiClientHealth: any
+    apiClientHealth: unknown
   }> {
     const apiHealth = await this.apiClient.getHealthStatus()
 

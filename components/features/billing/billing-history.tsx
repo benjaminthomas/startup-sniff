@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Download, Calendar, CreditCard } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
-import { createClient } from '@/lib/auth/supabase-client';
 
 interface BillingTransaction {
   id: string;
@@ -28,8 +27,6 @@ export function BillingHistory({ userId }: BillingHistoryProps) {
   useEffect(() => {
     async function fetchBillingHistory() {
       try {
-        const supabase = createClient();
-        
         // Subscriptions table not yet implemented - showing empty state
         const transactions: BillingTransaction[] = [];
 

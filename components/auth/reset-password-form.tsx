@@ -137,7 +137,7 @@ export function ResetPasswordForm({ csrfToken, recoveryToken }: ResetPasswordFor
         }
       } catch (err) {
         // Don't show error for successful redirects
-        if (err instanceof Error && (err as any).digest?.startsWith('NEXT_REDIRECT')) {
+        if (err instanceof Error && (err as Error & { digest?: string }).digest?.startsWith('NEXT_REDIRECT')) {
           return
         }
         

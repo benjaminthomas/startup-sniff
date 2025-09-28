@@ -206,7 +206,7 @@ export const IconCategories = {
   market_validation: [FeatureIcons.MarketResearch, FeatureIcons.DataAnalysis, FeatureIcons.TrendAnalysis],
   content_creation: [FeatureIcons.BlogPost, FeatureIcons.SocialContent, FeatureIcons.EmailCampaign],
   reddit_analysis: [FeatureIcons.RedditTrends, FeatureIcons.CommunityInsights, FeatureIcons.DiscussionAnalysis],
-  navigation: [FeatureIcons.Home, FeatureIcons.Search, FeatureIcons.Bell, FeatureIcons.User],
+  navigation: [FeatureIcons.Home, FeatureIcons.Search],
   actions: [FeatureIcons.Create, FeatureIcons.Edit, FeatureIcons.Delete, FeatureIcons.Save],
   states: [FeatureIcons.Loading, FeatureIcons.Success, FeatureIcons.Warning, FeatureIcons.Error],
   billing: [FeatureIcons.Billing, FeatureIcons.Pricing, FeatureIcons.Calendar],

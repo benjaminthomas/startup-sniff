@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { FileText, Download, Loader2 } from 'lucide-react';
+import { FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
+import { TargetMarket, Solution } from '@/types/startup-ideas';
 
 interface ExportPDFButtonProps {
   ideaId: string;
@@ -127,27 +128,28 @@ async function generatePDF(ideaId: string, filename: string): Promise<void> {
 
   // Target market
   addText('TARGET MARKET', 14, true);
-  const formatTargetMarket = (targetMarket: any) => {
+  const formatTargetMarket = (targetMarket: TargetMarket) => {
     if (typeof targetMarket === 'object' && targetMarket) {
       let formatted = '';
-      if (targetMarket.primary_demographic) {
-        formatted += `Primary Demographics: ${targetMarket.primary_demographic}\n\n`;
+      const market = targetMarket as unknown as Record<string, unknown>;
+      if (market.primary_demographic) {
+        formatted += `Primary Demographics: ${market.primary_demographic}\n\n`;
       }
-      if (targetMarket.pain_level) {
-        formatted += `Pain Level: ${targetMarket.pain_level.charAt(0).toUpperCase() + targetMarket.pain_level.slice(1)}\n\n`;
+      if (market.pain_level) {
+        formatted += `Pain Level: ${(market.pain_level as string).charAt(0).toUpperCase() + (market.pain_level as string).slice(1)}\n\n`;
       }
-      if (targetMarket.market_size_estimate) {
-        formatted += `Market Size Estimate: ${targetMarket.market_size_estimate.toLocaleString()} potential users\n\n`;
+      if (market.market_size_estimate) {
+        formatted += `Market Size Estimate: ${(market.market_size_estimate as number).toLocaleString()} potential users\n\n`;
       }
-      if (targetMarket.user_personas && targetMarket.user_personas.length > 0) {
+      if (market.user_personas && Array.isArray(market.user_personas) && market.user_personas.length > 0) {
         formatted += 'User Personas:\n';
-        targetMarket.user_personas.forEach((persona: any, index: number) => {
+        (market.user_personas as Record<string, unknown>[]).forEach((persona: Record<string, unknown>, index: number) => {
           formatted += `${index + 1}. ${persona.name || 'Target User'}\n`;
           if (persona.age_range) formatted += `   Age Range: ${persona.age_range}\n`;
           if (persona.income_level) formatted += `   Income Level: ${persona.income_level}\n`;
-          if (persona.pain_points && persona.pain_points.length > 0) {
+          if (persona.pain_points && Array.isArray(persona.pain_points) && persona.pain_points.length > 0) {
             formatted += `   Key Pain Points:\n`;
-            persona.pain_points.forEach((point: string) => {
+            (persona.pain_points as string[]).forEach((point: string) => {
               formatted += `   • ${point}\n`;
             });
           }
@@ -163,22 +165,23 @@ async function generatePDF(ideaId: string, filename: string): Promise<void> {
 
   // Solution
   addText('SOLUTION', 14, true);
-  const formatSolution = (solution: any) => {
+  const formatSolution = (solution: Solution) => {
     if (typeof solution === 'object' && solution) {
       let formatted = '';
-      if (solution.business_model) {
-        formatted += `Business Model: ${solution.business_model}\n\n`;
+      const sol = solution as unknown as Record<string, unknown>;
+      if (sol.business_model) {
+        formatted += `Business Model: ${sol.business_model}\n\n`;
       }
-      if (solution.key_features && solution.key_features.length > 0) {
+      if (sol.key_features && Array.isArray(sol.key_features) && sol.key_features.length > 0) {
         formatted += 'Key Features:\n';
-        solution.key_features.forEach((feature: string) => {
+        (sol.key_features as string[]).forEach((feature: string) => {
           formatted += `• ${feature}\n`;
         });
         formatted += '\n';
       }
-      if (solution.differentiators && solution.differentiators.length > 0) {
+      if (sol.differentiators && Array.isArray(sol.differentiators) && sol.differentiators.length > 0) {
         formatted += 'Competitive Differentiators:\n';
-        solution.differentiators.forEach((diff: string) => {
+        (sol.differentiators as string[]).forEach((diff: string) => {
           formatted += `• ${diff}\n`;
         });
         formatted += '\n';
@@ -198,7 +201,7 @@ async function generatePDF(ideaId: string, filename: string): Promise<void> {
   // Reddit Sources
   addText('REDDIT SOURCES', 14, true);
   if (ideaData.redditSources && ideaData.redditSources.length > 0) {
-    ideaData.redditSources.forEach((source: any) => {
+    ideaData.redditSources.forEach((source: Record<string, unknown>) => {
       addText(`• r/${source.subreddit}: ${source.title}`);
     });
   } else {

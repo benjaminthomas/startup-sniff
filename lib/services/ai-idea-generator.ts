@@ -464,5 +464,3 @@ Respond with a JSON object containing: title, problem_statement, solution_approa
 // Export singleton instance
 export const aiIdeaGenerator = new AIIdeaGenerator()
 
-// Export types
-export type { GeneratedIdea, IdeaGenerationOptions }

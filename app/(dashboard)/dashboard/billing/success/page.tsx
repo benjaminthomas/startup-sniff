@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { Route } from 'next';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +55,7 @@ function SuccessContent() {
 
             <div className="text-sm text-muted-foreground">
               Need help getting started?{' '}
-              <Link href="/support" className="text-primary hover:underline">
+              <Link href={"/support" as Route} className="text-primary hover:underline">
                 Contact our support team
               </Link>
             </div>

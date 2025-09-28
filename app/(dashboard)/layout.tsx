@@ -40,8 +40,8 @@ export default async function DashboardLayout({
   const displayUser = profile ? {
     id: profile.id,
     email: profile.email || user.email || null,
-    full_name: (profile as any).name || (profile as any).full_name || user.user_metadata?.full_name || null,
-    plan_type: (profile as any).plan_type || 'explorer',
+    full_name: (profile as Record<string, unknown>).name as string || (profile as Record<string, unknown>).full_name as string || user.user_metadata?.full_name || null,
+    plan_type: (profile as Record<string, unknown>).plan_type as string || 'explorer',
   } : {
     id: user.id,
     email: user.email || null,

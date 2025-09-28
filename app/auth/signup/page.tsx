@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 import { getCurrentUser } from '@/lib/auth/actions'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
 import { SignUpForm } from '@/components/auth/signup-form'
@@ -15,6 +16,9 @@ export const metadata: Metadata = {
   title: 'Sign Up | StartupSniff',
   description: 'Create your secure StartupSniff account',
 }
+
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
 
 interface SignUpPageProps {
   searchParams: Promise<{
@@ -82,11 +86,11 @@ async function SignUpPageContent({ searchParams }: SignUpPageProps) {
 
           <div className="text-center text-xs text-muted-foreground">
             By creating an account, you agree to our{' '}
-            <Link href="/terms" className="underline hover:text-foreground">
+            <Link href={"/terms" as Route} className="underline hover:text-foreground">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/privacy" className="underline hover:text-foreground">
+            <Link href={"/privacy" as Route} className="underline hover:text-foreground">
               Privacy Policy
             </Link>
           </div>

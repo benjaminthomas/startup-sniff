@@ -1,6 +1,5 @@
 'use server'
 
-import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server'
 import OpenAI from 'openai'
@@ -17,8 +16,6 @@ const validationSchema = z.object({
   targetMarket: z.string().min(1, 'Target market is required').max(200, 'Target market description too long')
 })
 
-// Generated idea ID validation schema
-const ideaIdSchema = z.string().uuid('Invalid idea ID format')
 
 // AI validation response schema
 const validationResponseSchema = z.object({
@@ -112,7 +109,7 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
 
     if (usageLimits) {
       const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && validations_completed >= monthly_limit_validations) {
+      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
         return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
       }
     }
@@ -165,7 +162,7 @@ Provide detailed market validation analysis.`
       // Try to parse with our strict schema first
       try {
         validationData = validationResponseSchema.parse(parsedResponse)
-      } catch (strictParseError) {
+      } catch {
         console.log('⚠️ Strict parsing failed, attempting flexible parsing...')
         
         // Flexible parsing - extract data regardless of structure
@@ -183,8 +180,8 @@ Provide detailed market validation analysis.`
             barriers_to_entry: ['High technical complexity', 'Strong competition']
           },
           target_market: {
-            primary_demographic: typeof idea.target_market === 'object' && idea.target_market ? 
-              (idea.target_market as any).description || 'Target demographic' : 
+            primary_demographic: typeof idea.target_market === 'object' && idea.target_market ?
+              (idea.target_market as Record<string, unknown>).description as string || 'Target demographic' : 
               'General market',
             user_personas: [{
               name: 'Target User',
@@ -200,7 +197,7 @@ Provide detailed market validation analysis.`
             key_features: ['Core functionality', 'User-friendly interface', 'Advanced analytics'],
             differentiators: ['Unique approach', 'Better UX', 'Cost-effective'],
             business_model: typeof idea.solution === 'object' && idea.solution ?
-              (idea.solution as any).business_model || 'SaaS subscription' :
+              (idea.solution as Record<string, unknown>).business_model as string || 'SaaS subscription' :
               'SaaS subscription',
             revenue_streams: ['Primary subscriptions', 'Premium features']
           },
@@ -340,7 +337,7 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
 
     if (usageLimits) {
       const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && validations_completed >= monthly_limit_validations) {
+      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
         return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
       }
     }
@@ -393,7 +390,7 @@ Provide detailed market validation analysis.`
       // Try to parse with our strict schema first
       try {
         validationData = validationResponseSchema.parse(parsedResponse)
-      } catch (strictParseError) {
+      } catch {
         console.log('⚠️ Strict parsing failed, attempting flexible parsing...')
         
         // Flexible parsing - extract data regardless of structure
@@ -484,13 +481,17 @@ Provide detailed market validation analysis.`
     console.log('✅ Idea saved to database:', ideaData.id)
 
     // Update usage limits
-    await supabase
+    const { error: usageUpdateError } = await supabase
       .from('usage_limits')
-      .upsert({
-        user_id: user.id,
+      .update({
         validations_completed: (usageLimits?.validations_completed || 0) + 1,
         updated_at: new Date().toISOString()
       })
+      .eq('user_id', user.id)
+
+    if (usageUpdateError) {
+      console.error('❌ Usage limits update error:', usageUpdateError)
+    }
 
     console.log('✅ Usage limits updated')
 

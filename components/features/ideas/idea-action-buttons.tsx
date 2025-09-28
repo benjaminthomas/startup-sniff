@@ -8,16 +8,15 @@ import { toggleFavorite } from '@/server/actions/ideas';
 import {
   Heart,
   FileText,
-  Share2,
   Download,
   Copy,
-  ExternalLink,
   TrendingUp
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { StartupIdea } from '@/types/global';
 
 interface IdeaActionButtonsProps {
-  idea: any;
+  idea: StartupIdea;
 }
 
 export function IdeaActionButtons({ idea }: IdeaActionButtonsProps) {

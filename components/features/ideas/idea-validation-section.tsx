@@ -1,7 +1,6 @@
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import {
   BarChart3,
   TrendingUp,
@@ -9,28 +8,24 @@ import {
   Shield,
   CheckCircle,
   AlertTriangle,
-  Star,
-  Users,
-  DollarSign
+  Star
 } from 'lucide-react';
 
 interface IdeaValidationSectionProps {
-  idea: any;
-  validationData: any;
+  idea: Record<string, unknown>;
+  validationData: Record<string, unknown>;
 }
 
-export function IdeaValidationSection({ idea, validationData }: IdeaValidationSectionProps) {
+export function IdeaValidationSection({ validationData }: IdeaValidationSectionProps) {
   if (!validationData) return null;
 
-  const {
-    feasibilityScore = 0,
-    marketPotential = 0,
-    competitionLevel = 0,
-    feedback = '',
-    strengths = [],
-    weaknesses = [],
-    recommendations = []
-  } = validationData;
+  const feasibilityScore = Number(validationData.feasibilityScore) || 0;
+  const marketPotential = Number(validationData.marketPotential) || 0;
+  const competitionLevel = Number(validationData.competitionLevel) || 0;
+  const feedback = String(validationData.feedback || '');
+  const strengths = Array.isArray(validationData.strengths) ? validationData.strengths : [];
+  const weaknesses = Array.isArray(validationData.weaknesses) ? validationData.weaknesses : [];
+  const recommendations = Array.isArray(validationData.recommendations) ? validationData.recommendations : [];
 
   const overallScore = Math.round((feasibilityScore + marketPotential + (10 - competitionLevel)) / 3 * 10);
 
@@ -67,7 +62,6 @@ export function IdeaValidationSection({ idea, validationData }: IdeaValidationSe
             </div>
           </div>
 
-          {/* Detailed Scores */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center p-4 rounded-lg bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800">
               <TrendingUp className="h-6 w-6 text-blue-600 mx-auto mb-2" />

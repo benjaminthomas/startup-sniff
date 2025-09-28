@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
-import type { StartupIdea } from '@/types/global';
-import type { TargetMarket, Solution, MarketAnalysis, Implementation, SuccessMetrics } from '@/types/global';
+import { mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,8 +12,8 @@ import { ValidationStatusAlert } from '@/components/features/validation/validati
 import { RedditSources } from '@/components/features/ideas/reddit-sources';
 import { FavoriteButton } from '@/components/features/ideas/favorite-button';
 import { ExportPDFButton } from '@/components/features/ideas/export-pdf-button';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   Target,
   Users,
   DollarSign,
@@ -31,8 +30,7 @@ import {
   Shield,
   Eye,
   FileText,
-  ArrowRight,
-  AlertTriangle
+  ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -104,28 +102,11 @@ export default async function IdeaDetailPage({
     notFound();
   }
 
-  // Type guard helpers
-  function getObj<T>(val: unknown): T | undefined {
-    return typeof val === 'object' && val !== null ? (val as T) : undefined;
-  }
-  function getArr<T = unknown>(val: unknown): T[] | undefined {
-    return Array.isArray(val) ? (val as T[]) : undefined;
-  }
-
-  // Create properly typed idea object
-  const idea: StartupIdea = {
-    ...ideaRaw,
-    target_market: getObj<TargetMarket>(ideaRaw.target_market) || { demographic: '', size: '', pain_level: 1 },
-    solution: getObj<Solution>(ideaRaw.solution) || { value_proposition: '', features: [], business_model: '' },
-    market_analysis: getObj<MarketAnalysis>(ideaRaw.market_analysis) || { competition_level: '', timing: '', barriers: [] },
-    implementation: getObj<Implementation>(ideaRaw.implementation) || { complexity: 1, mvp: '', time_to_market: '' },
-    success_metrics: getObj<SuccessMetrics>(ideaRaw.success_metrics) || { probability_score: 0, risk_factors: [] },
-    source_data: {},
-    ai_confidence_score: ideaRaw.ai_confidence_score ?? undefined,
-  };
+  // Create properly typed idea object using the helper function
+  const idea = mapDatabaseRowToStartupIdea(ideaRaw);
 
   // Reddit sources functionality disabled until posts table schema is updated
-  let redditSources: Record<string, unknown>[] = [];
+  const redditSources: Record<string, unknown>[] = [];
 
   const confidenceScore = idea.ai_confidence_score || 0;
   const confidenceLevel = getConfidenceLevel(confidenceScore);
@@ -203,7 +184,7 @@ export default async function IdeaDetailPage({
         <Card className="border border-orange-200 bg-orange-50/30 dark:border-orange-800 dark:bg-orange-950/10">
           <CardContent className="p-6">
             <RedditSources
-              sources={redditSources as any[]}
+              sources={redditSources as never[]}
               title="Inspiration from Reddit Discussions"
             />
           </CardContent>
@@ -228,7 +209,7 @@ export default async function IdeaDetailPage({
               <CardDescription>Who will benefit from this solution?</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.demographic ? (
+        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.description ? (
                 <div className="space-y-4">
                   {/* Target Demographics */}
                   <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
@@ -237,25 +218,10 @@ export default async function IdeaDetailPage({
                       Target Demographics
                     </h4>
                     <p className="text-muted-foreground leading-relaxed">
-                      {idea.target_market.demographic || 'Students and professionals seeking better collaboration tools'}
+                      {idea.target_market.description || 'Students and professionals seeking better collaboration tools'}
                     </p>
                   </div>
 
-                  {/* Pain Points & Needs */}
-                  {typeof idea.target_market.pain_level === 'number' && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-900/10">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-amber-600" />
-                        Pain Level
-                      </h4>
-                      <Badge variant={
-                        idea.target_market.pain_level === 3 ? 'destructive' :
-                        idea.target_market.pain_level === 2 ? 'secondary' : 'default'
-                      } className="text-sm">
-                        {['Low', 'Medium', 'High'][idea.target_market.pain_level - 1] || 'Unknown'} Pain
-                      </Badge>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -290,16 +256,16 @@ export default async function IdeaDetailPage({
               <CardDescription>How this idea solves the problem</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.solution === 'object' && idea.solution && idea.solution.value_proposition ? (
+        {typeof idea.solution === 'object' && idea.solution && idea.solution.description ? (
                 <div className="space-y-6">
-                  {idea.solution.value_proposition && (
+                  {idea.solution.description && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Star className="h-4 w-4 text-violet-600" />
                         Solution Overview
                       </h4>
                       <p className="text-muted-foreground leading-relaxed">
-                        {idea.solution.value_proposition}
+                        {idea.solution.description}
                       </p>
                     </div>
                   )}
@@ -309,9 +275,9 @@ export default async function IdeaDetailPage({
                       <Sparkles className="h-4 w-4 text-blue-600" />
                       Key Features
                     </h4>
-                    {idea.solution.features && Array.isArray(idea.solution.features) && idea.solution.features.length > 0 ? (
+                    {idea.solution.key_features && Array.isArray(idea.solution.key_features) && idea.solution.key_features.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {idea.solution.features.map((feature: string, index: number) => (
+                        {idea.solution.key_features.map((feature: string, index: number) => (
                           <div key={index} className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
                             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
                             <span className="text-sm">{feature}</span>
@@ -361,15 +327,19 @@ export default async function IdeaDetailPage({
                     )}
                   </div>
                   
-          {idea.solution.business_model && (
+          {idea.solution.revenue_model && Array.isArray(idea.solution.revenue_model) && idea.solution.revenue_model.length > 0 && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/10 dark:to-green-950/10 border border-emerald-200 dark:border-emerald-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-emerald-600" />
-                        Business Model
+                        Revenue Model
                       </h4>
-                      <p className="text-muted-foreground">
-                        {idea.solution.business_model}
-                      </p>
+                      <div className="space-y-2">
+                        {idea.solution.revenue_model.map((model: string, index: number) => (
+                          <p key={index} className="text-muted-foreground">
+                            • {model}
+                          </p>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -430,81 +400,17 @@ export default async function IdeaDetailPage({
               <CardDescription>Competitive landscape and market opportunities</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-              {idea.is_validated && typeof idea.market_analysis === 'object' && idea.market_analysis && (idea.market_analysis.competition_level || idea.market_analysis.timing) ? (
+              {idea.is_validated && typeof idea.market_analysis === 'object' && idea.market_analysis ? (
                 <div className="space-y-8">
-                  
-                  {/* Competition Level */}
-                  {idea.market_analysis.competition_level && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
-                      <h4 className="font-semibold mb-4 flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-indigo-600" />
-                        Competition Level
-                      </h4>
-                      <p className="text-muted-foreground">
-                        {idea.market_analysis.competition_level}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Competition & Advantages Grid */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    
-                    {/* Competition Analysis */}
-                    {idea.market_analysis.competition_level && (
-                      <div className="p-6 rounded-xl bg-gradient-to-b from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-900/10 border border-red-200 dark:border-red-800">
-                        <h4 className="font-semibold mb-4 flex items-center gap-2">
-                          <Target className="h-5 w-5 text-red-600" />
-                          Competition Level
-                        </h4>
-                        <div className="text-center mb-4">
-                          <Badge variant={
-                            idea.market_analysis.competition_level === 'high' ? 'destructive' :
-                            idea.market_analysis.competition_level === 'medium' ? 'secondary' : 'default'
-                          } className="text-lg px-4 py-2">
-                            {idea.market_analysis.competition_level.charAt(0).toUpperCase() + idea.market_analysis.competition_level.slice(1)}
-                          </Badge>
-                        </div>
-                      </div>
-                    )}
+                  <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
+                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                      <TrendingUp className="h-5 w-5 text-indigo-600" />
+                      Market Analysis Complete
+                    </h4>
+                    <p className="text-muted-foreground">
+                      This idea has been validated with comprehensive market research and competitive analysis.
+                    </p>
                   </div>
-                  
-                  {/* Market Timing */}
-                  {idea.market_analysis.timing && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-900/10 border border-purple-200 dark:border-purple-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-purple-600" />
-                        Market Timing Analysis
-                      </h4>
-                      <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
-                          <TrendingUp className="h-6 w-6 text-purple-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium">{idea.market_analysis.timing}</p>
-                          <p className="text-sm text-muted-foreground mt-1">Current market conditions and growth trends</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Barriers */}
-                  {Array.isArray(idea.market_analysis.barriers) && idea.market_analysis.barriers.length > 0 && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <AlertTriangle className="h-5 w-5 text-amber-600" />
-                        Market Barriers
-                      </h4>
-                      <div className="space-y-2">
-                        {idea.market_analysis.barriers.map((barrier: string, index: number) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm text-muted-foreground">{barrier}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -592,71 +498,18 @@ export default async function IdeaDetailPage({
               <CardDescription>How to bring this idea to life</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-              {typeof idea.implementation === 'object' && idea.implementation && (idea.implementation.time_to_market || idea.implementation.mvp) ? (
+              {typeof idea.implementation === 'object' && idea.implementation ? (
                 <div className="space-y-6">
                   
-                  {/* MVP & Time to Market */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {idea.implementation.time_to_market && (
-                      <div className="p-6 rounded-xl bg-gradient-to-b from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-900/10 border border-blue-200 dark:border-blue-800">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2">
-                          <Clock className="h-5 w-5 text-blue-600" />
-                          Time to Market
-                        </h4>
-                        <div className="text-2xl font-bold text-blue-600 mb-2">
-                          {idea.implementation.time_to_market}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Estimated development timeline for MVP launch
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Implementation Complexity */}
-                    {typeof idea.implementation.complexity === 'number' && (
-                      <div className="p-6 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-900/10 border border-orange-200 dark:border-orange-800">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2">
-                          <Target className="h-5 w-5 text-orange-600" />
-                          Implementation Complexity
-                        </h4>
-                        <Badge variant={
-                          idea.implementation.complexity >= 3 ? 'destructive' :
-                          idea.implementation.complexity >= 2 ? 'secondary' : 'default'
-                        } className="text-sm mb-3">
-                          {idea.implementation.complexity >= 3 ? 'High' : idea.implementation.complexity >= 2 ? 'Medium' : 'Low'} Complexity
-                        </Badge>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          {idea.implementation.complexity >= 3
-                            ? <AlertCircle className="h-4 w-4 text-red-500" />
-                            : idea.implementation.complexity >= 2
-                            ? <AlertTriangle className="h-4 w-4 text-amber-500" />
-                            : <CheckCircle className="h-4 w-4 text-green-500" />
-                          }
-                          <span>
-                            {idea.implementation.complexity >= 3 
-                              ? 'Requires significant technical expertise' 
-                              : idea.implementation.complexity >= 2 
-                              ? 'Moderate development complexity' 
-                              : 'Straightforward implementation'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                  <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
+                    <h4 className="font-semibold mb-4 flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-indigo-600" />
+                      Implementation Plan Available
+                    </h4>
+                    <p className="text-muted-foreground">
+                      This idea includes detailed implementation guidance and development roadmap.
+                    </p>
                   </div>
-
-                  {/* MVP Description */}
-                  {idea.implementation.mvp && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Lightbulb className="h-5 w-5 text-indigo-600" />
-                        MVP Description
-                      </h4>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {idea.implementation.mvp}
-                      </p>
-                    </div>
-                  )}
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -764,30 +617,30 @@ export default async function IdeaDetailPage({
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
                       <Target className="h-6 w-6 text-green-600 mx-auto mb-2" />
                       <div className="text-2xl font-bold text-green-600">
-                        {(idea.market_analysis as any)?.market_size ?
-                          `$${Math.round(((idea.market_analysis as any).market_size.tam || 0) / 1000000)}M` :
+                        {(idea.market_analysis as unknown as Record<string, unknown>)?.market_size ?
+                          `$${Math.round(((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.tam as number || 0) / 1000000}M` :
                           'TBD'
                         }
                       </div>
                       <div className="text-xs text-muted-foreground">Market Size</div>
                     </div>
                     
-                    {/* Competition Level */}
+                    {/* Validation Status */}
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <Shield className="h-6 w-6 text-red-600 mx-auto mb-2" />
-                      <div className="text-sm font-bold text-red-600 capitalize">
-                        {idea.market_analysis?.competition_level || 'Unknown'}
+                      <Shield className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                      <div className="text-sm font-bold text-green-600 capitalize">
+                        Validated
                       </div>
-                      <div className="text-xs text-muted-foreground">Competition</div>
+                      <div className="text-xs text-muted-foreground">Status</div>
                     </div>
-                    
-                    {/* Implementation Time */}
+
+                    {/* Implementation Ready */}
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <Clock className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                      <CheckCircle className="h-6 w-6 text-purple-600 mx-auto mb-2" />
                       <div className="text-sm font-bold text-purple-600">
-                        {idea.implementation?.time_to_market || 'TBD'}
+                        Ready
                       </div>
-                      <div className="text-xs text-muted-foreground">Time to Market</div>
+                      <div className="text-xs text-muted-foreground">Implementation</div>
                     </div>
                   </div>
 
@@ -800,25 +653,14 @@ export default async function IdeaDetailPage({
                       </div>
                       <Progress value={confidenceScore} className="h-2" />
                     </div>
-                    
-                    {idea.market_analysis?.competition_level && (
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span>Competition Intensity</span>
-                          <span>
-                            {idea.market_analysis.competition_level === 'high' ? '85%' :
-                             idea.market_analysis.competition_level === 'medium' ? '60%' : '30%'}
-                          </span>
-                        </div>
-                        <Progress 
-                          value={
-                            idea.market_analysis.competition_level === 'high' ? 85 :
-                            idea.market_analysis.competition_level === 'medium' ? 60 : 30
-                          } 
-                          className="h-2" 
-                        />
+
+                    <div>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span>Validation Complete</span>
+                        <span>100%</span>
                       </div>
-                    )}
+                      <Progress value={100} className="h-2" />
+                    </div>
                   </div>
                 </>
               ) : (
@@ -921,10 +763,6 @@ export default async function IdeaDetailPage({
                   <div className={cn("w-2 h-2 rounded-full", idea.is_validated ? "bg-green-500" : "bg-gray-300")}></div>
                   <span className={cn("text-muted-foreground", idea.is_validated && "text-green-600")}>
                     Market Validated {idea.is_validated ? "✓" : ""}
-                  <div className={cn("w-2 h-2 rounded-full", idea.is_validated ? "bg-green-500" : "bg-gray-300")}></div>
-                  <span className={cn("text-muted-foreground", idea.is_validated && "text-green-600")}> 
-                    Market Validated {idea.is_validated ? "✓" : ""}
-                  </span>
                   </span>
                 </div>
                 

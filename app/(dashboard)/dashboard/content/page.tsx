@@ -7,6 +7,7 @@ import { GeneratedContentShowcase } from '@/components/features/content/generate
 import { ContentAnalytics } from '@/components/features/content/content-analytics';
 import { getUserIdeas } from '@/server/actions/ideas';
 import { getUserContent } from '@/server/actions/content';
+import { StartupIdea, GeneratedContent } from '@/types/global';
 
 export default async function ContentPage() {
   const supabase = await createServerSupabaseClient();
@@ -19,16 +20,12 @@ export default async function ContentPage() {
   // Can be re-added when analytics dashboard is implemented
 
   // Get user's startup ideas for content generation
-  const userIdeas = user ? await getUserIdeas(10) : [];
+  const userIdeasRaw = user ? await getUserIdeas(10) : [];
+  const typedUserIdeas: StartupIdea[] = userIdeasRaw as unknown as StartupIdea[];
 
-  // Type cast for compatibility with StartupIdea interface
-  const typedUserIdeas = userIdeas as any[];
-  
   // Get user's generated content
-  const userContent = user ? await getUserContent(20) : [];
-
-  // Type cast for compatibility with GeneratedContent interface
-  const typedUserContent = userContent as any[];
+  const userContentRaw = user ? await getUserContent(20) : [];
+  const typedUserContent: GeneratedContent[] = userContentRaw as unknown as GeneratedContent[];
   
   return (
     <div className="space-y-6">
@@ -51,7 +48,7 @@ export default async function ContentPage() {
             className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
           >
             <Library className="h-4 w-4" />
-            My Library ({userContent.length})
+            My Library ({typedUserContent.length})
           </TabsTrigger>
           <TabsTrigger
             value="analytics"
@@ -65,7 +62,7 @@ export default async function ContentPage() {
         {/* Create Content Tab */}
         <TabsContent value="create" className="mt-8">
           <div className="space-y-6">
-            <ContentGenerationForm userIdeas={typedUserIdeas} />
+            <ContentGenerationForm userIdeas={typedUserIdeas as never} />
           </div>
         </TabsContent>
 

@@ -3,8 +3,8 @@
  * Analyzes Reddit posts to identify startup opportunities
  */
 
-import { createClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/supabase'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { Database, RedditPost } from '@/types/supabase'
 
 export interface PainPoint {
   id: string
@@ -36,7 +36,7 @@ export interface StartupIdea {
 }
 
 class PainPointExtractor {
-  private supabase: any
+  private supabase: SupabaseClient<Database>
 
   constructor() {
     this.supabase = createClient<Database>(
@@ -53,13 +53,16 @@ class PainPointExtractor {
 
     try {
       // Get recent Reddit posts with high engagement that indicate pain points
-      const { data: posts, error } = await this.supabase
+      const response = await this.supabase
         .from('reddit_posts')
         .select('*')
         .gte('created_utc', timeFilter)
         .or('score.gte.10,comments.gte.5') // High engagement threshold
         .order('score', { ascending: false })
         .limit(200)
+
+      const posts = response.data as RedditPost[] | null
+      const error = response.error
 
       if (error) {
         console.error('Error fetching Reddit posts:', error)
@@ -89,7 +92,7 @@ class PainPointExtractor {
   /**
    * Analyze a single Reddit post for pain point indicators
    */
-  private analyzePainPoint(post: any): PainPoint | null {
+  private analyzePainPoint(post: RedditPost): PainPoint | null {
     const title = post.title?.toLowerCase() || ''
     const content = post.content?.toLowerCase() || ''
     const fullText = `${title} ${content}`
@@ -120,7 +123,7 @@ class PainPointExtractor {
       engagement_score: engagementScore,
       sentiment_score: sentimentScore,
       extracted_problems: extractedProblems,
-      market_size_indicator: this.estimateMarketSize(post.subreddit, post.score),
+      market_size_indicator: this.estimateMarketSize(post.subreddit, post.score || 0),
       competition_level: this.estimateCompetitionLevel(fullText),
       urgency_level: this.estimateUrgencyLevel(painIndicators, fullText),
       created_at: post.created_utc
@@ -209,7 +212,7 @@ class PainPointExtractor {
   /**
    * Calculate engagement score based on Reddit metrics
    */
-  private calculateEngagementScore(post: any): number {
+  private calculateEngagementScore(post: RedditPost): number {
     const score = post.score || 0
     const comments = post.comments || 0
 
@@ -223,7 +226,7 @@ class PainPointExtractor {
   /**
    * Calculate overall opportunity score
    */
-  private calculateOpportunityScore(post: any, painIndicators: string[], engagementScore: number): number {
+  private calculateOpportunityScore(post: RedditPost, painIndicators: string[], engagementScore: number): number {
     let score = 0
 
     // Base score from engagement
@@ -346,5 +349,3 @@ class PainPointExtractor {
 // Export singleton instance
 export const painPointExtractor = new PainPointExtractor()
 
-// Export types
-export type { PainPoint, StartupIdea }

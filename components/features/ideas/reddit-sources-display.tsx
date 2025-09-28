@@ -1,8 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
-  ExternalLink,
   Users,
   MessageCircle,
   TrendingUp,
@@ -10,26 +8,33 @@ import {
   Calendar,
   BarChart3
 } from 'lucide-react';
+import { RedditSource } from '@/types/reddit';
+
+interface RedditSourceData {
+  pain_point_sources?: RedditSource[];
+  generation_method?: string;
+  reddit_powered?: boolean;
+  [key: string]: unknown;
+}
 
 interface RedditSourcesDisplayProps {
   ideaId: string;
-  sourceData: any;
+  sourceData: RedditSourceData | null;
 }
 
-export function RedditSourcesDisplay({ ideaId, sourceData }: RedditSourcesDisplayProps) {
+export function RedditSourcesDisplay({ sourceData }: RedditSourcesDisplayProps) {
   const painPointSources = sourceData?.pain_point_sources || [];
-  const generationMethod = sourceData?.generation_method;
   const isRedditPowered = sourceData?.reddit_powered || false;
 
   // Calculate dynamic metrics from actual data
   const discussionCount = painPointSources.length;
-  const communityCount = [...new Set(painPointSources.map((p: any) => p.subreddit))].length;
+  const communityCount = [...new Set(painPointSources.map((p) => p.subreddit))].length;
   const avgScore = painPointSources.length > 0
-    ? Math.round(painPointSources.reduce((acc: number, p: any) => acc + (p.score || 0), 0) / painPointSources.length)
+    ? Math.round(painPointSources.reduce((acc: number, p) => acc + (p.score || 0), 0) / painPointSources.length)
     : 0;
   const engagementLevel = avgScore > 50 ? 'High' : avgScore > 20 ? 'Medium' : 'Low';
-  const isRecent = painPointSources.some((p: any) => {
-    const postDate = new Date(p.created_utc * 1000);
+  const isRecent = painPointSources.some((p) => {
+    const postDate = new Date((p.created_utc as unknown as number) * 1000);
     const daysDiff = (Date.now() - postDate.getTime()) / (1000 * 60 * 60 * 24);
     return daysDiff <= 7;
   });

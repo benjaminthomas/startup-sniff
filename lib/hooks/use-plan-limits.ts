@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/auth/supabase-client';
-import { useRouter } from 'next/navigation';
 
 // Plan limits configuration
 export const PLAN_LIMITS = {
@@ -58,10 +57,9 @@ export function usePlanLimits(): PlanLimitsState {
     last_reset: new Date().toISOString()
   });
   const [isLoading, setIsLoading] = useState(false);  // Changed to false
-  const router = useRouter();
 
   // Add a dependency array and force re-fetch when needed
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [refreshTrigger] = useState(0);
   
   console.log('📊 HOOK STATE: Current usage state:', usage);
 
@@ -156,7 +154,7 @@ export function usePlanLimits(): PlanLimitsState {
           const newUsage = {
             ideas_used: actualIdeasCount,
             validations_used: actualValidatedCount,
-            content_used: Number(usageLimitsResult.data.content_generated || 0),
+            content_used: 0, // content_generated field doesn't exist in schema
             last_reset: usageLimitsResult.data.created_at || new Date().toISOString()
           };
           console.log('✅ Setting usage from usage_limits (validated):', newUsage);
@@ -203,7 +201,7 @@ export function usePlanLimits(): PlanLimitsState {
   }, [refreshTrigger]);
 
   const canUseFeature = (feature: string): boolean => {
-    return PLAN_LIMITS[planType].features.includes(feature);
+    return (PLAN_LIMITS[planType].features as unknown as string[]).includes(feature);
   };
 
   const getRemainingLimit = (type: 'ideas' | 'validations' | 'content'): number => {
@@ -263,11 +261,11 @@ export function usePlanLimits(): PlanLimitsState {
       
       await supabase
         .from('usage_limits')
-        .upsert({
-          user_id: user.id,
+        .update({
           [updateField]: currentUsage + 1,
           updated_at: new Date().toISOString()
-        });
+        })
+        .eq('user_id', user.id);
 
       // Update local state
       setUsage(prev => ({

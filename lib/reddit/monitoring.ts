@@ -10,7 +10,7 @@ export interface LogEntry {
   level: LogLevel['level']
   component: string
   message: string
-  metadata?: any
+  metadata?: unknown
   correlationId?: string
   userId?: string
   requestId?: string
@@ -31,7 +31,7 @@ export interface Alert {
   component: string
   resolved: boolean
   resolvedAt?: string
-  metadata?: any
+  metadata?: unknown
 }
 
 export interface MonitoringConfig {
@@ -80,11 +80,11 @@ export class RedditMonitor {
    */
   createLogger(component: string) {
     return {
-      debug: (message: string, metadata?: any) => this.log('debug', component, message, metadata),
-      info: (message: string, metadata?: any) => this.log('info', component, message, metadata),
-      warn: (message: string, metadata?: any) => this.log('warn', component, message, metadata),
-      error: (message: string, metadata?: any) => this.log('error', component, message, metadata),
-      fatal: (message: string, metadata?: any) => this.log('fatal', component, message, metadata)
+      debug: (message: string, metadata?: unknown) => this.log('debug', component, message, metadata),
+      info: (message: string, metadata?: unknown) => this.log('info', component, message, metadata),
+      warn: (message: string, metadata?: unknown) => this.log('warn', component, message, metadata),
+      error: (message: string, metadata?: unknown) => this.log('error', component, message, metadata),
+      fatal: (message: string, metadata?: unknown) => this.log('fatal', component, message, metadata)
     }
   }
 
@@ -95,7 +95,7 @@ export class RedditMonitor {
     level: LogLevel['level'],
     component: string,
     message: string,
-    metadata?: any,
+    metadata?: unknown,
     correlationId?: string,
     userId?: string,
     requestId?: string
@@ -210,7 +210,7 @@ export class RedditMonitor {
     severity: Alert['severity'],
     message: string,
     component: string,
-    metadata?: any
+    metadata?: unknown
   ): void {
     if (!this.config.enableAlerts) return
 
@@ -232,7 +232,7 @@ export class RedditMonitor {
       alertId: alert.id,
       type,
       severity,
-      ...metadata
+      ...(metadata && typeof metadata === 'object' ? metadata as Record<string, unknown> : {})
     })
 
     // Store in Redis for external monitoring
@@ -356,7 +356,7 @@ export class RedditMonitor {
       const errorRate = totalLogs > 0 ? (errorLogs / totalLogs) * 100 : 0
 
       // Get component health
-      const components: Record<string, any> = {}
+      const components: Record<string, Record<string, unknown>> = {}
       const componentKeys = await this.redis.keys('reddit:logs:*:total')
 
       for (const key of componentKeys) {
@@ -395,7 +395,7 @@ export class RedditMonitor {
 
       return {
         status,
-        components,
+        components: components as Record<string, { status: 'healthy' | 'degraded' | 'unhealthy'; lastError?: string; errorRate?: number; responseTime?: number }>,
         activeAlerts,
         metrics: {
           totalLogs,

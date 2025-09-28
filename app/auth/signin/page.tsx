@@ -13,6 +13,7 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 import { getCurrentUser } from '@/lib/auth/actions'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
 import { SignInForm } from '@/components/auth/signin-form'
@@ -22,6 +23,9 @@ export const metadata: Metadata = {
   title: 'Sign In | StartupSniff',
   description: 'Sign in to your StartupSniff account securely',
 }
+
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
 
 interface SignInPageProps {
   searchParams: Promise<{
@@ -40,7 +44,7 @@ async function SignInPageContent({ searchParams }: SignInPageProps) {
   
   if (user) {
     const redirectTo = params.redirectTo || '/dashboard'
-    redirect(redirectTo)
+    redirect(redirectTo as Route)
   }
 
   // Generate CSRF token for the form

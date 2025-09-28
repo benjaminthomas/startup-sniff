@@ -3,12 +3,16 @@ import { PageHeader } from '@/components/ui/page-header';
 import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generation-form';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { getUserIdeas } from '@/server/actions/ideas';
+import { StartupIdea } from '@/types/global';
+
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
 
 export default async function GeneratePage() {
-  let recentIdeas: any[] = [];
+  let recentIdeas: StartupIdea[] = [];
   
   try {
-    recentIdeas = await getUserIdeas(3);
+    recentIdeas = await getUserIdeas(3) as unknown as StartupIdea[];
   } catch (error) {
     console.log('Failed to fetch recent ideas:', error);
     // Continue with empty array - component will handle this gracefully

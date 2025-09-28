@@ -126,7 +126,7 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
  * Extract form data safely for Server Actions
  */
 export const extractFormDataSafely = (formData: FormData) => {
-  const data: Record<string, any> = {}
+  const data: Record<string, string> = {}
   
   for (const [key, value] of formData.entries()) {
     if (typeof value === 'string') {

@@ -149,7 +149,7 @@ export async function generateIdea(formData: FormData) {
       throw new Error('Failed to check usage limits');
     }
 
-    if (usageData && usageData.ideas_generated >= usageData.monthly_limit_ideas) {
+    if (usageData && (usageData.ideas_generated ?? 0) >= usageData.monthly_limit_ideas) {
       throw new Error('Usage limit reached. Please upgrade your plan.');
     }
 
@@ -191,13 +191,13 @@ export async function generateIdea(formData: FormData) {
         problemStatement: redditIdea.problem_statement,
         solution: redditIdea.solution_approach,
         targetMarket: redditIdea.target_market.join(', '),
-        revenueModel: redditIdea.business_model.revenue_streams,
-        estimatedCost: redditIdea.business_model.funding_requirements,
-        timeToMarket: redditIdea.technical_requirements.estimated_development_time,
-        marketSize: redditIdea.market_analysis.market_size_estimate,
-        competition: redditIdea.market_analysis.competition_analysis,
+        revenueModel: (redditIdea as unknown as Record<string, unknown>).business_model ? ((redditIdea as unknown as Record<string, unknown>).business_model as Record<string, unknown>).revenue_streams as string[] : [],
+        estimatedCost: (redditIdea as unknown as Record<string, unknown>).business_model ? ((redditIdea as unknown as Record<string, unknown>).business_model as Record<string, unknown>).funding_requirements as string : 'To be determined',
+        timeToMarket: (redditIdea as unknown as Record<string, unknown>).technical_requirements ? ((redditIdea as unknown as Record<string, unknown>).technical_requirements as Record<string, unknown>).estimated_development_time as string : '3-6 months',
+        marketSize: (redditIdea as unknown as Record<string, unknown>).market_analysis ? ((redditIdea as unknown as Record<string, unknown>).market_analysis as Record<string, unknown>).market_size_estimate as string : 'Medium',
+        competition: (redditIdea as unknown as Record<string, unknown>).market_analysis ? ((redditIdea as unknown as Record<string, unknown>).market_analysis as Record<string, unknown>).competition_analysis as string : 'Analysis pending',
         uniqueValue: redditIdea.market_opportunity || 'High market potential',
-        nextSteps: redditIdea.market_analysis.go_to_market_strategy,
+        nextSteps: (redditIdea as unknown as Record<string, unknown>).market_analysis ? ((redditIdea as unknown as Record<string, unknown>).market_analysis as Record<string, unknown>).go_to_market_strategy as string[] : ['Market research', 'MVP development'],
         risks: ['Market competition', 'Technical challenges'],
         opportunities: [redditIdea.market_opportunity]
       };
@@ -241,10 +241,13 @@ export async function generateIdea(formData: FormData) {
           generated_at: new Date().toISOString(),
           reddit_powered: isFromReddit,
           pain_point_sources: isFromReddit && redditIdeaResult.success
-            ? redditIdeaResult.ideas[0].source_pain_point_ids || []
+            ? (redditIdeaResult.ideas[0] as unknown as Record<string, unknown>).source_pain_point_ids as string[] || []
             : [],
           generation_method: isFromReddit ? 'reddit_pain_points' : 'openai_prompts'
-        }
+        },
+        is_validated: false,
+        is_favorite: false,
+        validation_data: null
       })
       .select()
       .single();
@@ -406,7 +409,7 @@ export async function getIdeaWithRedditSources(ideaId: string) {
     }
 
     // Extract Reddit source IDs from source_data
-    const painPointSources = idea.source_data?.pain_point_sources || [];
+    const painPointSources = (idea.source_data as Record<string, unknown>)?.pain_point_sources as string[] || [];
 
     if (painPointSources.length === 0) {
       return { idea, redditSources: [] };

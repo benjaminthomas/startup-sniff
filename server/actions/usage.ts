@@ -138,7 +138,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     return {
       planType,
       usage: usageData,
-      limits: PLAN_LIMITS[planType]
+      limits: PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]
     };
   } catch (error) {
     console.error('💥 Error in getCurrentUserUsage:', error);

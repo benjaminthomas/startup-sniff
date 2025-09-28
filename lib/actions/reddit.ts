@@ -3,8 +3,8 @@
 import { redditIntegrationService } from '@/lib/services/reddit-integration'
 import { painPointExtractor } from '@/lib/services/pain-point-extractor'
 import { aiIdeaGenerator } from '@/lib/services/ai-idea-generator'
-import type { RedditTrendAnalysis, TrendsSummary, RedditPost } from '@/lib/services/reddit-integration'
-import type { PainPoint, GeneratedIdea, IdeaGenerationOptions } from '@/lib/services/pain-point-extractor'
+import type { RedditTrendAnalysis, TrendsSummary } from '@/lib/services/reddit-integration'
+import type { PainPoint, StartupIdea } from '@/lib/services/pain-point-extractor'
 
 interface TrendAnalysisResult {
   success: boolean;
@@ -116,8 +116,8 @@ export async function getTrendingPainPoints(limit = 20): Promise<PainPoint[]> {
  * Generate startup ideas from Reddit pain points
  */
 export async function generateIdeasFromPainPoints(
-  options: IdeaGenerationOptions = {}
-): Promise<{ success: boolean; ideas: GeneratedIdea[]; error?: string }> {
+  options: Record<string, unknown> = {}
+): Promise<{ success: boolean; ideas: StartupIdea[]; error?: string }> {
   try {
     console.log('🚀 Generating startup ideas from pain points...')
 
@@ -145,7 +145,7 @@ export async function generateIdeasFromPainPoints(
  */
 export async function generateQuickIdea(
   painPointId: string
-): Promise<{ success: boolean; idea?: Partial<GeneratedIdea>; error?: string }> {
+): Promise<{ success: boolean; idea?: Partial<StartupIdea>; error?: string }> {
   try {
     console.log(`🔍 Generating quick idea for pain point: ${painPointId}`)
 
@@ -200,13 +200,13 @@ export async function getStartupIntelligence(
     includePainPoints?: boolean
     includeIdeas?: boolean
     includeTrends?: boolean
-    ideaOptions?: IdeaGenerationOptions
+    ideaOptions?: Record<string, unknown>
   } = {}
 ): Promise<{
   success: boolean
   data?: {
     painPoints: PainPoint[]
-    ideas: GeneratedIdea[]
+    ideas: StartupIdea[]
     trends: TrendsSummary
   }
   error?: string

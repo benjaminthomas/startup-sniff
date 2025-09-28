@@ -6,9 +6,9 @@ import { ValidationButton } from './validation-button';
 import { ValidationMessage } from './validation-message';
 import {
   CheckCircle,
-  AlertTriangle,
+  
   Sparkles,
-  TrendingUp,
+  
   BarChart3
 } from 'lucide-react';
 

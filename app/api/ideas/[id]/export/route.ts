@@ -28,7 +28,7 @@ export async function GET(
     }
 
     // Fetch Reddit sources if they exist
-    let redditSources: Array<{
+    const redditSources: Array<{
       reddit_id: string;
       subreddit: string;
       title: string;
@@ -39,7 +39,6 @@ export async function GET(
       author: string;
       created_utc: number;
     }> = [];
-    const painPointSources: string[] = [];
 
     // Reddit posts functionality disabled until table schema is updated
 

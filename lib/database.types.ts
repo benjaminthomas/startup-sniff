@@ -477,27 +477,3 @@ export const Constants = {
     },
   },
 } as const
-
-// Helper types for Reddit posts
-export type RedditPost = Database['public']['Tables']['reddit_posts']['Row']
-export type RedditPostInsert = Database['public']['Tables']['reddit_posts']['Insert']
-export type RedditPostUpdate = Database['public']['Tables']['reddit_posts']['Update']
-
-// Helper types for startup ideas
-export type StartupIdea = Database['public']['Tables']['startup_ideas']['Row']
-export type StartupIdeaInsert = Database['public']['Tables']['startup_ideas']['Insert']
-export type StartupIdeaUpdate = Database['public']['Tables']['startup_ideas']['Update']
-
-// Helper types for users
-export type User = Database['public']['Tables']['users']['Row']
-export type UserInsert = Database['public']['Tables']['users']['Insert']
-export type UserUpdate = Database['public']['Tables']['users']['Update']
-
-// Helper types for usage limits
-export type UsageLimits = Database['public']['Tables']['usage_limits']['Row']
-export type UsageLimitsInsert = Database['public']['Tables']['usage_limits']['Insert']
-export type UsageLimitsUpdate = Database['public']['Tables']['usage_limits']['Update']
-
-// Plan and subscription types
-export type PlanType = Database['public']['Enums']['plan_type']
-export type SubscriptionStatus = Database['public']['Enums']['subscription_status']

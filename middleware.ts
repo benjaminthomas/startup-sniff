@@ -46,8 +46,8 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Rate limiting for auth endpoints
-    if (request.method !== 'GET' && RATE_LIMITS[pathname]) {
-      const { limit, windowMs } = RATE_LIMITS[pathname]
+    if (request.method !== 'GET' && RATE_LIMITS[pathname as keyof typeof RATE_LIMITS]) {
+      const { limit, windowMs } = RATE_LIMITS[pathname as keyof typeof RATE_LIMITS]
       const identifier = await getClientIdentifier(request)
       const { allowed, remaining } = await checkRateLimit(identifier, limit, windowMs)
 
@@ -191,7 +191,7 @@ async function getClientIdentifier(request: NextRequest): Promise<string> {
   // Use IP address, but fallback to user agent if behind proxy
   const forwarded = request.headers.get('x-forwarded-for')
   const realIp = request.headers.get('x-real-ip')
-  const ip = forwarded?.split(',')[0] || realIp || request.ip || 'unknown'
+  const ip = forwarded?.split(',')[0] || realIp || 'unknown'
   
   // Include user agent to prevent easy bypassing
   const userAgent = request.headers.get('user-agent') || 'unknown'
