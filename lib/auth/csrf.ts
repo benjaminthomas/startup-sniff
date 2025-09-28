@@ -42,6 +42,14 @@ export const setCSRFToken = async (token: string) => {
 export const getCSRFToken = async (): Promise<string | null> => {
   const cookieStore = await cookies()
   const token = cookieStore.get(CSRF_TOKEN_NAME)
+  const allCookies = cookieStore.getAll()
+  console.log('🔍 Reading CSRF token:', {
+    tokenName: CSRF_TOKEN_NAME,
+    found: !!token,
+    tokenValue: token?.value || 'undefined',
+    tokenLength: token?.value?.length || 0,
+    allCookiesDetailed: allCookies.map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...', hasValue: !!c.value }))
+  })
   return token?.value || null
 }
 

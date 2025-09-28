@@ -149,6 +149,11 @@ export async function middleware(request: NextRequest) {
 
       if (needsNewToken) {
         const newToken = generateCSRFToken()
+        console.log('🔐 Generated CSRF token:', {
+          tokenLength: newToken.length,
+          tokenPreview: newToken.substring(0, 20) + '...',
+          pathname
+        })
         response.cookies.set('csrf-token', newToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
