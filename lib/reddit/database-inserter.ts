@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ProcessedPost } from './post-processor'
 import type { Logger } from './api-client'
-import type { RedditPostInsert, Database } from '@/types/supabase'
+import type { Database, RedditPostInsert } from '@/types/supabase'
 
 export interface InsertionConfig {
   batchSize: number
@@ -38,7 +38,7 @@ export interface BatchResult {
 
 export interface ConflictPost {
   new: ProcessedPost
-  existing: any
+  existing: Record<string, unknown>
   resolution: 'skip' | 'update' | 'error'
 }
 
@@ -141,7 +141,7 @@ export class RedditDatabaseInserter {
 
     while (attempt <= this.config.maxRetries) {
       try {
-        const result = await this.insertBatchToDB(posts, batchNumber)
+        const result = await this.insertBatchToDB(posts)
         return {
           ...result,
           batchNumber,
@@ -180,8 +180,7 @@ export class RedditDatabaseInserter {
    * Insert batch to database with conflict handling
    */
   private async insertBatchToDB(
-    posts: ProcessedPost[],
-    batchNumber: number
+    posts: ProcessedPost[]
   ): Promise<Omit<BatchResult, 'batchNumber' | 'duration'>> {
     if (this.config.enableDeduplication) {
       return this.insertWithDeduplication(posts)
@@ -218,7 +217,7 @@ export class RedditDatabaseInserter {
       throw new Error(`Failed to check for existing posts: ${checkError.message}`)
     }
 
-    const existingMap = new Map<string, any>()
+    const existingMap = new Map<string, Record<string, unknown>>()
     existingPosts?.forEach(post => {
       existingMap.set(post.hash, post)
       existingMap.set(post.reddit_id, post)
@@ -235,7 +234,7 @@ export class RedditDatabaseInserter {
           if (resolution === 'skip') {
             result.skipped++
           } else if (resolution === 'update') {
-            await this.updatePost(post, existing.reddit_id)
+            await this.updatePost(post, existing.reddit_id as string)
             result.updated++
           } else {
             result.failed++
@@ -260,7 +259,7 @@ export class RedditDatabaseInserter {
   private async insertWithoutDeduplication(
     posts: ProcessedPost[]
   ): Promise<Omit<BatchResult, 'batchNumber' | 'duration'>> {
-    const dbPosts = posts.map(this.convertToDbFormat)
+    const dbPosts = posts.map(this.convertToDbFormat) as RedditPostInsert[]
 
     const { data, error } = await this.supabase
       .from('reddit_posts')
@@ -307,16 +306,16 @@ export class RedditDatabaseInserter {
   /**
    * Determine if existing post should be updated
    */
-  private shouldUpdateExisting(newPost: ProcessedPost, existing: any): boolean {
+  private shouldUpdateExisting(newPost: ProcessedPost, existing: Record<string, unknown>): boolean {
     // Update if the new post has better data
-    if (newPost.score > existing.score + 5) return true
-    if (newPost.comments > existing.comments + 2) return true
+    if ((newPost.score || 0) > (existing.score as number || 0) + 5) return true
+    if ((newPost.comments || 0) > (existing.comments as number || 0) + 2) return true
 
     // Update if we now have AI analysis but didn't before
     if (newPost.analysis && !existing.analysis) return true
 
     // Update if significant time has passed (re-analysis)
-    const daysSinceUpdate = (Date.now() - new Date(existing.updated_at).getTime()) / (1000 * 60 * 60 * 24)
+    const daysSinceUpdate = (Date.now() - new Date(existing.updated_at as string).getTime()) / (1000 * 60 * 60 * 24)
     if (daysSinceUpdate > 7) return true
 
     return false
@@ -326,7 +325,7 @@ export class RedditDatabaseInserter {
    * Insert a single post
    */
   private async insertSinglePost(post: ProcessedPost): Promise<void> {
-    const dbPost = this.convertToDbFormat(post)
+    const dbPost = this.convertToDbFormat(post) as RedditPostInsert
 
     const { error } = await this.supabase
       .from('reddit_posts')
@@ -369,7 +368,7 @@ export class RedditDatabaseInserter {
   /**
    * Convert processed post to database format
    */
-  private convertToDbFormat(post: ProcessedPost): any {
+  private convertToDbFormat(post: ProcessedPost): Record<string, unknown> {
     return {
       reddit_id: post.reddit_id,
       subreddit: post.subreddit,

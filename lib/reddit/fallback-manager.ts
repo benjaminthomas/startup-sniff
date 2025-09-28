@@ -49,7 +49,7 @@ export interface QueuedRequest {
   priority: 'high' | 'medium' | 'low'
   timestamp: Date
   retryCount: number
-  options: any
+  options: unknown
 }
 
 /**
@@ -131,12 +131,12 @@ export class RedditFallbackManager {
   async handleApiFailure(
     error: Error,
     subreddit: string,
-    options: any
+    options: unknown
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     this.logger.warn(`API failure for r/${subreddit}:`, error.message)
 
@@ -149,7 +149,7 @@ export class RedditFallbackManager {
     }
 
     if (this.isAuthenticationError(error)) {
-      return this.handleAuthFailure(subreddit, options)
+      return this.handleAuthFailure(subreddit)
     }
 
     if (this.isServerError(error)) {
@@ -161,7 +161,7 @@ export class RedditFallbackManager {
     }
 
     // Generic failure handling
-    return this.handleGenericFailure(error, subreddit, options)
+    return this.handleGenericFailure(error, subreddit)
   }
 
   /**
@@ -190,7 +190,7 @@ export class RedditFallbackManager {
    */
   async queueRequest(
     subreddit: string,
-    options: any,
+    options: unknown,
     priority: 'high' | 'medium' | 'low' = 'medium'
   ): Promise<string> {
     const request: QueuedRequest = {
@@ -474,12 +474,12 @@ export class RedditFallbackManager {
    */
   private async handleRateLimitFailure(
     subreddit: string,
-    options: any
+    options: unknown
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     // Try cache first
     const cached = await this.getCachedData(subreddit)
@@ -505,13 +505,12 @@ export class RedditFallbackManager {
    * Handle authentication failures
    */
   private async handleAuthFailure(
-    subreddit: string,
-    options: any
+    subreddit: string
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     // Authentication issues need immediate attention
     this.logger.error('Authentication failure - manual intervention required')
@@ -537,12 +536,12 @@ export class RedditFallbackManager {
    */
   private async handleServerError(
     subreddit: string,
-    options: any
+    options: unknown
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     // Server errors might be temporary - queue for retry
     await this.queueRequest(subreddit, options, 'low')
@@ -568,12 +567,12 @@ export class RedditFallbackManager {
    */
   private async handleNetworkError(
     subreddit: string,
-    options: any
+    options: unknown
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     // Network issues - queue and use cache
     await this.queueRequest(subreddit, options, 'high')
@@ -598,13 +597,12 @@ export class RedditFallbackManager {
    */
   private async handleGenericFailure(
     error: Error,
-    subreddit: string,
-    options: any
+    subreddit: string
   ): Promise<{
     shouldRetry: boolean
     fallbackMethod?: FallbackMethod
     delay?: number
-    fallbackData?: any
+    fallbackData?: unknown
   }> {
     this.logger.error(`Generic failure for r/${subreddit}:`, error)
 

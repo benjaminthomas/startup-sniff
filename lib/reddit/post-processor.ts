@@ -86,7 +86,6 @@ export class RedditPostProcessor {
    * Process a batch of posts
    */
   async processBatch(posts: RedditPostInsert[]): Promise<ProcessingResult> {
-    const startTime = Date.now()
     this.logger.info(`Processing batch of ${posts.length} posts`)
 
     const processed: ProcessedPost[] = []
@@ -116,8 +115,6 @@ export class RedditPostProcessor {
       await Promise.allSettled(chunkPromises)
     }
 
-    const duration = Date.now() - startTime
-
     const result: ProcessingResult = {
       success: failed.length === 0,
       processed,
@@ -139,8 +136,6 @@ export class RedditPostProcessor {
    * Process a single post
    */
   async processPost(post: RedditPostInsert): Promise<ProcessedPost> {
-    const startTime = Date.now()
-
     // Step 1: Sanitize content
     const sanitizedPost = this.sanitizePost(post)
 
@@ -160,8 +155,6 @@ export class RedditPostProcessor {
     if (shouldFilter.filter) {
       throw new Error(`Post filtered: ${shouldFilter.reason}`)
     }
-
-    const processingTime = Date.now() - startTime
 
     const processedPost: ProcessedPost = {
       ...sanitizedPost,
@@ -383,7 +376,7 @@ ${content.substring(0, 2000)}
         confidence: 0.3,
         flags: topics
       },
-      qualityScore: Math.max(20, Math.min(80, post.score + post.comments)), // Simple score based on engagement
+      qualityScore: Math.max(20, Math.min(80, (post.score || 0) + (post.comments || 0))), // Simple score based on engagement
       topics,
       businessRelevance: topics.includes('business') || topics.includes('startup') ? 70 : 30,
       processingTime
@@ -417,7 +410,7 @@ ${content.substring(0, 2000)}
     }
 
     // Score filtering (very low engagement)
-    if (post.score < -10) {
+    if ((post.score || 0) < -10) {
       return {
         filter: true,
         reason: 'Score too low'

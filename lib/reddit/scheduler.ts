@@ -1,7 +1,7 @@
 import { CronJob } from 'cron'
-import { SubredditFetcher, FetcherConfig } from './subreddit-fetcher'
-import { RedditPostProcessor, ProcessingConfig } from './post-processor'
-import { RedditDatabaseInserter, InsertionConfig } from './database-inserter'
+import { SubredditFetcher } from './subreddit-fetcher'
+import { RedditPostProcessor } from './post-processor'
+import { RedditDatabaseInserter } from './database-inserter'
 import type { Logger } from './api-client'
 import type { Redis } from 'ioredis'
 
@@ -97,11 +97,17 @@ export class RedditScheduler {
     }
 
     try {
-      const cronJob = new CronJob({
-        cronTime: jobConfig.schedule.cronPattern,
-        onTick: () => this.runJob(jobConfig.name),
-        timeZone: jobConfig.schedule.timezone || 'UTC'
-      })
+      const cronJob = new CronJob(
+        jobConfig.schedule.cronPattern,
+        () => {
+          this.runJob(jobConfig.name).catch(error => {
+            this.logger.error(`Job execution failed: ${error}`)
+          })
+        },
+        null,
+        true,
+        jobConfig.schedule.timezone || 'UTC'
+      )
 
       this.jobs.set(jobConfig.name, {
         config: jobConfig,
@@ -127,7 +133,6 @@ export class RedditScheduler {
     }
 
     job.cronJob.stop()
-    job.cronJob.destroy()
     this.jobs.delete(jobName)
 
     this.logger.info(`Job '${jobName}' removed`)
@@ -315,7 +320,13 @@ export class RedditScheduler {
       // Insert without processing
       this.logger.debug(`Inserting ${allPosts.length} posts without processing`)
 
-      const insertResult = await this.inserter.insertBatch(allPosts as any)
+      // Convert raw posts to ProcessedPost format
+      const processedPosts = allPosts.map(post => ({
+        ...post,
+        processedAt: new Date().toISOString()
+      }))
+
+      const insertResult = await this.inserter.insertBatch(processedPosts)
       totalInserted = insertResult.inserted + insertResult.updated
       totalErrors += insertResult.failed
     }
@@ -344,7 +355,7 @@ export class RedditScheduler {
     setTimeout(async () => {
       try {
         await this.runJob(jobName)
-      } catch (error) {
+      } catch {
         this.scheduleRetry(jobName, attempt + 1)
       }
     }, delay)
@@ -354,11 +365,13 @@ export class RedditScheduler {
    * Start health check monitoring
    */
   private startHealthCheck(): void {
-    this.healthCheckJob = new CronJob({
-      cronTime: '*/5 * * * *', // Every 5 minutes
-      onTick: () => this.performHealthCheck(),
-      timeZone: 'UTC'
-    })
+    this.healthCheckJob = new CronJob(
+      '*/5 * * * *', // Every 5 minutes
+      () => this.performHealthCheck(),
+      null,
+      false,
+      'UTC'
+    )
 
     this.healthCheckJob.start()
     this.logger.info('Health check monitoring started')
@@ -416,10 +429,10 @@ export class RedditScheduler {
 
     // Find next run time
     let nextRunTime: Date | null = null
-    for (const [_, jobData] of this.jobs) {
+    for (const [, jobData] of this.jobs) {
       const nextTick = jobData.cronJob.nextDate()
-      if (nextTick && (!nextRunTime || nextTick.toDate() < nextRunTime)) {
-        nextRunTime = nextTick.toDate()
+      if (nextTick && (!nextRunTime || nextTick.toJSDate() < nextRunTime)) {
+        nextRunTime = nextTick.toJSDate()
       }
     }
 
@@ -466,7 +479,7 @@ export class RedditScheduler {
       exists: true,
       enabled: job.config.schedule.enabled,
       running: job.running,
-      nextRun: job.cronJob.nextDate()?.toDate() || null,
+      nextRun: job.cronJob.nextDate()?.toJSDate() || null,
       lastRun
     }
   }
@@ -486,13 +499,18 @@ export class RedditScheduler {
     // If schedule changed, recreate the cron job
     if (newConfig.schedule) {
       job.cronJob.stop()
-      job.cronJob.destroy()
 
-      const cronJob = new CronJob({
-        cronTime: job.config.schedule.cronPattern,
-        onTick: () => this.runJob(jobName),
-        timeZone: job.config.schedule.timezone || 'UTC'
-      })
+      const cronJob = new CronJob(
+        job.config.schedule.cronPattern,
+        () => {
+          this.runJob(jobName).catch(error => {
+            this.logger.error(`Job execution failed: ${error}`)
+          })
+        },
+        null,
+        false,
+        job.config.schedule.timezone || 'UTC'
+      )
 
       job.cronJob = cronJob
 
@@ -528,13 +546,11 @@ export class RedditScheduler {
     // Stop health check
     if (this.healthCheckJob) {
       this.healthCheckJob.stop()
-      this.healthCheckJob.destroy()
     }
 
     // Stop all jobs
     for (const [jobName, job] of this.jobs) {
       job.cronJob.stop()
-      job.cronJob.destroy()
       this.logger.info(`Stopped job: ${jobName}`)
     }
 

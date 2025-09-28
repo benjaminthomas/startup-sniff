@@ -14,7 +14,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
 import { z } from 'zod'
 import { createServerSupabaseClient, createServerAdminClient, checkRateLimit } from './supabase-server'
 import { generateFormCSRFToken, verifyCSRFToken, clearCSRFToken } from './csrf'
@@ -98,18 +97,6 @@ async function getClientIdentifier(): Promise<string> {
     .substring(0, 16)
 }
 
-// Helper function to extract form data safely
-function extractFormDataSafely(formData: FormData) {
-  const data: Record<string, any> = {}
-  
-  for (const [key, value] of formData.entries()) {
-    if (typeof value === 'string') {
-      data[key] = value
-    }
-  }
-  
-  return data
-}
 
 /**
  * Secure Sign In Action
@@ -162,7 +149,7 @@ export async function signInAction(formData: FormData) {
     }
   }
 
-  const { email, password, csrfToken, rememberMe } = validationResult.data
+  const { email, password } = validationResult.data
 
   // Simple CSRF token validation for Server Actions
   // Since Server Actions run in a different context, we use a simplified validation
@@ -190,7 +177,7 @@ export async function signInAction(formData: FormData) {
   }
 
   // Additional validation: check token timestamp (not expired)
-  const [tokenValue, tokenTimestamp] = formToken.split('.')
+  const [, tokenTimestamp] = formToken.split('.')
   const timestamp = parseInt(tokenTimestamp, 10)
   const tokenAge = Date.now() - timestamp
   const maxAge = 24 * 60 * 60 * 1000 // 24 hours
@@ -288,7 +275,7 @@ export async function signInAction(formData: FormData) {
 
   } catch (error) {
     // Allow Next.js redirects to bubble up
-    if (error instanceof Error && error.digest?.startsWith('NEXT_REDIRECT')) {
+    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
       throw error
     }
     
@@ -334,7 +321,7 @@ export async function signUpAction(formData: FormData) {
     }
   }
 
-  const { email, password, fullName, csrfToken } = validationResult.data
+  const { email, password, fullName } = validationResult.data
 
   // Simple CSRF token validation for Server Actions
   const formToken = formData.get('csrf-token') as string
@@ -574,7 +561,7 @@ export async function updatePasswordAction(formData: FormData) {
     }
   }
 
-  const { password, csrfToken } = validationResult.data
+  const { password } = validationResult.data
 
   // Simple CSRF token validation for Server Actions
   const formToken = formData.get('csrf-token') as string
@@ -613,7 +600,7 @@ export async function updatePasswordAction(formData: FormData) {
       try {
         // Decode and validate the recovery token
         const tokenData = JSON.parse(Buffer.from(recoveryToken, 'base64').toString())
-        const { userId, email, timestamp, code } = tokenData
+        const { userId, timestamp } = tokenData
         
         // Validate token age (10 minutes max)
         const tokenAge = Date.now() - timestamp
@@ -631,7 +618,7 @@ export async function updatePasswordAction(formData: FormData) {
         console.log(`Using admin client to update password for user [REDACTED] (${userId})`)
         
         // Update password using admin client
-        const { data: adminUser, error: adminUpdateError } = await adminClient.auth.admin.updateUserById(
+        const { error: adminUpdateError } = await adminClient.auth.admin.updateUserById(
           userId,
           { password }
         )
@@ -699,7 +686,7 @@ export async function updatePasswordAction(formData: FormData) {
 
   } catch (error) {
     // Allow Next.js redirects to bubble up
-    if (error instanceof Error && error.digest?.startsWith('NEXT_REDIRECT')) {
+    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
       throw error
     }
     
@@ -750,7 +737,7 @@ export async function signOutAction() {
 
   } catch (error) {
     // Allow Next.js redirects to bubble up
-    if (error instanceof Error && error.digest?.startsWith('NEXT_REDIRECT')) {
+    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
       throw error
     }
     
