@@ -59,8 +59,7 @@ const nextConfig: NextConfig = {
   // Transpile packages for better compatibility
   transpilePackages: ['jspdf'],
 
-  // Output optimization
-  output: 'standalone',
+  // Output optimization (removed standalone for development compatibility)
 
   // Headers for security and performance
   async headers() {
