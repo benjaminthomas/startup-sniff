@@ -149,7 +149,7 @@ export async function signInAction(formData: FormData) {
     }
   }
 
-  const { email, password } = validationResult.data
+  const { email, password, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Simple CSRF token validation for Server Actions
   // Since Server Actions run in a different context, we use a simplified validation
@@ -321,7 +321,7 @@ export async function signUpAction(formData: FormData) {
     }
   }
 
-  const { email, password, fullName } = validationResult.data
+  const { email, password, fullName, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Simple CSRF token validation for Server Actions
   const formToken = formData.get('csrf-token') as string
@@ -561,7 +561,7 @@ export async function updatePasswordAction(formData: FormData) {
     }
   }
 
-  const { password } = validationResult.data
+  const { password, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
 
   // Simple CSRF token validation for Server Actions
   const formToken = formData.get('csrf-token') as string

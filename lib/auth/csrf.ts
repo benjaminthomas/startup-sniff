@@ -124,9 +124,11 @@ export const getOrGenerateCSRFToken = async (): Promise<string> => {
       // Invalid token format, continue to generate new one
     }
   }
-  
-  // Return a generated token - the middleware will handle setting cookies
-  return generateCSRFToken()
+
+  // Generate a new token and set it in cookies
+  const newToken = generateCSRFToken()
+  await setCSRFToken(newToken)
+  return newToken
 }
 
 // Middleware helper to extract and verify CSRF token from request
