@@ -4,10 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Heart, 
-  TrendingUp, 
-  Eye, 
+import {
+  Heart,
+  TrendingUp,
   Zap,
   Target,
   ArrowRight,
@@ -16,9 +15,10 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { StartupIdea } from '@/types/global';
 
 interface RecentIdeasProps {
-  ideas: any[];
+  ideas: StartupIdea[];
 }
 
 // Helper functions for confidence level styling
@@ -113,7 +113,7 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col space-y-6">
-          {ideas.slice(0, 3).map((idea, index) => {
+          {ideas.slice(0, 3).map((idea) => {
             const confidenceScore = idea.ai_confidence_score || 0;
             const confidenceLevel = getConfidenceLevel(confidenceScore);
             const colors = getConfidenceColors(confidenceLevel);

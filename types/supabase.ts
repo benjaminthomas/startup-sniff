@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "13.0.4"
+  }
   public: {
     Tables: {
       generated_content: {
@@ -62,6 +67,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reddit_posts: {
+        Row: {
+          analysis_data: Json | null
+          author: string
+          comments: number | null
+          content: string | null
+          created_at: string | null
+          created_utc: string
+          hash: string
+          id: string
+          intent_flags: string[] | null
+          processed_at: string | null
+          reddit_id: string
+          score: number | null
+          sentiment: number | null
+          subreddit: string
+          title: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          analysis_data?: Json | null
+          author: string
+          comments?: number | null
+          content?: string | null
+          created_at?: string | null
+          created_utc: string
+          hash: string
+          id?: string
+          intent_flags?: string[] | null
+          processed_at?: string | null
+          reddit_id: string
+          score?: number | null
+          sentiment?: number | null
+          subreddit: string
+          title: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          analysis_data?: Json | null
+          author?: string
+          comments?: number | null
+          content?: string | null
+          created_at?: string | null
+          created_utc?: string
+          hash?: string
+          id?: string
+          intent_flags?: string[] | null
+          processed_at?: string | null
+          reddit_id?: string
+          score?: number | null
+          sentiment?: number | null
+          subreddit?: string
+          title?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
       }
       startup_ideas: {
         Row: {
@@ -234,7 +299,9 @@ export type Database = {
           id: string
           plan_type: Database["public"]["Enums"]["plan_type"] | null
           stripe_customer_id: string | null
-          subscription_status: Database["public"]["Enums"]["subscription_status"] | null
+          subscription_status:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           trial_ends_at: string | null
           updated_at: string
         }
@@ -246,7 +313,9 @@ export type Database = {
           id: string
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           stripe_customer_id?: string | null
-          subscription_status?: Database["public"]["Enums"]["subscription_status"] | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           trial_ends_at?: string | null
           updated_at?: string
         }
@@ -258,19 +327,13 @@ export type Database = {
           id?: string
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           stripe_customer_id?: string | null
-          subscription_status?: Database["public"]["Enums"]["subscription_status"] | null
+          subscription_status?:
+            | Database["public"]["Enums"]["subscription_status"]
+            | null
           trial_ends_at?: string | null
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "users_id_fkey"
-            columns: ["id"]
-            isOneToOne: true
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -288,3 +351,153 @@ export type Database = {
     }
   }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      plan_type: ["explorer", "founder", "growth"],
+      subscription_status: ["trial", "active", "inactive", "cancelled"],
+    },
+  },
+} as const
+
+// Helper types for Reddit posts
+export type RedditPost = Database['public']['Tables']['reddit_posts']['Row']
+export type RedditPostInsert = Database['public']['Tables']['reddit_posts']['Insert']
+export type RedditPostUpdate = Database['public']['Tables']['reddit_posts']['Update']
+
+// Helper types for startup ideas
+export type StartupIdea = Database['public']['Tables']['startup_ideas']['Row']
+export type StartupIdeaInsert = Database['public']['Tables']['startup_ideas']['Insert']
+export type StartupIdeaUpdate = Database['public']['Tables']['startup_ideas']['Update']
+
+// Helper types for users
+export type User = Database['public']['Tables']['users']['Row']
+export type UserInsert = Database['public']['Tables']['users']['Insert']
+export type UserUpdate = Database['public']['Tables']['users']['Update']
+
+// Helper types for usage limits
+export type UsageLimits = Database['public']['Tables']['usage_limits']['Row']
+export type UsageLimitsInsert = Database['public']['Tables']['usage_limits']['Insert']
+export type UsageLimitsUpdate = Database['public']['Tables']['usage_limits']['Update']
+
+// Plan and subscription types
+export type PlanType = Database['public']['Enums']['plan_type']
+export type SubscriptionStatus = Database['public']['Enums']['subscription_status']

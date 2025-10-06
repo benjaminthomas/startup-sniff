@@ -1,10 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { BarChart3, Target, Users, DollarSign, CheckCircle } from "lucide-react";
+import { Target, Users, DollarSign, CheckCircle } from "lucide-react";
 import { ValidationForm } from "@/components/features/validation/validation-form";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 
@@ -15,32 +11,56 @@ export default async function ValidationPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let validationStats = {
+  const validationStats = {
     ideasValidated: 0,
-    averageMarketSize: '$2.4B',
-    potentialUsers: '150K',
-    revenueEstimate: '$50K'
+    averageMarketSize: '-',
+    potentialUsers: '-',
+    revenueEstimate: '-'
   };
 
   if (user) {
     // Fetch actual validation statistics
     const { data: validatedIdeas } = await supabase
       .from('startup_ideas')
-      .select('validation_data, market_analysis')
+      .select('market_analysis')
       .eq('user_id', user.id)
       .eq('is_validated', true);
 
     if (validatedIdeas && validatedIdeas.length > 0) {
       validationStats.ideasValidated = validatedIdeas.length;
-      
+
       // Calculate average market size from validated ideas
       const marketSizes = validatedIdeas
-        .filter(idea => idea.market_analysis?.market_size?.tam)
-        .map(idea => idea.market_analysis.market_size.tam);
-      
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.tam)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).tam as number);
+
       if (marketSizes.length > 0) {
         const avgMarketSize = marketSizes.reduce((sum, size) => sum + size, 0) / marketSizes.length;
         validationStats.averageMarketSize = `$${(avgMarketSize / 1000000).toFixed(1)}M`;
+      }
+
+      // Calculate potential users from validated ideas
+      const userEstimates = validatedIdeas
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.sam)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).sam as number);
+
+      if (userEstimates.length > 0) {
+        const avgUsers = userEstimates.reduce((sum, users) => sum + users, 0) / userEstimates.length;
+        validationStats.potentialUsers = avgUsers > 1000000
+          ? `${(avgUsers / 1000000).toFixed(1)}M`
+          : `${Math.round(avgUsers / 1000)}K`;
+      }
+
+      // Calculate revenue estimate from validated ideas
+      const revenueEstimates = validatedIdeas
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.revenue_potential && ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>)?.monthly)
+        .map(idea => ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>).monthly as number);
+
+      if (revenueEstimates.length > 0) {
+        const avgRevenue = revenueEstimates.reduce((sum, rev) => sum + rev, 0) / revenueEstimates.length;
+        validationStats.revenueEstimate = avgRevenue > 1000
+          ? `$${Math.round(avgRevenue / 1000)}K`
+          : `$${Math.round(avgRevenue)}`;
       }
     }
   }

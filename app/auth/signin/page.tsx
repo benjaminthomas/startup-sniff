@@ -13,16 +13,19 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+import type { Route } from 'next'
 import { getCurrentUser } from '@/lib/auth/actions'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
 import { SignInForm } from '@/components/auth/signin-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
 
 export const metadata: Metadata = {
   title: 'Sign In | StartupSniff',
   description: 'Sign in to your StartupSniff account securely',
 }
+
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
 
 interface SignInPageProps {
   searchParams: Promise<{
@@ -41,7 +44,7 @@ async function SignInPageContent({ searchParams }: SignInPageProps) {
   
   if (user) {
     const redirectTo = params.redirectTo || '/dashboard'
-    redirect(redirectTo)
+    redirect(redirectTo as Route)
   }
 
   // Generate CSRF token for the form
@@ -84,24 +87,9 @@ async function SignInPageContent({ searchParams }: SignInPageProps) {
             redirectTo={params.redirectTo}
           />
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">
-                Or continue with
-              </span>
-            </div>
-          </div>
-
-          {/* OAuth providers would go here */}
-          <div className="text-center text-sm text-muted-foreground">
-            OAuth providers coming soon...
-          </div>
 
           <div className="text-center text-sm text-muted-foreground">
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <Link
               href="/auth/signup"
               className="font-medium text-primary hover:underline transition-colors"

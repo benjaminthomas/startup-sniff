@@ -1,26 +1,22 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { generateIdea } from '@/server/actions/ideas';
-import { 
-  Loader2, 
-  Sparkles, 
-  AlertCircle, 
-  ChevronRight, 
-  Zap, 
-  Target, 
-  Users, 
+import {
+  Loader2,
+  Sparkles,
+  AlertCircle,
+  Zap,
+  Target,
+  Users,
   DollarSign,
-  Clock,
   Lightbulb,
   Brain,
   TrendingUp,
@@ -54,6 +50,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { UnlockOverlay } from '@/components/ui/unlock-overlay';
+import { StartupIdea, StartupIdeaRow, IdeaGenerationFormData, mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 
 const industries = [
   { id: 'technology', label: 'Technology', icon: Monitor, description: 'Software, AI, hardware' },
@@ -88,22 +85,15 @@ const audiences = [
   { id: 'seniors', label: 'Seniors', icon: UserX, description: '65+ demographic' },
 ];
 
-type FormData = {
-  industry?: string;
-  problemArea?: string;
-  targetAudience?: string;
-  budget?: string;
-  timeframe?: string;
-  userPrompt?: string;
-}
+// Use the imported type
+type FormData = IdeaGenerationFormData;
 
 export function IdeaGenerationForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({});
   const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedIdea, setGeneratedIdea] = useState<any>(null);
+  const [generatedIdea, setGeneratedIdea] = useState<StartupIdea | null>(null);
   const [error, setError] = useState<string>('');
-  const [isPending, startTransition] = useTransition();
   const [showUnlockOverlay, setShowUnlockOverlay] = useState(false);
   const router = useRouter();
 
@@ -215,10 +205,13 @@ export function IdeaGenerationForm() {
       if (result.success && result.idea) {
         // Refresh usage data after successful generation
         await refreshUsage();
-        
-        setGeneratedIdea(result.idea);
-        toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, { 
-          id: loadingToast 
+
+        // Convert database row to properly typed StartupIdea
+        const typedIdea = result.idea ? mapDatabaseRowToStartupIdea(result.idea as unknown as StartupIdeaRow) : null;
+        setGeneratedIdea(typedIdea);
+        toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
+          id: loadingToast,
+          duration: 5000
         });
 
         // Show usage progress
@@ -232,8 +225,9 @@ export function IdeaGenerationForm() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to generate idea';
       setError(errorMessage);
-      toast.error(`${errorMessage}`, { 
-        id: loadingToast 
+      toast.error(`${errorMessage}`, {
+        id: loadingToast,
+        duration: 5000
       });
     } finally {
       setIsGenerating(false);
@@ -272,7 +266,7 @@ export function IdeaGenerationForm() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-muted-foreground leading-relaxed">{generatedIdea.description}</p>
+          <p className="text-muted-foreground leading-relaxed">{generatedIdea.problem_statement}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-background/50 rounded-lg">
@@ -281,10 +275,7 @@ export function IdeaGenerationForm() {
                 Target Market:
               </span>
               <p className="text-muted-foreground mt-1">
-                {typeof generatedIdea.target_market === 'object' 
-                  ? generatedIdea.target_market?.description || 'Not specified'
-                  : generatedIdea.target_market || 'Not specified'
-                }
+                {generatedIdea.target_market.description || 'Not specified'}
               </p>
             </div>
             <div className="p-3 bg-background/50 rounded-lg">
@@ -293,10 +284,7 @@ export function IdeaGenerationForm() {
                 Revenue Model:
               </span>
               <p className="text-muted-foreground mt-1">
-                {Array.isArray(generatedIdea.solution?.revenue_model) 
-                  ? generatedIdea.solution.revenue_model.join(', ')
-                  : generatedIdea.revenue_models?.join?.(', ') || 'Not specified'
-                }
+                {generatedIdea.solution.revenue_model?.join(', ') || 'Not specified'}
               </p>
             </div>
           </div>
@@ -752,7 +740,7 @@ export function IdeaGenerationForm() {
               </div>
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li>• Mention your skills and experience</li>
-                <li>• Share what problems you've personally experienced</li>
+                <li>• Share what problems you&apos;ve personally experienced</li>
                 <li>• Include any market insights you have</li>
                 <li>• Tell us about your ideal work style</li>
               </ul>

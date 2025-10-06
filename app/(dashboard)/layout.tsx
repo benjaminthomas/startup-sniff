@@ -33,13 +33,18 @@ export default async function DashboardLayout({
       .eq('id', user.id)
       .single();
     profile = data;
-  } catch (error) {
+  } catch {
     // Use auth user data as fallback if profile doesn't exist
   }
 
-  const displayUser = profile || {
+  const displayUser = profile ? {
+    id: profile.id,
+    email: profile.email || user.email || null,
+    full_name: (profile as Record<string, unknown>).name as string || (profile as Record<string, unknown>).full_name as string || user.user_metadata?.full_name || null,
+    plan_type: (profile as Record<string, unknown>).plan_type as string || 'explorer',
+  } : {
     id: user.id,
-    email: user.email,
+    email: user.email || null,
     full_name: user.user_metadata?.full_name || null,
     plan_type: 'explorer',
   };

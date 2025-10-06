@@ -22,7 +22,6 @@ import { toast } from 'sonner'
 import { signInAction } from '@/lib/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
@@ -83,27 +82,20 @@ export function SignInForm({ csrfToken, redirectTo }: SignInFormProps) {
 
       try {
         const result = await signInAction(formData)
-        
+
         if (!result.success) {
-          setError(result.error)
-          
-          // Focus the field with the error
-          if (result.field && form.setFocus) {
-            form.setFocus(result.field as keyof SignInFormData)
-          }
-          
-          // Show toast for better UX
+          setError(result.error || 'An error occurred')
           toast.error(result.error)
         } else {
           toast.success('Welcome back! Redirecting...')
+
+          // Handle client-side navigation
+          if (result.redirectTo) {
+            window.location.href = result.redirectTo
+          }
         }
       } catch (err) {
-        // Don't show error for successful redirects
-        if (err instanceof Error && err.digest?.startsWith('NEXT_REDIRECT')) {
-          return
-        }
-        
-        console.error('Sign-in error:', err)
+        console.error('Signin error:', err)
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }

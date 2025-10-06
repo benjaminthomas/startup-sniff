@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,8 +11,20 @@ import { toast } from 'sonner';
 import { formatCurrency, formatDate } from '@/lib/utils';
 
 interface CurrentPlanProps {
-  currentPlan: any;
-  subscription: any;
+  currentPlan: {
+    id: string;
+    name: string;
+    price: number;
+    features: string[];
+    limits: {
+      ideas: number;
+      validations: number;
+    };
+  };
+  subscription: {
+    current_period_end: string;
+    cancel_at_period_end: boolean;
+  } | null;
   hasStripeCustomerId: boolean;
 }
 

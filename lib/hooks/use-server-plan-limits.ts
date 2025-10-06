@@ -49,7 +49,7 @@ export function useServerPlanLimits() {
     if (limit === -1) return -1; // unlimited
     
     const used = data.usage[usageKey];
-    const remaining = Math.max(0, limit - used);
+    const remaining = Math.max(0, limit - Number(used || 0));
     
     console.log(`getRemainingLimit(${type}):`, {
       planType: data.planType,
@@ -72,7 +72,7 @@ export function useServerPlanLimits() {
     if (limit === -1) return 0; // unlimited
     
     const used = data.usage[usageKey];
-    return Math.min(100, (used / limit) * 100);
+    return Math.min(100, (Number(used || 0) / limit) * 100);
   };
 
   const isAtLimit = (type: 'ideas' | 'validations' | 'content'): boolean => {

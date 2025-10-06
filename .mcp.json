@@ -7,17 +7,15 @@
         "-y",
         "@upstash/context7-mcp",
         "--api-key",
-        "ctx7sk-d8feae8c-beb8-49f4-ba70-59221119d238"
-      ],
-      "env": {}
+        "ctx7sk-f93b3dfe-b5f5-439d-b8af-841d1b1af4cd"
+      ]
     },
     "playwright": {
       "type": "stdio",
       "command": "npx",
       "args": [
         "@playwright/mcp@latest"
-      ],
-      "env": {}
+      ]
     },
     "supabase": {
       "command": "npx",

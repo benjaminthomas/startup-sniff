@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   TrendingUp, 
@@ -13,11 +12,10 @@ import {
   ExternalLink,
   RefreshCw,
   Target,
-  Users,
   Activity,
   ChevronRight
 } from "lucide-react";
-import { analyzeRedditTrends, getRedditTrendsSummary } from "@/lib/actions/reddit";
+import { getRedditTrendsSummary } from "@/lib/actions/reddit";
 
 interface RedditTrendAnalysis {
   subreddit: string;
@@ -41,16 +39,18 @@ interface RedditTrendAnalysis {
   }>;
 }
 
+interface TrendOpportunity {
+  subreddit: string;
+  opportunityScore: number;
+  trendingTopics: string[];
+  topPost: Record<string, unknown> | null;
+}
+
 interface TrendsSummary {
   totalTopics: number;
   activeCommunities: number;
   weeklyGrowth: string;
-  topOpportunities: Array<{
-    subreddit: string;
-    opportunityScore: number;
-    trendingTopics: string[];
-    topPost: any;
-  }>;
+  topOpportunities: TrendOpportunity[];
   fullAnalysis?: RedditTrendAnalysis[];
 }
 
@@ -95,6 +95,43 @@ export function RedditTrends() {
     if (score >= 60) return 'text-green-600';
     if (score >= 40) return 'text-yellow-600';
     return 'text-gray-600';
+  };
+
+  // Generate meaningful titles from trending topics and posts
+  const generateMeaningfulTitle = (opportunity: TrendOpportunity) => {
+    if (opportunity.topPost?.title) {
+      // Extract the main problem/pain point from the post title
+      const title = opportunity.topPost.title as string;
+      if (title.length > 60) {
+        return title.substring(0, 57) + '...';
+      }
+      return title;
+    }
+
+    // Fallback to trending topics if no post title
+    if (opportunity.trendingTopics && opportunity.trendingTopics.length > 0) {
+      const mainTopic = opportunity.trendingTopics[0];
+      return `${mainTopic} Solutions Needed`;
+    }
+
+    // Last resort - community focus
+    return `${opportunity.subreddit} Community Opportunities`;
+  };
+
+  const generateAnalysisTitle = (analysis: RedditTrendAnalysis) => {
+    if (analysis.top_posts && analysis.top_posts.length > 0) {
+      const topPost = analysis.top_posts[0];
+      if ((topPost.title as string).length > 50) {
+        return (topPost.title as string).substring(0, 47) + '...';
+      }
+      return topPost.title as string;
+    }
+
+    if (analysis.trending_topics && analysis.trending_topics.length > 0) {
+      return `${analysis.trending_topics[0]} Market Opportunities`;
+    }
+
+    return `r/${analysis.subreddit} Pain Points`;
   };
 
   if (isLoading && !summary) {
@@ -160,9 +197,9 @@ export function RedditTrends() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Reddit Trend Analysis</CardTitle>
+              <CardTitle>Market Pain Points & Opportunities</CardTitle>
               <CardDescription>
-                AI-powered analysis of trending topics across entrepreneurship communities
+                Real user problems and business opportunities discovered from active Reddit discussions
               </CardDescription>
             </div>
             <Button 
@@ -187,13 +224,16 @@ export function RedditTrends() {
                     <Card key={opportunity.subreddit} className="border-l-4 border-l-blue-500">
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium">r/{opportunity.subreddit}</h5>
-                          <Badge 
-                            variant="outline" 
+                          <h5 className="font-medium text-sm leading-tight">{generateMeaningfulTitle(opportunity)}</h5>
+                          <Badge
+                            variant="outline"
                             className={getOpportunityColor(opportunity.opportunityScore)}
                           >
                             {opportunity.opportunityScore}/100
                           </Badge>
+                        </div>
+                        <div className="mb-2">
+                          <span className="text-xs text-muted-foreground">from r/{opportunity.subreddit}</span>
                         </div>
                         <div className="space-y-2">
                           <div className="flex flex-wrap gap-1">
@@ -205,7 +245,7 @@ export function RedditTrends() {
                           </div>
                           {opportunity.topPost && (
                             <p className="text-xs text-muted-foreground line-clamp-2">
-                              "{opportunity.topPost.title}"
+                              &ldquo;{opportunity.topPost.title as string}&rdquo;
                             </p>
                           )}
                         </div>
@@ -235,16 +275,19 @@ export function RedditTrends() {
                     {fullAnalysis.map((analysis) => (
                       <Card key={analysis.subreddit}>
                         <CardHeader className="pb-3">
-                          <div className="flex items-center justify-between">
-                            <CardTitle className="text-lg">r/{analysis.subreddit}</CardTitle>
-                            <div className="flex items-center space-x-2">
-                              <Badge 
-                                variant="outline" 
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 mr-4">
+                              <CardTitle className="text-lg leading-tight mb-1">{generateAnalysisTitle(analysis)}</CardTitle>
+                              <span className="text-sm text-muted-foreground">from r/{analysis.subreddit}</span>
+                            </div>
+                            <div className="flex items-center space-x-2 flex-shrink-0">
+                              <Badge
+                                variant="outline"
                                 className={getSentimentColor(analysis.sentiment_score)}
                               >
                                 {analysis.sentiment_score}% sentiment
                               </Badge>
-                              <Badge 
+                              <Badge
                                 variant="outline"
                                 className={getOpportunityColor(analysis.opportunity_score)}
                               >

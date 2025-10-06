@@ -111,21 +111,14 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
         const result = await signUpAction(formData)
         
         if (!result.success) {
-          setError(result.error)
-          
-          // Focus the field with the error
-          if (result.field && form.setFocus) {
-            form.setFocus(result.field as keyof SignUpFormData)
-          }
-          
+          setError(result.error || 'An error occurred')
           toast.error(result.error)
         } else {
           setSuccess(result.message || 'Account created successfully!')
           toast.success('Account created! Please check your email.')
           form.reset()
         }
-      } catch (err) {
-        console.error('Sign-up error:', err)
+      } catch {
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }
@@ -141,7 +134,7 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
         <div>
           <h3 className="text-lg font-semibold">Check your email</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            We've sent a confirmation email to verify your account. 
+            We&apos;ve sent a confirmation email to verify your account.
             Please check your inbox and click the verification link to complete your registration.
           </p>
         </div>

@@ -45,23 +45,23 @@ export function IconShowcase() {
             <h3 className="text-lg font-semibold mb-4">Icon Sizes</h3>
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
-                <FeatureIcons.Lightbulb className={IconSizes.xs} />
+                <FeatureIcons.IdeaGeneration className={IconSizes.xs} />
                 <span className="text-sm">XS (12px)</span>
               </div>
               <div className="flex items-center space-x-2">
-                <FeatureIcons.Lightbulb className={IconSizes.sm} />
+                <FeatureIcons.IdeaGeneration className={IconSizes.sm} />
                 <span className="text-sm">SM (16px)</span>
               </div>
               <div className="flex items-center space-x-2">
-                <FeatureIcons.Lightbulb className={IconSizes.md} />
+                <FeatureIcons.IdeaGeneration className={IconSizes.md} />
                 <span className="text-sm">MD (20px)</span>
               </div>
               <div className="flex items-center space-x-2">
-                <FeatureIcons.Lightbulb className={IconSizes.lg} />
+                <FeatureIcons.IdeaGeneration className={IconSizes.lg} />
                 <span className="text-sm">LG (24px)</span>
               </div>
               <div className="flex items-center space-x-2">
-                <FeatureIcons.Lightbulb className={IconSizes.xl} />
+                <FeatureIcons.IdeaGeneration className={IconSizes.xl} />
                 <span className="text-sm">XL (32px)</span>
               </div>
             </div>

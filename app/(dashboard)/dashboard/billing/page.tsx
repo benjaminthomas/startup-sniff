@@ -24,23 +24,17 @@ export default async function BillingPage() {
     redirect('/auth/signin');
   }
 
-  // Get user profile and subscription data
-  const [userProfile, subscription] = await Promise.allSettled([
+  // Get user profile (subscription table not yet implemented)
+  const [userProfile] = await Promise.allSettled([
     supabase
       .from('users')
       .select('*')
       .eq('id', user.id)
       .single(),
-    supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .single(),
   ]);
 
   const profile = userProfile.status === 'fulfilled' ? userProfile.value.data : null;
-  const currentSubscription = subscription.status === 'fulfilled' ? subscription.value.data : null;
+  const currentSubscription = null; // TODO: Implement when subscriptions table is created
 
   // Use auth user data as fallback
   const displayUser = profile || {
@@ -69,8 +63,8 @@ export default async function BillingPage() {
 
         <div>
           <h2 className="text-2xl font-semibold mb-6">Available Plans</h2>
-          <PricingCards 
-            currentPlanId={displayUser.plan_type}
+          <PricingCards
+            currentPlanId={displayUser.plan_type || 'explorer'}
             userId={user.id}
           />
         </div>

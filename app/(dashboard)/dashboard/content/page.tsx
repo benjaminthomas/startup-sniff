@@ -1,12 +1,13 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader } from "@/components/ui/page-header";
-import { FileText, PenTool, Share2, Copy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sparkles, BarChart3, Library } from "lucide-react";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
+import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
+import { ContentAnalytics } from '@/components/features/content/content-analytics';
+import { getUserIdeas } from '@/server/actions/ideas';
+import { getUserContent } from '@/server/actions/content';
+import { StartupIdea, GeneratedContent } from '@/types/global';
 
 export default async function ContentPage() {
   const supabase = await createServerSupabaseClient();
@@ -15,28 +16,17 @@ export default async function ContentPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  let contentStats = {
-    contentCreated: 0,
-    blogPosts: 0,
-    socialPosts: 0,
-    templates: 12, // This could be a fixed number of available templates
-  };
+  // Note: Content stats calculation removed - not currently displayed in UI
+  // Can be re-added when analytics dashboard is implemented
 
-  if (user) {
-    // Fetch actual content generation statistics
-    const { data: generatedContent } = await supabase
-      .from('generated_content')
-      .select('content_type, created_at')
-      .eq('user_id', user.id);
+  // Get user's startup ideas for content generation
+  const userIdeasRaw = user ? await getUserIdeas(10) : [];
+  const typedUserIdeas: StartupIdea[] = userIdeasRaw as unknown as StartupIdea[];
 
-    if (generatedContent) {
-      contentStats.contentCreated = generatedContent.length;
-      contentStats.blogPosts = generatedContent.filter(content => content.content_type === 'blog_post').length;
-      contentStats.socialPosts = generatedContent.filter(content => 
-        content.content_type === 'tweet' || content.content_type === 'social_media'
-      ).length;
-    }
-  }
+  // Get user's generated content
+  const userContentRaw = user ? await getUserContent(20) : [];
+  const typedUserContent: GeneratedContent[] = userContentRaw as unknown as GeneratedContent[];
+  
   return (
     <div className="space-y-6">
       <PageHeader
@@ -44,125 +34,48 @@ export default async function ContentPage() {
         description="Create compelling marketing content for your startup with AI assistance"
       />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Content Created</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contentStats.contentCreated}</div>
-            <p className="text-xs text-muted-foreground">Total generated</p>
-          </CardContent>
-        </Card>
+      <Tabs defaultValue="create" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 bg-muted/30 p-1 rounded-xl h-12">
+          <TabsTrigger
+            value="create"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+          >
+            <Sparkles className="h-4 w-4" />
+            Create Content
+          </TabsTrigger>
+          <TabsTrigger
+            value="library"
+            className="data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+          >
+            <Library className="h-4 w-4" />
+            My Library ({typedUserContent.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="data-[state=active]:bg-green-500 data-[state=active]:text-white rounded-lg font-medium transition-all duration-200 flex items-center gap-2"
+          >
+            <BarChart3 className="h-4 w-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Blog Posts</CardTitle>
-            <PenTool className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contentStats.blogPosts}</div>
-            <p className="text-xs text-muted-foreground">Blog posts created</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Social Posts</CardTitle>
-            <Share2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contentStats.socialPosts}</div>
-            <p className="text-xs text-muted-foreground">Social posts created</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Templates</CardTitle>
-            <Copy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{contentStats.templates}</div>
-            <p className="text-xs text-muted-foreground">Available templates</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Generate Content</CardTitle>
-          <CardDescription>
-            Create marketing content tailored to your startup and audience
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="content-type">Content Type</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select content type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="blog-post">Blog Post</SelectItem>
-                  <SelectItem value="social-media">Social Media Post</SelectItem>
-                  <SelectItem value="email">Email Campaign</SelectItem>
-                  <SelectItem value="landing-page">Landing Page Copy</SelectItem>
-                  <SelectItem value="press-release">Press Release</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="tone">Tone & Style</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select tone" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="professional">Professional</SelectItem>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="exciting">Exciting</SelectItem>
-                  <SelectItem value="authoritative">Authoritative</SelectItem>
-                  <SelectItem value="friendly">Friendly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Create Content Tab */}
+        <TabsContent value="create" className="mt-8">
+          <div className="space-y-6">
+            <ContentGenerationForm userIdeas={typedUserIdeas as never} />
           </div>
+        </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="topic">Topic/Subject</Label>
-            <Input
-              id="topic"
-              placeholder="What do you want to write about?"
-            />
-          </div>
+        {/* My Library Tab */}
+        <TabsContent value="library" className="mt-8">
+          <GeneratedContentShowcase content={typedUserContent} />
+        </TabsContent>
 
-          <div className="space-y-2">
-            <Label htmlFor="key-points">Key Points</Label>
-            <Textarea
-              id="key-points"
-              placeholder="List the main points you want to cover..."
-              rows={3}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="target-audience">Target Audience</Label>
-            <Input
-              id="target-audience"
-              placeholder="Who is this content for?"
-            />
-          </div>
-
-          <Button className="w-full">
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Content
-          </Button>
-        </CardContent>
-      </Card>
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="mt-8">
+          <ContentAnalytics content={typedUserContent} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -4,9 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Lightbulb, TrendingUp, FileText, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
 
 export function QuickActions() {
   const actions = [

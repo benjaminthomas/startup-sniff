@@ -168,7 +168,7 @@ export function Header({ user, breadcrumbs = [] }: HeaderProps) {
                   {user?.full_name || 'User'}
                 </p>
                 <p className="text-xs leading-none text-muted-foreground">
-                  {user?.email || 'user@example.com'}
+                  {user?.email || 'Loading...'}
                 </p>
               </div>
             </DropdownMenuLabel>

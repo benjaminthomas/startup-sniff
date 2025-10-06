@@ -103,9 +103,9 @@ Generate 3 innovative startup ideas based on this data.`;
     const usage = completion.usage?.total_tokens || 0;
 
     return {
-      ideas: ideas.map((idea: any) => ({
+      ideas: ideas.map((idea: Record<string, unknown>) => ({
         ...idea,
-        ai_confidence_score: idea.success_metrics?.probability_score || 50,
+        ai_confidence_score: (idea.success_metrics as Record<string, unknown>)?.probability_score || 50,
         source_data: { reddit_data: redditData, user_preferences: userPreferences },
         is_validated: false,
         is_favorite: false,

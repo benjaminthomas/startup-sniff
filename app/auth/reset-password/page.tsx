@@ -6,7 +6,6 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { getCurrentUser } from '@/lib/auth/actions'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server'
 import { ResetPasswordForm } from '@/components/auth/reset-password-form'
@@ -17,6 +16,9 @@ export const metadata: Metadata = {
   title: 'Reset Password | StartupSniff',
   description: 'Set your new StartupSniff account password',
 }
+
+// Force dynamic rendering since this page uses cookies/auth
+export const dynamic = 'force-dynamic'
 
 interface ResetPasswordPageProps {
   searchParams: Promise<{

@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { supabase, response } = createMiddlewareSupabaseClient(request)
+    const { supabase } = createMiddlewareSupabaseClient(request)
 
     // Check if this is a password recovery flow
     const tokenHash = searchParams.get('token_hash')
@@ -110,24 +110,24 @@ export async function GET(request: NextRequest) {
       // Don't block authentication for profile errors
     }
 
-    // Create usage limits for new users
-    const { error: usageLimitsError } = await supabase
-      .from('usage_limits')
-      .upsert({
-        user_id: data.user.id,
-        plan_type: 'explorer',
-        monthly_limit_ideas: 5,
-        monthly_limit_validations: 3,
-        ideas_generated: 0,
-        validations_completed: 0,
-        updated_at: new Date().toISOString(),
-      }, {
-        onConflict: 'user_id'
-      })
+    // Usage limits functionality disabled until table schema is updated
+    // const { error: usageLimitsError } = await supabase
+    //   .from('usage_limits')
+    //   .upsert({
+    //     user_id: data.user.id,
+    //     plan_type: 'explorer',
+    //     monthly_limit_ideas: 5,
+    //     monthly_limit_validations: 3,
+    //     ideas_generated: 0,
+    //     validations_completed: 0,
+    //     updated_at: new Date().toISOString(),
+    //   }, {
+    //     onConflict: 'user_id'
+    //   })
 
-    if (usageLimitsError) {
-      console.error('Failed to create/update usage limits:', usageLimitsError)
-    }
+    // if (usageLimitsError) {
+    //   console.error('Failed to create/update usage limits:', usageLimitsError)
+    // }
 
     // Generate CSRF token for authenticated session
     try {

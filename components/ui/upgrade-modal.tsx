@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { 
   Card, 
   CardContent, 
@@ -11,10 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Zap, 
-  Crown, 
-  Sparkles, 
+import {
+  Crown,
+  Sparkles,
   ArrowUp,
   Target,
   Lightbulb,
@@ -22,7 +20,6 @@ import {
   X,
   CheckCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -33,7 +30,6 @@ interface UpgradeModalProps {
   currentPlan: 'explorer' | 'founder' | 'growth';
   usedCount: number;
   limitCount: number;
-  className?: string;
 }
 
 // Following StartupSniff design system - using design tokens and shadcn/ui standards
@@ -91,8 +87,7 @@ export function UpgradeModal({
   featureType,
   currentPlan,
   usedCount,
-  limitCount,
-  className
+  limitCount
 }: UpgradeModalProps) {
   const feature = FEATURE_CONFIG[featureType];
   const FeatureIcon = feature.icon;
@@ -136,9 +131,9 @@ export function UpgradeModal({
                   </div>
                 </div>
                 
-                <CardTitle className="text-xl">You've reached your {feature.title} limit!</CardTitle>
+                <CardTitle className="text-xl">You&apos;ve reached your {feature.title} limit!</CardTitle>
                 <CardDescription>
-                  You've used <strong>{usedCount} of {limitCount}</strong> {feature.description} this month
+                  You&apos;ve used <strong>{usedCount} of {limitCount}</strong> {feature.description} this month
                 </CardDescription>
                 
                 <div className="mt-4">

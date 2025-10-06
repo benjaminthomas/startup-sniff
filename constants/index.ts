@@ -73,6 +73,93 @@ export const BRAND_VOICES = [
   { id: 'contrarian', name: 'Contrarian', description: 'Bold, challenging, unique perspective' },
 ] as const;
 
+export const CONTENT_TEMPLATES = [
+  {
+    id: 'product_launch_blog',
+    name: 'Product Launch Blog',
+    type: 'blog_post',
+    description: 'Announce your new product with compelling benefits',
+    preview: 'Introducing [Product] - The Future of [Industry] is Here...',
+  },
+  {
+    id: 'startup_story_blog',
+    name: 'Startup Story Blog',
+    type: 'blog_post', 
+    description: 'Share your entrepreneurial journey and lessons learned',
+    preview: 'How I Built [Startup] From Zero to [Milestone]...',
+  },
+  {
+    id: 'problem_solution_tweet',
+    name: 'Problem-Solution Thread',
+    type: 'tweet',
+    description: 'Present a problem and your startup as the solution',
+    preview: '🧵 Thread: The $100B problem nobody is talking about...',
+  },
+  {
+    id: 'growth_metrics_tweet', 
+    name: 'Growth Metrics Thread',
+    type: 'tweet',
+    description: 'Share your startup growth and key metrics',
+    preview: '📈 We hit [milestone] this month! Here\'s what we learned...',
+  },
+  {
+    id: 'welcome_email',
+    name: 'Welcome Email Series',
+    type: 'email',
+    description: 'Onboard new users with value-driven messaging',
+    preview: 'Welcome to [Product]! Here\'s how to get started...',
+  },
+  {
+    id: 'feature_announcement_email',
+    name: 'Feature Announcement',
+    type: 'email', 
+    description: 'Announce new features to your user base',
+    preview: 'New Feature Alert: [Feature] is now live!',
+  },
+  {
+    id: 'saas_landing_page',
+    name: 'SaaS Landing Page',
+    type: 'landing_page',
+    description: 'Convert visitors with clear value props and social proof',
+    preview: '[Product] - The [Category] Tool That [Benefit]',
+  },
+  {
+    id: 'waitlist_landing_page',
+    name: 'Waitlist Landing Page', 
+    type: 'landing_page',
+    description: 'Build pre-launch excitement and capture early users',
+    preview: 'Get Early Access to [Product] - Join 1000+ Founders',
+  },
+  {
+    id: 'investor_pitch_blog',
+    name: 'Investor Pitch Blog',
+    type: 'blog_post',
+    description: 'Showcase your vision and traction to potential investors',
+    preview: 'Why We\'re Building [Startup]: A Letter to Investors',
+  },
+  {
+    id: 'customer_success_tweet',
+    name: 'Customer Success Story',
+    type: 'tweet', 
+    description: 'Highlight customer wins and social proof',
+    preview: '🎉 Customer spotlight: How [Customer] achieved [result]...',
+  },
+  {
+    id: 'pricing_announcement_email',
+    name: 'Pricing Announcement',
+    type: 'email',
+    description: 'Communicate pricing changes with transparency',
+    preview: 'Important Update: Changes to Our Pricing Structure',
+  },
+  {
+    id: 'about_us_page',
+    name: 'About Us Page',
+    type: 'landing_page',
+    description: 'Tell your company story and build trust',
+    preview: 'About [Company] - Our Mission to [Vision]',
+  },
+] as const;
+
 export const SUBREDDITS = [
   'entrepreneur',
   'startups',

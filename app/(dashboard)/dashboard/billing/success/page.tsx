@@ -1,6 +1,7 @@
 import { Metadata } from 'next';
 import { Suspense } from 'react';
 import Link from 'next/link';
+import { Route } from 'next';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +29,7 @@ function SuccessContent() {
 
           <CardContent className="space-y-6">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <h3 className="font-semibold text-green-900 mb-2">What's next?</h3>
+              <h3 className="font-semibold text-green-900 mb-2">What&apos;s next?</h3>
               <ul className="text-sm text-green-700 space-y-1 text-left">
                 <li>• Generate unlimited AI-powered startup ideas</li>
                 <li>• Access advanced market validation tools</li>
@@ -54,7 +55,7 @@ function SuccessContent() {
 
             <div className="text-sm text-muted-foreground">
               Need help getting started?{' '}
-              <Link href="/support" className="text-primary hover:underline">
+              <Link href={"/support" as Route} className="text-primary hover:underline">
                 Contact our support team
               </Link>
             </div>

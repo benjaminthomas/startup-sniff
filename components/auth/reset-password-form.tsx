@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useState, useTransition, useEffect } from 'react'
+import { useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,7 +12,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 // import { createClient } from '@/lib/auth/supabase-client'
 
-import { updatePasswordAction } from '@/lib/auth/actions'
+import { resetPasswordAction } from '@/lib/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -114,34 +114,34 @@ export function ResetPasswordForm({ csrfToken, recoveryToken }: ResetPasswordFor
       formData.append('confirmPassword', data.confirmPassword)
       formData.append('csrf-token', csrfToken)
       
-      // Include recovery token if available
+      // Include reset token if available
       if (recoveryToken) {
-        formData.append('recovery-token', recoveryToken)
+        formData.append('token', recoveryToken)
       }
 
       try {
-        const result = await updatePasswordAction(formData)
+        const result = await resetPasswordAction(formData)
         
         if (!result.success) {
-          setError(result.error)
-          
-          // Focus the field with the error
-          if (result.field && form.setFocus) {
-            form.setFocus(result.field as keyof ResetPasswordFormData)
-          }
-          
+          setError(result.error || 'An error occurred')
+
           toast.error(result.error)
         } else {
           toast.success('Password updated successfully!')
-          // The action will handle the redirect
+
+          // Redirect to signin page after successful password reset
+          if (result.redirectTo) {
+            setTimeout(() => {
+              window.location.href = result.redirectTo!
+            }, 1500) // Small delay to show success message
+          }
         }
       } catch (err) {
         // Don't show error for successful redirects
-        if (err instanceof Error && err.digest?.startsWith('NEXT_REDIRECT')) {
+        if (err instanceof Error && (err as Error & { digest?: string }).digest?.startsWith('NEXT_REDIRECT')) {
           return
         }
         
-        console.error('Password reset error:', err)
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }

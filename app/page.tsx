@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { 
   ArrowRight, 
@@ -8,7 +8,6 @@ import {
   TrendingUp, 
   Target, 
   Zap,
-  CheckCircle,
   BarChart3,
   Users,
   Globe
@@ -97,7 +96,7 @@ export default function HomePage() {
               Everything You Need to Launch Smart
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              From idea discovery to market validation, we've got your startup journey covered
+              From idea discovery to market validation, we&apos;ve got your startup journey covered
             </p>
           </div>
 
