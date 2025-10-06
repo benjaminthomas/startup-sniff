@@ -1,27 +1,26 @@
 /**
- * Secure Authentication Middleware
- * 
+ * Custom JWT Authentication Middleware
+ *
  * This middleware provides:
- * - Automatic session refresh
- * - CSRF protection for state-changing operations  
+ * - JWT session verification
+ * - CSRF protection for state-changing operations
  * - Rate limiting for auth endpoints
  * - Secure route protection
  * - Attack prevention (XSS, session fixation, replay attacks)
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { createMiddlewareSupabaseClient, checkRateLimit } from '@/lib/auth/supabase-server'
-import { extractAndVerifyCSRFToken, generateCSRFToken, setCSRFToken } from '@/lib/auth/csrf'
+import { verifySessionToken } from '@/lib/auth/jwt'
+import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/lib/auth/csrf'
 
 // Define protected and public routes
 const PUBLIC_ROUTES = [
   '/',
   '/auth/signin',
-  '/auth/signup', 
-  '/auth/callback',
+  '/auth/signup',
   '/auth/forgot-password',
   '/auth/reset-password',
-  '/auth/magic-link',
+  '/auth/verify-email',
 ]
 
 const AUTH_ROUTES = [
@@ -29,6 +28,7 @@ const AUTH_ROUTES = [
   '/auth/signup',
   '/auth/forgot-password',
   '/auth/reset-password',
+  '/auth/verify-email',
 ]
 
 const PROTECTED_ROUTES = ['/dashboard']
@@ -40,13 +40,16 @@ const RATE_LIMITS = {
   '/auth/forgot-password': { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
 }
 
+// In-memory rate limit store (in production, use Redis or database)
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const { supabase, response } = createMiddlewareSupabaseClient(request)
+  const response = NextResponse.next()
 
   try {
-    // Rate limiting for auth endpoints
-    if (request.method !== 'GET' && RATE_LIMITS[pathname as keyof typeof RATE_LIMITS]) {
+    // Rate limiting for auth endpoints (disabled in development for testing)
+    if (process.env.NODE_ENV === 'production' && request.method !== 'GET' && RATE_LIMITS[pathname as keyof typeof RATE_LIMITS]) {
       const { limit, windowMs } = RATE_LIMITS[pathname as keyof typeof RATE_LIMITS]
       const identifier = await getClientIdentifier(request)
       const { allowed, remaining } = await checkRateLimit(identifier, limit, windowMs)
@@ -55,7 +58,7 @@ export async function middleware(request: NextRequest) {
         console.warn(`Rate limit exceeded for ${identifier} on ${pathname}`)
         return NextResponse.json(
           { error: 'Too many attempts. Please try again later.' },
-          { 
+          {
             status: 429,
             headers: {
               'Retry-After': Math.ceil(windowMs / 1000).toString(),
@@ -69,15 +72,12 @@ export async function middleware(request: NextRequest) {
     }
 
     // CSRF Protection for all state-changing operations
-    if (request.method !== 'GET' && 
-        !pathname.startsWith('/auth/callback')) {
-      
+    if (request.method !== 'GET' && !pathname.startsWith('/api/webhooks')) {
       // Server Actions have built-in protection but we add additional validation
       const isServerAction = !!request.headers.get('next-action')
-      
+
       if (isServerAction) {
         // For Server Actions, we rely on Next.js built-in CSRF protection
-        // but we log for monitoring purposes
         console.log(`🔒 Server Action protected by Next.js: ${pathname}`)
       } else {
         // For regular API routes and form submissions, enforce CSRF
@@ -92,23 +92,31 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Get current user (secure method - authenticates with Supabase Auth server)
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    // Get JWT session token
+    const sessionToken = request.cookies.get('session-token')?.value
+    let user = null
 
-    // Handle user authentication errors
-    if (userError) {
-      console.error('User authentication error:', userError)
-      // Clear potentially corrupted session
-      await supabase.auth.signOut()
-      response.cookies.delete('csrf-token')
+    if (sessionToken) {
+      try {
+        const sessionPayload = await verifySessionToken(sessionToken)
+        if (sessionPayload) {
+          user = {
+            id: sessionPayload.userId,
+            email: sessionPayload.email
+          }
+        }
+      } catch (error) {
+        // Invalid token, clear it
+        response.cookies.delete('session-token')
+      }
     }
 
     const isAuthenticated = !!user
-    const isPublicRoute = PUBLIC_ROUTES.some(route => 
+    const isPublicRoute = PUBLIC_ROUTES.some(route =>
       pathname === route || pathname.startsWith(`${route}/`)
     )
     const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route))
-    const isProtectedRoute = PROTECTED_ROUTES.some(route => 
+    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
       pathname.startsWith(route)
     )
 
@@ -120,7 +128,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect authenticated users away from auth pages
-    if (isAuthenticated && isAuthRoute && pathname !== '/auth/callback') {
+    if (isAuthenticated && isAuthRoute) {
       const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard'
       return NextResponse.redirect(new URL(redirectTo, request.url))
     }
@@ -128,17 +136,17 @@ export async function middleware(request: NextRequest) {
     // Ensure CSRF token exists for all users accessing forms
     if (request.method === 'GET' && (pathname.startsWith('/auth/') || isAuthenticated)) {
       const existingToken = request.cookies.get('csrf-token')
-      let needsNewToken = !existingToken
+      let needsNewToken = !existingToken || !existingToken.value || existingToken.value === 'undefined'
 
       // Check if existing token is valid and not expired
-      if (existingToken) {
+      if (existingToken && existingToken.value && existingToken.value !== 'undefined') {
         try {
           const [, storedTimestamp] = existingToken.value.split('.')
           const timestamp = parseInt(storedTimestamp, 10)
           const tokenAge = Date.now() - timestamp
           const maxAge = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
 
-          if (tokenAge > maxAge) {
+          if (tokenAge > maxAge || isNaN(timestamp)) {
             needsNewToken = true
           }
         } catch {
@@ -149,11 +157,6 @@ export async function middleware(request: NextRequest) {
 
       if (needsNewToken) {
         const newToken = generateCSRFToken()
-        console.log('🔐 Generated CSRF token:', {
-          tokenLength: newToken.length,
-          tokenPreview: newToken.substring(0, 20) + '...',
-          pathname
-        })
         response.cookies.set('csrf-token', newToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -161,7 +164,6 @@ export async function middleware(request: NextRequest) {
           path: '/',
           maxAge: 24 * 60 * 60, // 24 hours
         })
-        console.log('🔐 Set new CSRF token for', pathname)
       }
     }
 
@@ -172,7 +174,7 @@ export async function middleware(request: NextRequest) {
       'X-Frame-Options': 'DENY',
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
-      
+
       // Content Security Policy
       'Content-Security-Policy': [
         "default-src 'self'",
@@ -180,14 +182,14 @@ export async function middleware(request: NextRequest) {
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' blob: data:",
         "font-src 'self'",
-        "connect-src 'self' https://*.supabase.co", // Allow Supabase API connections
+        "connect-src 'self' https://*.supabase.co", // Allow Supabase DB connections
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
         "frame-ancestors 'none'",
         "upgrade-insecure-requests"
       ].join('; '),
-      
+
       // CORS headers
       'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000',
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
@@ -204,7 +206,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error('Middleware error:', error)
     // Fail securely - redirect to signin on errors
-    if (!PUBLIC_ROUTES.includes(pathname)) {
+    if (!PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
     return response
@@ -217,10 +219,10 @@ async function getClientIdentifier(request: NextRequest): Promise<string> {
   const forwarded = request.headers.get('x-forwarded-for')
   const realIp = request.headers.get('x-real-ip')
   const ip = forwarded?.split(',')[0] || realIp || 'unknown'
-  
+
   // Include user agent to prevent easy bypassing
   const userAgent = request.headers.get('user-agent') || 'unknown'
-  
+
   // Create a hash to avoid storing full IP/UA using Web Crypto API
   const encoder = new TextEncoder()
   const data = encoder.encode(`${ip}:${userAgent}`)
@@ -228,6 +230,25 @@ async function getClientIdentifier(request: NextRequest): Promise<string> {
   const hashArray = Array.from(new Uint8Array(hashBuffer))
   const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   return hashHex.substring(0, 16)
+}
+
+// Simple in-memory rate limiting (use Redis in production)
+async function checkRateLimit(identifier: string, limit: number, windowMs: number): Promise<{ allowed: boolean; remaining: number }> {
+  const now = Date.now()
+  const record = rateLimitStore.get(identifier)
+
+  if (!record || now > record.resetTime) {
+    // New window or first request
+    rateLimitStore.set(identifier, { count: 1, resetTime: now + windowMs })
+    return { allowed: true, remaining: limit - 1 }
+  }
+
+  if (record.count >= limit) {
+    return { allowed: false, remaining: 0 }
+  }
+
+  record.count++
+  return { allowed: true, remaining: limit - record.count }
 }
 
 export const config = {

@@ -1,13 +1,6 @@
 /**
- * Secure Authentication Server Actions
- * 
- * All server actions implement:
- * - Input validation with Zod
- * - CSRF protection  
- * - Rate limiting
- * - Secure session management
- * - Comprehensive error handling
- * - Attack prevention
+ * Custom Authentication Server Actions
+ * Replaces Supabase Auth with custom JWT-based authentication
  */
 
 'use server'
@@ -15,773 +8,662 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { z } from 'zod'
-import { createServerSupabaseClient, createServerAdminClient, checkRateLimit } from './supabase-server'
-import { generateFormCSRFToken, verifyCSRFToken, clearCSRFToken } from './csrf'
-import { 
-  logAuthSuccess, 
-  logAuthFailure, 
-  logPasswordReset, 
-  logLogout,
-  logSecurityEvent,
-  detectSuspiciousActivity,
-  getClientIPAddress,
-  getUserAgent
-} from './security-logger'
 import { headers } from 'next/headers'
 
+import { hashPassword, verifyPassword, validatePasswordStrength } from './password'
+import { createSessionToken, setSessionCookie, clearSessionCookie, generateSessionId, getCurrentSession } from './jwt'
+import { UserDatabase, SessionDatabase, RateLimitDatabase } from './database'
+import { sendEmailVerification, sendPasswordResetEmail, generatePasswordResetToken, generateEmailVerificationToken, verifyEmailToken } from './email-mailgun-official'
+import { verifyCSRFToken } from './csrf'
+import { AuthResponse } from '@/types/database'
+
 // Validation schemas
+const signUpSchema = z.object({
+  email: z.string().email('Please enter a valid email address').max(255, 'Email too long').toLowerCase().trim(),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password too long'),
+  fullName: z.string().min(1, 'Full name is required').max(100, 'Name too long').trim(),
+  csrfToken: z.string(),
+})
+
 const signInSchema = z.object({
-  email: z.string()
-    .email('Please enter a valid email address')
-    .max(255, 'Email too long')
-    .toLowerCase()
-    .trim(),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(128, 'Password too long'),
+  email: z.string().email('Please enter a valid email address').max(255, 'Email too long').toLowerCase().trim(),
+  password: z.string().min(1, 'Password is required'),
   csrfToken: z.string(),
   rememberMe: z.boolean().optional(),
 })
 
-const signUpSchema = z.object({
-  email: z.string()
-    .email('Please enter a valid email address')
-    .max(255, 'Email too long')
-    .toLowerCase()
-    .trim(),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(128, 'Password too long')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
-  fullName: z.string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name too long')
-    .trim(),
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address').max(255, 'Email too long').toLowerCase().trim(),
   csrfToken: z.string(),
 })
 
 const resetPasswordSchema = z.object({
-  email: z.string()
-    .email('Please enter a valid email address')
-    .max(255, 'Email too long')
-    .toLowerCase()
-    .trim(),
+  token: z.string().min(1, 'Reset token is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(128, 'Password too long'),
   csrfToken: z.string(),
 })
 
-const updatePasswordSchema = z.object({
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(128, 'Password too long')
-    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Password must contain uppercase, lowercase, and number'),
-  confirmPassword: z.string(),
-  csrfToken: z.string(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: 'Passwords do not match',
-  path: ['confirmPassword'],
-})
+/**
+ * Rate limiting helper
+ */
+async function checkRateLimit(identifier: string, endpoint: string, maxAttempts: number, windowMinutes: number): Promise<boolean> {
+  try {
+    const rateLimit = await RateLimitDatabase.get(identifier, endpoint)
+    const now = new Date()
+    const windowStart = new Date(now.getTime() - windowMinutes * 60 * 1000)
 
-// Helper function to get client identifier
-async function getClientIdentifier(): Promise<string> {
+    if (!rateLimit) {
+      // First attempt
+      await RateLimitDatabase.upsert({
+        identifier,
+        endpoint,
+        attempts: 1,
+        window_start: now.toISOString(),
+      })
+      return true
+    }
+
+    const rateLimitWindowStart = new Date(rateLimit.window_start)
+
+    if (rateLimitWindowStart < windowStart) {
+      // Window expired, reset
+      await RateLimitDatabase.upsert({
+        identifier,
+        endpoint,
+        attempts: 1,
+        window_start: now.toISOString(),
+        blocked_until: null,
+      })
+      return true
+    }
+
+    if (rateLimit.attempts >= maxAttempts) {
+      // Rate limit exceeded
+      const blockUntil = new Date(now.getTime() + windowMinutes * 60 * 1000)
+      await RateLimitDatabase.upsert({
+        identifier,
+        endpoint,
+        attempts: rateLimit.attempts + 1,
+        window_start: rateLimit.window_start,
+        blocked_until: blockUntil.toISOString(),
+      })
+      return false
+    }
+
+    // Increment attempts
+    await RateLimitDatabase.upsert({
+      identifier,
+      endpoint,
+      attempts: rateLimit.attempts + 1,
+      window_start: rateLimit.window_start,
+      blocked_until: rateLimit.blocked_until,
+    })
+
+    return true
+  } catch (error) {
+    console.error('Rate limiting error:', error)
+    return true // Fail open for availability
+  }
+}
+
+/**
+ * Get client IP address for rate limiting
+ */
+async function getClientIP(): Promise<string> {
   const headersList = await headers()
   const forwarded = headersList.get('x-forwarded-for')
   const realIp = headersList.get('x-real-ip')
-  const ip = forwarded?.split(',')[0] || realIp || 'unknown'
-  const userAgent = headersList.get('user-agent') || 'unknown'
-  
-  const crypto = await import('crypto')
-  return crypto
-    .createHash('sha256')
-    .update(`${ip}:${userAgent}`)
-    .digest('hex')
-    .substring(0, 16)
-}
-
-
-/**
- * Secure Sign In Action
- */
-export async function signInAction(formData: FormData) {
-  // Get client information for logging
-  const headersList = await headers()
-  const request = new Request('http://localhost', {
-    headers: headersList,
-  })
-  const ipAddress = getClientIPAddress(request)
-  const userAgent = getUserAgent(request)
-
-  // Rate limiting check
-  const identifier = await getClientIdentifier()
-  const { allowed } = await checkRateLimit(identifier, 5, 15 * 60 * 1000) // 5 attempts per 15 minutes
-  
-  if (!allowed) {
-    // Log rate limit violation
-    await logSecurityEvent({
-      event_type: 'rate_limit_exceeded',
-      email: formData.get('email') as string || 'unknown',
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      metadata: { action: 'sign_in' },
-      risk_score: 7
-    })
-
-    return {
-      success: false,
-      error: 'Too many sign-in attempts. Please try again in 15 minutes.',
-      field: null,
-    }
-  }
-
-  // Validate input
-  const validationResult = signInSchema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password'),
-    csrfToken: formData.get('csrf-token'),
-    rememberMe: formData.get('remember-me') === 'on',
-  })
-
-  if (!validationResult.success) {
-    const fieldError = validationResult.error.errors[0]
-    return {
-      success: false,
-      error: fieldError.message,
-      field: fieldError.path[0],
-    }
-  }
-
-  const { email, password, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
-
-  // Simple CSRF token validation for Server Actions
-  // Since Server Actions run in a different context, we use a simplified validation
-  const formToken = formData.get('csrf-token') as string
-  if (!formToken || formToken.split('.').length !== 2) {
-    console.warn('CSRF validation failed: Invalid or missing token in Server Action')
-    
-    await logSecurityEvent({
-      event_type: 'csrf_violation',
-      email,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      metadata: { 
-        action: 'sign_in',
-        csrf_error: 'Invalid or missing CSRF token in Server Action'
-      },
-      risk_score: 9
-    })
-
-    return {
-      success: false,
-      error: 'Security validation failed. Please refresh the page.',
-      field: null,
-    }
-  }
-
-  // Additional validation: check token timestamp (not expired)
-  const [, tokenTimestamp] = formToken.split('.')
-  const timestamp = parseInt(tokenTimestamp, 10)
-  const tokenAge = Date.now() - timestamp
-  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
-
-  if (tokenAge > maxAge) {
-    console.warn('CSRF validation failed: Token expired in Server Action')
-    
-    await logSecurityEvent({
-      event_type: 'csrf_violation',
-      email,
-      ip_address: ipAddress,
-      user_agent: userAgent,
-      metadata: { 
-        action: 'sign_in',
-        csrf_error: 'CSRF token expired'
-      },
-      risk_score: 8
-    })
-
-    return {
-      success: false,
-      error: 'Security token expired. Please refresh the page.',
-      field: null,
-    }
-  }
-
-  try {
-    const supabase = await createServerSupabaseClient()
-
-    // Attempt sign in
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      // Log failed attempt with comprehensive security logging
-      await logAuthFailure(email, ipAddress, userAgent, error.message)
-      
-      // Check for suspicious activity
-      const isSuspicious = await detectSuspiciousActivity(ipAddress, email)
-      if (isSuspicious) {
-        // Additional security measures could be triggered here
-        console.warn(`Suspicious activity detected for ${email} from ${ipAddress}`)
-      }
-      
-      // Generic error message to prevent user enumeration
-      return {
-        success: false,
-        error: 'Invalid email or password. Please check your credentials and try again.',
-        field: 'email',
-      }
-    }
-
-    if (!data.user) {
-      return {
-        success: false,
-        error: 'Sign-in failed. Please try again.',
-        field: null,
-      }
-    }
-
-    // Verify email is confirmed
-    if (!data.user.email_confirmed_at) {
-      return {
-        success: false,
-        error: 'Please check your email and click the confirmation link before signing in.',
-        field: 'email',
-      }
-    }
-
-    // Create user profile if it doesn't exist
-    const { error: profileError } = await supabase
-      .from('users')
-      .upsert({
-        id: data.user.id,
-        email: data.user.email!,
-        full_name: data.user.user_metadata?.full_name || '',
-        updated_at: new Date().toISOString(),
-      })
-
-    if (profileError) {
-      console.error('Profile creation error:', profileError)
-      // Don't block sign-in for profile errors
-    }
-
-    // Log successful authentication
-    await logAuthSuccess(data.user.id, data.user.email!, ipAddress, userAgent)
-
-    // Generate new CSRF token for authenticated session
-    await generateFormCSRFToken()
-
-    revalidatePath('/', 'layout')
-    redirect('/dashboard')
-
-  } catch (error) {
-    // Allow Next.js redirects to bubble up
-    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
-      throw error
-    }
-    
-    console.error('Sign-in error:', error)
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.',
-      field: null,
-    }
-  }
+  return forwarded?.split(',')[0] || realIp || 'unknown'
 }
 
 /**
- * Secure Sign Up Action
+ * Sign up action
  */
-export async function signUpAction(formData: FormData) {
-  // Rate limiting check
-  const identifier = await getClientIdentifier()
-  const { allowed } = await checkRateLimit(identifier, 3, 60 * 60 * 1000) // 3 attempts per hour
-  
-  if (!allowed) {
-    return {
-      success: false,
-      error: 'Too many sign-up attempts. Please try again in an hour.',
-      field: null,
-    }
-  }
-
-  // Validate input
-  const validationResult = signUpSchema.safeParse({
-    email: formData.get('email'),
-    password: formData.get('password'),
-    fullName: formData.get('fullName'),
-    csrfToken: formData.get('csrf-token'),
-  })
-
-  if (!validationResult.success) {
-    const fieldError = validationResult.error.errors[0]
-    return {
-      success: false,
-      error: fieldError.message,
-      field: fieldError.path[0],
-    }
-  }
-
-  const { email, password, fullName, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
-
-  // Simple CSRF token validation for Server Actions
-  const formToken = formData.get('csrf-token') as string
-  if (!formToken || formToken.split('.').length !== 2) {
-    console.warn('CSRF validation failed for signUp: Invalid or missing token')
-    return {
-      success: false,
-      error: 'Security validation failed. Please refresh the page.',
-      field: null,
-    }
-  }
-
-  // Check token expiry
-  const [, tokenTimestamp] = formToken.split('.')
-  const timestamp = parseInt(tokenTimestamp, 10)
-  const tokenAge = Date.now() - timestamp
-  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
-
-  if (tokenAge > maxAge) {
-    console.warn('CSRF validation failed for signUp: Token expired')
-    return {
-      success: false,
-      error: 'Security token expired. Please refresh the page.',
-      field: null,
-    }
-  }
-
+export async function signUpAction(formData: FormData): Promise<AuthResponse> {
   try {
-    const supabase = await createServerSupabaseClient()
+    // Validate input
+    const validationResult = signUpSchema.safeParse({
+      email: formData.get('email'),
+      password: formData.get('password'),
+      fullName: formData.get('fullName'),
+      csrfToken: formData.get('csrf-token'),
+    })
+
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.errors[0].message,
+      }
+    }
+
+    const { email, password, fullName, csrfToken } = validationResult.data
+
+    // Verify CSRF token
+    const csrfValid = await verifyCSRFToken(csrfToken)
+    if (!csrfValid) {
+      return {
+        success: false,
+        error: 'Invalid request. Please try again.',
+      }
+    }
+
+    // Rate limiting (disabled in development for testing)
+    if (process.env.NODE_ENV === 'production') {
+      const clientIP = await getClientIP()
+      const rateLimitOk = await checkRateLimit(clientIP, 'signup', 3, 60) // 3 attempts per hour
+      if (!rateLimitOk) {
+        return {
+          success: false,
+          error: 'Too many signup attempts. Please try again later.',
+        }
+      }
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password)
+    if (!passwordValidation.isValid) {
+      return {
+        success: false,
+        error: passwordValidation.errors[0],
+      }
+    }
 
     // Check if user already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('email')
-      .eq('email', email)
-      .single()
-
+    const existingUser = await UserDatabase.findByEmail(email)
     if (existingUser) {
       return {
         success: false,
-        error: 'An account with this email already exists. Please sign in instead.',
-        field: 'email',
+        error: 'An account with this email already exists.',
       }
     }
 
-    // Check if user already exists in auth.users (requires admin client)
-    const adminClient = await createServerAdminClient()
-    const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers()
+    // Hash password
+    const passwordHash = await hashPassword(password)
 
-    if (listError) {
-      console.error('Admin listUsers error:', listError)
-      // Continue with signup if we can't check (fail open, but log the issue)
-    } else {
-      // Check if any user has this email
-      const existingUser = users?.find(user => user.email?.toLowerCase() === email.toLowerCase())
-      
-      if (existingUser) {
-        return {
-          success: false,
-          error: 'An account with this email already exists. Please sign in instead.',
-          field: 'email',
-        }
-      }
-    }
+    // Generate email verification token
+    const userId = crypto.randomUUID()
+    const verificationToken = await generateEmailVerificationToken(userId, email)
 
-    // Attempt sign up
-    const { data, error } = await supabase.auth.signUp({
+    // Create user
+    const user = await UserDatabase.create({
+      id: userId,
       email,
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
-        emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
-      },
+      password_hash: passwordHash,
+      full_name: fullName,
+      email_verified: false,
+      email_verification_token: verificationToken,
+      email_verification_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
+      plan_type: 'explorer',
+      subscription_status: 'inactive',
     })
 
-    if (error) {
-      console.error('Sign-up error:', error)
-      
-      // Handle specific Supabase auth errors
-      if (error.message.includes('User already registered') || error.code === 'user_already_exists') {
-        return {
-          success: false,
-          error: 'An account with this email already exists. Please sign in instead.',
-          field: 'email',
-        }
-      }
-      
-      if (error.code === 'email_address_invalid') {
-        return {
-          success: false,
-          error: 'Please enter a valid email address.',
-          field: 'email',
-        }
-      }
-      
-      if (error.code === 'signup_disabled') {
-        return {
-          success: false,
-          error: 'Account registration is currently disabled.',
-          field: null,
-        }
-      }
-      
-      return {
-        success: false,
-        error: error.message || 'Failed to create account. Please try again.',
-        field: null,
-      }
-    }
-
-    if (!data.user) {
-      return {
-        success: false,
-        error: 'Failed to create account. Please try again.',
-        field: null,
-      }
-    }
-
-    // Clear CSRF token after successful sign up
-    await clearCSRFToken()
-
-    return {
-      success: true,
-      message: 'Account created successfully! Please check your email to confirm your account.',
-      field: null,
-    }
-
-  } catch (error) {
-    console.error('Sign-up error:', error)
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.',
-      field: null,
-    }
-  }
-}
-
-/**
- * Secure Password Reset Request Action
- */
-export async function resetPasswordAction(formData: FormData) {
-  // Get client information for logging
-  const headersList = await headers()
-  const request = new Request('http://localhost', {
-    headers: headersList,
-  })
-  const ipAddress = getClientIPAddress(request)
-  const userAgent = getUserAgent(request)
-
-  // Rate limiting check
-  const identifier = await getClientIdentifier()
-  const { allowed } = await checkRateLimit(identifier, 3, 60 * 60 * 1000) // 3 attempts per hour
-  
-  if (!allowed) {
-    return {
-      success: false,
-      error: 'Too many reset attempts. Please try again in an hour.',
-    }
-  }
-
-  // Validate input
-  const validationResult = resetPasswordSchema.safeParse({
-    email: formData.get('email'),
-    csrfToken: formData.get('csrf-token'),
-  })
-
-  if (!validationResult.success) {
-    const fieldError = validationResult.error.errors[0]
-    return {
-      success: false,
-      error: fieldError.message,
-    }
-  }
-
-  const { email, csrfToken } = validationResult.data
-
-  // Verify CSRF token (lenient for password reset)
-  const csrfValid = await verifyCSRFToken(csrfToken)
-  if (!csrfValid) {
-    console.warn('CSRF validation failed for password reset - but allowing due to Next.js Server Action protection')
-    // Don't block password reset, but log for monitoring
-    // Next.js Server Actions have built-in CSRF protection
-  }
-
-  try {
-    const supabase = await createServerSupabaseClient()
-
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback?type=recovery&next=/auth/reset-password`,
-    })
-
-    if (error) {
-      console.error('Password reset error:', error)
-    } else {
-      // Log successful password reset request
-      await logPasswordReset('password_reset_request', email, ipAddress, userAgent)
-    }
-
-    // Always return success to prevent email enumeration
-    return {
-      success: true,
-      message: 'If an account with that email exists, you will receive a password reset link shortly.',
-    }
-
-  } catch (error) {
-    console.error('Password reset error:', error)
-    return {
-      success: false,
-      error: 'An unexpected error occurred. Please try again.',
-    }
-  }
-}
-
-/**
- * Secure Password Update Action
- */
-export async function updatePasswordAction(formData: FormData) {
-  // Get recovery token if available
-  const recoveryToken = formData.get('recovery-token') as string
-  
-  // Validate input
-  const validationResult = updatePasswordSchema.safeParse({
-    password: formData.get('password'),
-    confirmPassword: formData.get('confirmPassword'),
-    csrfToken: formData.get('csrf-token'),
-  })
-
-  if (!validationResult.success) {
-    const fieldError = validationResult.error.errors[0]
-    return {
-      success: false,
-      error: fieldError.message,
-      field: fieldError.path[0],
-    }
-  }
-
-  const { password, csrfToken: _ } = validationResult.data // eslint-disable-line @typescript-eslint/no-unused-vars
-
-  // CSRF token validation for Server Actions
-  const formToken = formData.get('csrf-token') as string
-  console.log('🔍 Server Action CSRF Debug:', {
-    formTokenProvided: !!formToken,
-    formTokenLength: formToken?.length,
-    formTokenPreview: formToken ? `${formToken.substring(0, 20)}...` : 'none'
-  })
-
-  if (!formToken || formToken.split('.').length !== 2) {
-    console.warn('CSRF validation failed for forgotPassword: Invalid or missing token')
-    return {
-      success: false,
-      error: 'Security validation failed. Please refresh the page.',
-      field: null,
-    }
-  }
-
-  // Check token expiry
-  const [, tokenTimestamp] = formToken.split('.')
-  const timestamp = parseInt(tokenTimestamp, 10)
-  const tokenAge = Date.now() - timestamp
-  const maxAge = 24 * 60 * 60 * 1000 // 24 hours
-
-  if (tokenAge > maxAge) {
-    console.warn('CSRF validation failed for forgotPassword: Token expired')
-    return {
-      success: false,
-      error: 'Security token expired. Please refresh the page.',
-      field: null,
-    }
-  }
-
-  try {
-    const supabase = await createServerSupabaseClient()
-    const adminClient = createServerAdminClient()
-
-    // Check if we have a recovery token (token-based update)
-    if (recoveryToken) {
-      console.log('Processing token-based password update')
-      
+    // Send verification email (auto-verify in development if email service not configured)
+    if (process.env.SMTP_USER || process.env.MAILGUN_API_KEY) {
       try {
-        // Decode and validate the recovery token
-        const tokenData = JSON.parse(Buffer.from(recoveryToken, 'base64').toString())
-        const { userId, timestamp } = tokenData
-        
-        // Validate token age (10 minutes max)
-        const tokenAge = Date.now() - timestamp
-        const maxAge = 10 * 60 * 1000 // 10 minutes
-        
-        if (tokenAge > maxAge) {
-          console.error('Recovery token expired')
-          return {
-            success: false,
-            error: 'Reset link has expired. Please request a new one.',
-            field: null,
-          }
-        }
-        
-        console.log(`Using admin client to update password for user [REDACTED] (${userId})`)
-        
-        // Update password using admin client
-        const { error: adminUpdateError } = await adminClient.auth.admin.updateUserById(
-          userId,
-          { password }
-        )
-
-        if (adminUpdateError) {
-          console.error('Admin password update error:', adminUpdateError)
-          return {
-            success: false,
-            error: 'Failed to update password. Please try again.',
-            field: null,
-          }
-        }
-
-        console.log('Password updated successfully via admin client for user: [REDACTED]')
-
-      } catch (tokenError) {
-        console.error('Invalid recovery token:', tokenError)
-        return {
-          success: false,
-          error: 'Invalid reset link. Please request a new one.',
-          field: null,
+        await sendEmailVerification(email, verificationToken)
+      } catch (error) {
+        console.warn('📧 Email sending failed, auto-verifying user in development:', error)
+        if (process.env.NODE_ENV === 'development') {
+          await UserDatabase.update(userId, {
+            email_verified: true,
+            email_verification_token: null,
+            email_verification_expires_at: null,
+          })
+          console.log('🧪 Development Mode: Auto-verified user due to email failure')
+        } else {
+          throw error // Re-throw in production
         }
       }
     } else {
-      // Fallback to session-based update
-      console.log('Processing session-based password update')
-      
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
-      
-      console.log('Password update - User check:', user ? 'authenticated' : 'not authenticated')
-
-      if (userError || !user) {
-        console.error('Password update failed - No authenticated user session and no recovery token')
-        
-        return {
-          success: false,
-          error: 'Session expired. Please request a new password reset link.',
-          field: null,
-        }
-      }
-
-      // Update password using standard method
-      const { error } = await supabase.auth.updateUser({
-        password,
+      console.log('🧪 Development Mode: Auto-verifying user (Email service not configured)')
+      // Auto-verify in development when email service is not configured
+      await UserDatabase.update(userId, {
+        email_verified: true,
+        email_verification_token: null,
+        email_verification_expires_at: null,
       })
-
-      if (error) {
-        console.error('Session-based password update error:', error)
-        return {
-          success: false,
-          error: 'Failed to update password. Please try again.',
-          field: null,
-        }
-      }
-
-      console.log('Password updated successfully for authenticated user')
-      
-      // Sign out to force re-authentication with new password
-      await supabase.auth.signOut()
-      await clearCSRFToken()
     }
 
-    revalidatePath('/', 'layout')
-    redirect('/auth/signin?message=Password updated successfully! Please sign in with your new password.')
-
+    return {
+      success: true,
+      message: process.env.SMTP_USER
+        ? 'Account created! Please verify your email address to continue.'
+        : 'Account created and verified! You can now sign in.',
+      redirectTo: process.env.SMTP_USER ? '/auth/verify-email' : '/auth/signin',
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        email_verified: user.email_verified,
+        plan_type: user.plan_type,
+        subscription_status: user.subscription_status,
+        trial_ends_at: user.trial_ends_at,
+        last_login_at: user.last_login_at,
+      },
+    }
   } catch (error) {
-    // Allow Next.js redirects to bubble up
-    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
-      throw error
-    }
-    
-    console.error('Password update error:', error)
+    console.error('Sign up error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',
-      field: null,
     }
   }
 }
 
 /**
- * Secure Sign Out Action
+ * Sign in action
  */
-export async function signOutAction() {
+export async function signInAction(formData: FormData): Promise<AuthResponse> {
   try {
-    const supabase = await createServerSupabaseClient()
-    
-    // Get current user for logging before sign out
-    const { data: { user } } = await supabase.auth.getUser()
-    
-    // Get client information for logging
-    const headersList = await headers()
-    const request = new Request('http://localhost', {
-      headers: headersList,
+    // Validate input
+    const validationResult = signInSchema.safeParse({
+      email: formData.get('email'),
+      password: formData.get('password'),
+      csrfToken: formData.get('csrf-token'),
+      rememberMe: formData.get('rememberMe') === 'true',
     })
-    const ipAddress = getClientIPAddress(request)
-    const userAgent = getUserAgent(request)
-    
-    // Sign out and revoke refresh tokens
-    const { error } = await supabase.auth.signOut({ scope: 'global' })
-    
-    if (error) {
-      console.error('Sign-out error:', error)
+
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.errors[0].message,
+      }
     }
 
-    // Log successful logout
-    if (user) {
-      await logLogout(user.id, user.email!, ipAddress, userAgent)
+    const { email, password, csrfToken } = validationResult.data
+
+    // Verify CSRF token
+    const csrfValid = await verifyCSRFToken(csrfToken)
+    if (!csrfValid) {
+      return {
+        success: false,
+        error: 'Invalid request. Please try again.',
+      }
     }
 
-    // Clear CSRF token
-    await clearCSRFToken()
+    // Rate limiting
+    const clientIP = await getClientIP()
+    const rateLimitOk = await checkRateLimit(clientIP, 'signin', 5, 15) // 5 attempts per 15 minutes
+    if (!rateLimitOk) {
+      return {
+        success: false,
+        error: 'Too many login attempts. Please try again later.',
+      }
+    }
 
-    revalidatePath('/', 'layout')
-    redirect('/auth/signin')
+    // Find user
+    const user = await UserDatabase.findByEmail(email)
+    if (!user || !user.password_hash) {
+      return {
+        success: false,
+        error: 'Invalid email or password.',
+      }
+    }
 
+    // Check if account is locked
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+      const lockTime = Math.ceil((new Date(user.locked_until).getTime() - Date.now()) / 60000)
+      return {
+        success: false,
+        error: `Account temporarily locked. Try again in ${lockTime} minutes.`,
+      }
+    }
+
+    // Verify password
+    const passwordValid = await verifyPassword(password, user.password_hash)
+    if (!passwordValid) {
+      // Increment login attempts
+      const newAttempts = user.login_attempts + 1
+      const lockUntil = newAttempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000) : undefined // Lock for 15 minutes after 5 attempts
+
+      await UserDatabase.updateLoginAttempts(user.id, newAttempts, lockUntil)
+
+      return {
+        success: false,
+        error: 'Invalid email or password.',
+      }
+    }
+
+    // Check if email is verified
+    if (!user.email_verified) {
+      return {
+        success: false,
+        error: 'Please verify your email address before signing in.',
+      }
+    }
+
+    // Create session
+    const sessionId = generateSessionId()
+    const sessionToken = await createSessionToken({
+      userId: user.id,
+      email: user.email,
+      sessionId,
+    })
+
+    // Store session in database
+    const headersList = await headers()
+    await SessionDatabase.create({
+      user_id: user.id,
+      session_token: sessionToken,
+      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+      user_agent: headersList.get('user-agent'),
+      ip_address: await getClientIP(),
+    })
+
+    // Set session cookie
+    await setSessionCookie(sessionToken)
+
+    // Update user login info
+    await UserDatabase.updateLastLogin(user.id)
+
+    revalidatePath('/dashboard')
+
+    return {
+      success: true,
+      message: 'Welcome back!',
+      redirectTo: '/dashboard',
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        email_verified: user.email_verified,
+        plan_type: user.plan_type,
+        subscription_status: user.subscription_status,
+        trial_ends_at: user.trial_ends_at,
+        last_login_at: user.last_login_at,
+      },
+    }
   } catch (error) {
-    // Allow Next.js redirects to bubble up
-    if (error instanceof Error && (error as unknown as Record<string, unknown>).digest?.toString().startsWith('NEXT_REDIRECT')) {
-      throw error
+    console.error('Sign in error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
     }
-    
-    console.error('Sign-out error:', error)
-    redirect('/auth/signin')
   }
 }
 
 /**
- * Generate and set CSRF token (Server Action)
+ * Sign out action
  */
-export async function generateCSRFTokenAction(): Promise<string> {
-  return await generateFormCSRFToken()
+export async function signOutAction(): Promise<AuthResponse> {
+  try {
+    const session = await getCurrentSession()
+
+    if (session) {
+      // Remove session from database
+      await SessionDatabase.deleteByToken(session.sessionId)
+    }
+
+    // Clear session cookie
+    await clearSessionCookie()
+
+    revalidatePath('/')
+    redirect('/auth/signin')
+  } catch (error) {
+    console.error('Sign out error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred during sign out.',
+    }
+  }
 }
 
 /**
- * Get current user session securely
+ * Forgot password action
+ */
+export async function forgotPasswordAction(formData: FormData): Promise<AuthResponse> {
+  try {
+    // Validate input
+    const validationResult = forgotPasswordSchema.safeParse({
+      email: formData.get('email'),
+      csrfToken: formData.get('csrf-token'),
+    })
+
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.errors[0].message,
+      }
+    }
+
+    const { email, csrfToken } = validationResult.data
+
+    // Verify CSRF token
+    const csrfValid = await verifyCSRFToken(csrfToken)
+    if (!csrfValid) {
+      return {
+        success: false,
+        error: 'Invalid request. Please try again.',
+      }
+    }
+
+    // Rate limiting
+    const clientIP = await getClientIP()
+    const rateLimitOk = await checkRateLimit(clientIP, 'forgot-password', 3, 60) // 3 attempts per hour
+    if (!rateLimitOk) {
+      return {
+        success: false,
+        error: 'Too many password reset attempts. Please try again later.',
+      }
+    }
+
+    // Find user
+    const user = await UserDatabase.findByEmail(email)
+    if (!user) {
+      // Don't reveal whether email exists
+      return {
+        success: true,
+        message: 'If an account with that email exists, you will receive a password reset link.',
+      }
+    }
+
+    // Generate reset token
+    const resetToken = await generatePasswordResetToken(user.id, user.email)
+
+    // Update user with reset token
+    await UserDatabase.update(user.id, {
+      password_reset_token: resetToken,
+      password_reset_expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 minutes
+    })
+
+    // Send reset email
+    await sendPasswordResetEmail(user.email, resetToken)
+
+    return {
+      success: true,
+      message: 'If an account with that email exists, you will receive a password reset link.',
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+/**
+ * Reset password action
+ */
+export async function resetPasswordAction(formData: FormData): Promise<AuthResponse> {
+  try {
+    // Validate input
+    const validationResult = resetPasswordSchema.safeParse({
+      token: formData.get('token'),
+      password: formData.get('password'),
+      csrfToken: formData.get('csrf-token'),
+    })
+
+    if (!validationResult.success) {
+      return {
+        success: false,
+        error: validationResult.error.errors[0].message,
+      }
+    }
+
+    const { token, password, csrfToken } = validationResult.data
+
+    // Verify CSRF token
+    const csrfValid = await verifyCSRFToken(csrfToken)
+    if (!csrfValid) {
+      return {
+        success: false,
+        error: 'Invalid request. Please try again.',
+      }
+    }
+
+    // Validate password strength
+    const passwordValidation = validatePasswordStrength(password)
+    if (!passwordValidation.isValid) {
+      return {
+        success: false,
+        error: passwordValidation.errors[0],
+      }
+    }
+
+    // Verify reset token
+    const tokenPayload = await verifyEmailToken(token, 'password_reset')
+    if (!tokenPayload) {
+      return {
+        success: false,
+        error: 'Invalid or expired reset token.',
+      }
+    }
+
+    // Find user and verify token matches
+    const user = await UserDatabase.findById(tokenPayload.userId)
+    if (!user || user.password_reset_token !== token) {
+      return {
+        success: false,
+        error: 'Invalid or expired reset token.',
+      }
+    }
+
+    // Check token expiration
+    if (user.password_reset_expires_at && new Date(user.password_reset_expires_at) < new Date()) {
+      return {
+        success: false,
+        error: 'Reset token has expired. Please request a new one.',
+      }
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(password)
+
+    // Update user password and clear reset token
+    await UserDatabase.update(user.id, {
+      password_hash: passwordHash,
+      password_reset_token: null,
+      password_reset_expires_at: null,
+      login_attempts: 0,
+      locked_until: null,
+    })
+
+    // Clear all sessions for this user
+    await SessionDatabase.deleteAllForUser(user.id)
+
+    return {
+      success: true,
+      message: 'Password reset successfully. Please sign in with your new password.',
+      redirectTo: '/auth/signin',
+    }
+  } catch (error) {
+    console.error('Reset password error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+/**
+ * Verify email action
+ */
+export async function verifyEmailAction(token: string): Promise<AuthResponse> {
+  try {
+    // Verify token
+    const tokenPayload = await verifyEmailToken(token, 'email_verification')
+    if (!tokenPayload) {
+      return {
+        success: false,
+        error: 'Invalid or expired verification token.',
+      }
+    }
+
+    // Find user and verify token matches
+    const user = await UserDatabase.findById(tokenPayload.userId)
+    if (!user || user.email_verification_token !== token) {
+      return {
+        success: false,
+        error: 'Invalid or expired verification token.',
+      }
+    }
+
+    // Check if already verified
+    if (user.email_verified) {
+      return {
+        success: true,
+        message: 'Email already verified. You can now sign in.',
+        redirectTo: '/auth/signin',
+      }
+    }
+
+    // Check token expiration
+    if (user.email_verification_expires_at && new Date(user.email_verification_expires_at) < new Date()) {
+      return {
+        success: false,
+        error: 'Verification token has expired. Please request a new one.',
+      }
+    }
+
+    // Update user as verified
+    await UserDatabase.update(user.id, {
+      email_verified: true,
+      email_verification_token: null,
+      email_verification_expires_at: null,
+    })
+
+    // TODO: Add welcome email functionality later
+    // await sendWelcomeEmail(user.email, user.full_name || undefined)
+
+    return {
+      success: true,
+      message: 'Email verified successfully! You can now sign in to your account.',
+      redirectTo: '/auth/signin',
+    }
+  } catch (error) {
+    console.error('Email verification error:', error)
+    return {
+      success: false,
+      error: 'An unexpected error occurred. Please try again.',
+    }
+  }
+}
+
+/**
+ * Get current authenticated user
  */
 export async function getCurrentUser() {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error || !user) {
-      return null
-    }
+    const session = await getCurrentSession()
+    if (!session) return null
 
-    // Get additional user profile data
-    const { data: profile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single()
+    const user = await UserDatabase.findById(session.userId)
+    if (!user || !user.email_verified) return null
 
     return {
-      ...user,
-      profile,
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      avatar_url: user.avatar_url,
+      email_verified: user.email_verified,
+      plan_type: user.plan_type,
+      subscription_status: user.subscription_status,
+      trial_ends_at: user.trial_ends_at,
+      last_login_at: user.last_login_at,
     }
-
   } catch (error) {
     console.error('Get current user error:', error)
     return null

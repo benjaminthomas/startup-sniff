@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { Mail, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { resetPasswordAction } from '@/lib/auth/actions'
+import { forgotPasswordAction } from '@/lib/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -59,7 +59,7 @@ export function ForgotPasswordForm({ csrfToken }: ForgotPasswordFormProps) {
       formData.append('csrf-token', csrfToken)
 
       try {
-        const result = await resetPasswordAction(formData)
+        const result = await forgotPasswordAction(formData)
         
         if (!result.success) {
           setError(result.error || 'An error occurred')
@@ -68,8 +68,7 @@ export function ForgotPasswordForm({ csrfToken }: ForgotPasswordFormProps) {
           setSuccess(result.message || 'Reset link sent successfully')
           toast.success('Reset link sent!')
         }
-      } catch (err) {
-        console.error('Password reset error:', err)
+      } catch {
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }

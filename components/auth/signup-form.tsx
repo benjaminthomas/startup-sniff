@@ -112,20 +112,13 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
         
         if (!result.success) {
           setError(result.error || 'An error occurred')
-          
-          // Focus the field with the error
-          if (result.field && form.setFocus) {
-            form.setFocus(result.field as keyof SignUpFormData)
-          }
-          
           toast.error(result.error)
         } else {
           setSuccess(result.message || 'Account created successfully!')
           toast.success('Account created! Please check your email.')
           form.reset()
         }
-      } catch (err) {
-        console.error('Sign-up error:', err)
+      } catch {
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }

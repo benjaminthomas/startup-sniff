@@ -13,13 +13,6 @@ const TOKEN_LIFETIME = 24 * 60 * 60 * 1000 // 24 hours
 export interface ServerActionCSRFResult {
   valid: boolean
   error?: string
-  debug?: {
-    cookieFound: boolean
-    tokenReceived: boolean
-    tokenLength?: number
-    cookieValue?: string
-    formTokenValue?: string
-  }
 }
 
 /**
@@ -34,30 +27,18 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     const csrfCookie = cookieStore.get(CSRF_TOKEN_NAME)
     
     const cookieValue = csrfCookie?.value
-    const debug = {
-      cookieFound: !!csrfCookie,
-      tokenReceived: !!formToken,
-      tokenLength: formToken?.length,
-      cookieValueLength: cookieValue?.length,
-      cookieValue: cookieValue ? cookieValue.substring(0, 20) + '...' : 'undefined',
-      formTokenValue: formToken ? formToken.substring(0, 20) + '...' : 'undefined'
-    }
-    
-    console.log('🔍 Server Action CSRF Debug:', debug)
     
     if (!formToken) {
       return {
         valid: false,
-        error: 'No CSRF token in form data',
-        debug
+        error: 'No CSRF token in form data'
       }
     }
     
     if (!cookieValue) {
       return {
         valid: false,
-        error: 'No CSRF token in cookies',
-        debug
+        error: 'No CSRF token in cookies'
       }
     }
     
@@ -68,8 +49,7 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     if (!formTokenValue || !formTimestamp || !cookieTokenValue || !cookieTimestamp) {
       return {
         valid: false,
-        error: 'Invalid token format',
-        debug
+        error: 'Invalid token format'
       }
     }
     
@@ -80,8 +60,7 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     if (formAge > TOKEN_LIFETIME || cookieAge > TOKEN_LIFETIME) {
       return {
         valid: false,
-        error: 'Token expired',
-        debug
+        error: 'Token expired'
       }
     }
     
@@ -89,8 +68,7 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     if (formTokenValue.length !== cookieTokenValue.length) {
       return {
         valid: false,
-        error: 'Token length mismatch',
-        debug
+        error: 'Token length mismatch'
       }
     }
     
@@ -108,16 +86,14 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     
     return {
       valid: isValid,
-      error: isValid ? undefined : 'Token values do not match',
-      debug
+      error: isValid ? undefined : 'Token values do not match'
     }
     
   } catch (error) {
     console.error('Server Action CSRF verification error:', error)
     return {
       valid: false,
-      error: 'CSRF verification failed due to system error',
-      debug: { cookieFound: false, tokenReceived: false }
+      error: 'CSRF verification failed due to system error'
     }
   }
 }

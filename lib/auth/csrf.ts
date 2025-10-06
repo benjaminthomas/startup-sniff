@@ -42,14 +42,6 @@ export const setCSRFToken = async (token: string) => {
 export const getCSRFToken = async (): Promise<string | null> => {
   const cookieStore = await cookies()
   const token = cookieStore.get(CSRF_TOKEN_NAME)
-  const allCookies = cookieStore.getAll()
-  console.log('🔍 Reading CSRF token:', {
-    tokenName: CSRF_TOKEN_NAME,
-    found: !!token,
-    tokenValue: token?.value || 'undefined',
-    tokenLength: token?.value?.length || 0,
-    allCookiesDetailed: allCookies.map(c => ({ name: c.name, value: c.value?.substring(0, 20) + '...', hasValue: !!c.value }))
-  })
   return token?.value || null
 }
 
@@ -62,8 +54,6 @@ export const verifyCSRFToken = async (providedToken: string): Promise<boolean> =
 
   const storedToken = await getCSRFToken()
   if (!storedToken) {
-    console.log('🔍 CSRF verification failed: no stored token')
-    // For missing tokens, allow middleware to handle token generation
     return false
   }
 
@@ -122,7 +112,7 @@ export const generateFormCSRFToken = async (): Promise<string> => {
 // Middleware ensures tokens exist for auth pages
 export const getOrGenerateCSRFToken = async (): Promise<string> => {
   const existingToken = await getCSRFToken()
-  if (existingToken) {
+  if (existingToken && existingToken !== 'undefined') {
     // Check if token is still valid (not expired)
     try {
       const [, storedTimestamp] = existingToken.split('.')
@@ -136,7 +126,7 @@ export const getOrGenerateCSRFToken = async (): Promise<string> => {
   }
 
   // If no valid token exists, return a temporary one
-  // Middleware should have set this, but fallback to ensure forms can render
+  // This ensures forms can render even if middleware hasn't set the cookie yet
   const tempToken = generateCSRFToken()
   return tempToken
 }
@@ -176,7 +166,6 @@ export const verifyCSRFTokenWithCookieStore = async (providedToken: string, requ
   // Get token from request cookies instead of Next.js cookies()
   const cookieHeader = request.headers.get('cookie')
   if (!cookieHeader) {
-    console.log('🔍 CSRF verification failed: no cookie header')
     return false
   }
 
@@ -191,7 +180,6 @@ export const verifyCSRFTokenWithCookieStore = async (providedToken: string, requ
 
   const storedToken = cookies[CSRF_TOKEN_NAME]
   if (!storedToken) {
-    console.log('🔍 CSRF verification failed: no stored token in request cookies')
     return false
   }
 

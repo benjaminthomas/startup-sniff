@@ -8,16 +8,14 @@
         "@upstash/context7-mcp",
         "--api-key",
         "ctx7sk-f93b3dfe-b5f5-439d-b8af-841d1b1af4cd"
-      ],
-      "env": {}
+      ]
     },
     "playwright": {
       "type": "stdio",
       "command": "npx",
       "args": [
         "@playwright/mcp@latest"
-      ],
-      "env": {}
+      ]
     },
     "supabase": {
       "command": "npx",
