@@ -1,15 +1,23 @@
 import Stripe from 'stripe';
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing STRIPE_SECRET_KEY environment variable');
+// Handle missing environment variables gracefully during build time
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey && process.env.NODE_ENV === 'production') {
+  throw new Error('Missing STRIPE_SECRET_KEY environment variable in production');
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Use a placeholder key during build time if not available
+export const stripe = new Stripe(stripeSecretKey || 'sk_test_placeholder', {
   apiVersion: '2025-08-27.basil',
   typescript: true,
 });
 
 export const getStripeCustomerId = async (userId: string, email: string): Promise<string> => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   // Check if customer already exists in Stripe
   const customers = await stripe.customers.list({
     email,
@@ -44,6 +52,10 @@ export const createCheckoutSession = async ({
   cancelUrl: string;
   userId: string;
 }) => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   return await stripe.checkout.sessions.create({
     customer: customerId,
     payment_method_types: ['card'],
@@ -68,6 +80,10 @@ export const createCheckoutSession = async ({
 };
 
 export const createBillingPortalSession = async (customerId: string, returnUrl: string) => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   return await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
@@ -75,10 +91,18 @@ export const createBillingPortalSession = async (customerId: string, returnUrl: 
 };
 
 export const cancelSubscription = async (subscriptionId: string) => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   return await stripe.subscriptions.cancel(subscriptionId);
 };
 
 export const updateSubscription = async (subscriptionId: string, priceId: string) => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   
   return await stripe.subscriptions.update(subscriptionId, {
@@ -94,6 +118,10 @@ export const updateSubscription = async (subscriptionId: string, priceId: string
 
 // Webhook verification
 export const verifyWebhookSignature = (body: string, signature: string): Stripe.Event => {
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY is required for Stripe operations');
+  }
+
   if (!process.env.STRIPE_WEBHOOK_SECRET) {
     throw new Error('Missing STRIPE_WEBHOOK_SECRET environment variable');
   }
