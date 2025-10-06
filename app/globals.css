@@ -46,26 +46,26 @@
 :root {
   --radius: 8px;
 
-  /* Updated StartupSniff Design System v1.0.0 */
-  --background: #F8FAFC;
-  --foreground: #1E293B;
-  --card: #FFFFFF;
-  --card-foreground: #1E293B;
-  --popover: #FFFFFF;
-  --popover-foreground: #1E293B;
-  --primary: #2563EB;
+  /* AI Business Theme Design System v2.0.0 - Dark First */
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
+  --card: #111111;
+  --card-foreground: #FFFFFF;
+  --popover: #111111;
+  --popover-foreground: #FFFFFF;
+  --primary: #8B5CF6;
   --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
+  --secondary: #6366F1;
   --secondary-foreground: #FFFFFF;
-  --muted: #F8FAFC;
-  --muted-foreground: #475569;
-  --accent: #2563EB;
+  --muted: #1A1A1A;
+  --muted-foreground: #A1A1AA;
+  --accent: #8B5CF6;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #2563EB;
+  --border: #262626;
+  --input: #262626;
+  --ring: #8B5CF6;
   --chart-1: #2563EB;
   --chart-2: #22C55E;
   --chart-3: #FACC15;
@@ -81,16 +81,16 @@
   --sidebar-ring: #2563EB;
 
   /* Brand Colors */
-  --color-brand-primary: #2563EB;
-  --color-brand-secondary: #1E293B;
+  --color-brand-primary: #8B5CF6;
+  --color-brand-secondary: #6366F1;
 
   /* Background Colors */
-  --color-background-default: #F8FAFC;
-  --color-background-alt: #FFFFFF;
+  --color-background-default: #0A0A0A;
+  --color-background-alt: #111111;
 
   /* Text Colors */
-  --color-text-primary: #1E293B;
-  --color-text-secondary: #475569;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A1A1AA;
 
   /* Utility Colors */
   --color-border: #E2E8F0;
@@ -187,4 +187,48 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* AI Business Theme Gradients */
+.gradient-primary {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(135deg, #0F0F23 0%, #1A1A3A 50%, #2D1B69 100%);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Aurora Animation */
+@keyframes aurora {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.aurora-background {
+  background: linear-gradient(-45deg, #8B5CF6, #6366F1, #3B82F6, #8B5CF6);
+  background-size: 400% 400%;
+  animation: aurora 15s ease infinite;
+}
+
+/* Glowing effects */
+.glow-purple {
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
