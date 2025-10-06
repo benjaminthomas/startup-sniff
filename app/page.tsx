@@ -8,7 +8,6 @@ import {
   Lightbulb,
   TrendingUp,
   Target,
-  Zap,
   BarChart3,
   Users,
   Globe,
@@ -170,7 +169,7 @@ export default function HomePage() {
               Everything You Need to Launch Smart
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              From Reddit trend analysis to market validation, we've got your startup journey covered
+              From Reddit trend analysis to market validation, we&apos;ve got your startup journey covered
             </p>
           </motion.div>
 
@@ -282,8 +281,8 @@ export default function HomePage() {
                         )}
                         {feature.title === "Content Generation" && (
                           <div className="space-y-1">
-                            <div className="font-semibold">📝 Blog Post: "5 Pain Points..."</div>
-                            <div className="font-semibold">🐦 Tweet: "Just discovered..."</div>
+                            <div className="font-semibold">📝 Blog Post: &ldquo;5 Pain Points...&rdquo;</div>
+                            <div className="font-semibold">🐦 Tweet: &ldquo;Just discovered...&rdquo;</div>
                             <div className="font-semibold">📊 Landing Page: Hero section</div>
                           </div>
                         )}
