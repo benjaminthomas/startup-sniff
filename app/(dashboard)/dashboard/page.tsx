@@ -1,6 +1,8 @@
 import { Metadata } from 'next';
 import type { StartupIdea, User as AppUser } from '@/types/global';
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
+import { UserDatabase } from '@/lib/auth/database';
 import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
 import { StatsCards } from '@/components/features/dashboard/stats-cards';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
@@ -26,43 +28,41 @@ export default async function DashboardPage() {
   } | null = null;
 
   try {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    // Use JWT session instead of Supabase auth
+    const session = await getCurrentSession();
 
-    if (authUser) {
-      // Try to fetch user profile data
-      const { data: profileRaw } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+    if (session) {
+      // Get user data from our JWT-based auth system
+      const dbUser = await UserDatabase.findById(session.userId);
 
-      let profile: AppUser | null = null;
-      if (profileRaw) {
-        // Patch avatar_url and plan_type to match User interface
-        profile = {
-          ...profileRaw,
-          avatar_url: typeof profileRaw.avatar_url === 'string' ? profileRaw.avatar_url : undefined,
-          full_name: profileRaw.full_name || undefined,
-          plan_type: typeof profileRaw.plan_type === 'string' && ['explorer', 'founder', 'growth'].includes(profileRaw.plan_type)
-            ? profileRaw.plan_type as 'explorer' | 'founder' | 'growth'
-            : undefined,
-          stripe_customer_id: typeof profileRaw.stripe_customer_id === 'string' ? profileRaw.stripe_customer_id : undefined,
-          subscription_status: profileRaw.subscription_status || undefined,
-          trial_ends_at: profileRaw.trial_ends_at || undefined,
+      if (dbUser) {
+        user = {
+          id: dbUser.id,
+          email: dbUser.email,
+          full_name: dbUser.full_name || undefined,
+          avatar_url: dbUser.avatar_url || undefined,
+          plan_type: (dbUser.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer',
+          stripe_customer_id: dbUser.stripe_customer_id || undefined,
+          subscription_status: dbUser.subscription_status || undefined,
+          trial_ends_at: dbUser.trial_ends_at || undefined,
+          created_at: dbUser.created_at || '',
+          updated_at: dbUser.updated_at || '',
+        };
+      } else {
+        // Fallback if user not found in database
+        user = {
+          id: session.userId,
+          email: session.email,
+          full_name: undefined,
+          avatar_url: undefined,
+          subscription_status: undefined,
+          plan_type: 'explorer',
+          stripe_customer_id: undefined,
+          trial_ends_at: undefined,
+          created_at: '',
+          updated_at: '',
         };
       }
-      user = profile || {
-  id: authUser.id,
-  email: authUser.email || '',
-  full_name: typeof authUser.user_metadata?.full_name === 'string' ? authUser.user_metadata.full_name : undefined,
-  avatar_url: typeof authUser.user_metadata?.avatar_url === 'string' ? authUser.user_metadata.avatar_url : undefined,
-  subscription_status: undefined,
-  plan_type: 'explorer',
-  stripe_customer_id: undefined,
-  trial_ends_at: undefined,
-  created_at: '',
-  updated_at: '',
-      };
     }
 
     // Get accurate usage data using the same function as content page

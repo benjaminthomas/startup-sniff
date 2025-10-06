@@ -2,6 +2,8 @@ import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
 import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
+import { UserDatabase } from '@/lib/auth/database';
 import { redirect } from 'next/navigation';
 import { 
   SidebarProvider,
@@ -14,38 +16,30 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const supabase = await createServerSupabaseClient();
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session) {
     redirect('/auth/signin');
   }
 
-  // Try to fetch user profile data
-  let profile = null;
+  // Get user data from our JWT-based auth system
+  let dbUser = null;
   try {
-    const { data } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    profile = data;
+    dbUser = await UserDatabase.findById(session.userId);
   } catch {
-    // Use auth user data as fallback if profile doesn't exist
+    // Continue with session data as fallback
   }
 
-  const displayUser = profile ? {
-    id: profile.id,
-    email: profile.email || user.email || null,
-    full_name: (profile as Record<string, unknown>).name as string || (profile as Record<string, unknown>).full_name as string || user.user_metadata?.full_name || null,
-    plan_type: (profile as Record<string, unknown>).plan_type as string || 'explorer',
+  const displayUser = dbUser ? {
+    id: dbUser.id,
+    email: dbUser.email,
+    full_name: dbUser.full_name || null,
+    plan_type: dbUser.plan_type || 'explorer',
   } : {
-    id: user.id,
-    email: user.email || null,
-    full_name: user.user_metadata?.full_name || null,
+    id: session.userId,
+    email: session.email,
+    full_name: null,
     plan_type: 'explorer',
   };
 
@@ -59,7 +53,7 @@ export default async function DashboardLayout({
             <DynamicHeader user={displayUser} />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="flex flex-1 flex-col gap-4 p-4 bg-white">
           <TrialBanner />
           {children}
         </div>
