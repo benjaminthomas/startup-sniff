@@ -109,40 +109,45 @@ export function IdeaGenerationForm() {
   } = useServerPlanLimits();
 
   const steps = [
-    { 
-      id: 'industry', 
-      title: 'Choose Your Industry', 
+    {
+      id: 'industry',
+      title: 'Choose Your Industry',
       subtitle: 'What market interests you most?',
       icon: Target,
-      optional: true
+      optional: false,
+      required: true
     },
-    { 
-      id: 'problem', 
-      title: 'What Problem to Solve?', 
+    {
+      id: 'problem',
+      title: 'What Problem to Solve?',
       subtitle: 'Pick an area where you can make impact',
       icon: Lightbulb,
-      optional: true
+      optional: false,
+      required: true
     },
-    { 
-      id: 'audience', 
-      title: 'Who Will You Serve?', 
+    {
+      id: 'audience',
+      title: 'Who Will You Serve?',
       subtitle: 'Define your target audience',
       icon: Users,
-      optional: true
+      optional: false,
+      required: true
     },
-    { 
-      id: 'resources', 
-      title: 'Your Resources', 
+    {
+      id: 'resources',
+      title: 'Your Resources',
       subtitle: 'Budget and timeline preferences',
       icon: DollarSign,
-      optional: true
+      optional: false,
+      required: true
     },
-    { 
-      id: 'context', 
-      title: 'Personal Touch', 
+    {
+      id: 'context',
+      title: 'Personal Touch (Optional)',
       subtitle: 'Tell us about your unique perspective',
       icon: Brain,
-      optional: true
+      optional: true,
+      required: false
     }
   ];
 
@@ -346,7 +351,11 @@ export function IdeaGenerationForm() {
           <div className="text-right">
             <div className="text-sm font-medium">{completedSteps} / {steps.length} completed</div>
             <div className="text-xs text-muted-foreground">
-              {requiredStepsCompleted ? "Ready to generate" : "4 steps required, 5th optional"}
+              {requiredStepsCompleted ? (
+                <span className="text-green-600 font-medium">✓ Ready to generate</span>
+              ) : (
+                <span className="text-amber-600">Complete first 4 steps to unlock</span>
+              )}
             </div>
           </div>
         </div>
@@ -452,13 +461,18 @@ export function IdeaGenerationForm() {
               </div>
             )}
             
+            {!requiredStepsCompleted && (
+              <p className="text-xs text-amber-600 text-center font-medium">
+                Complete all required steps to generate your idea
+              </p>
+            )}
             <Button
               onClick={handleSkipToGenerate}
               disabled={isGenerating || limitsLoading || !requiredStepsCompleted}
               className={cn(
                 "font-semibold shadow-lg hover:shadow-xl transition-all duration-200",
                 !requiredStepsCompleted
-                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  ? "bg-muted text-muted-foreground cursor-not-allowed hover:bg-muted"
                   : isAtLimit('ideas') && !limitsLoading
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                   : "bg-gradient-to-r from-primary via-blue-600 to-purple-600 hover:from-primary/90 hover:via-blue-600/90 hover:to-purple-600/90 text-white"
@@ -502,9 +516,12 @@ export function IdeaGenerationForm() {
       case 0: // Industry
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              Choose an industry that interests you or skip this step for general ideas.
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm">
+                Choose an industry that interests you.
+              </p>
+              <Badge variant="destructive" className="text-xs">Required</Badge>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {industries.map((industry) => (
                 <Button
@@ -547,9 +564,12 @@ export function IdeaGenerationForm() {
       case 1: // Problem Area
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              What kind of problems do you want to solve? Pick what resonates with you.
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm">
+                What kind of problems do you want to solve?
+              </p>
+              <Badge variant="destructive" className="text-xs">Required</Badge>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {problemAreas.map((problem) => (
                 <Button
@@ -592,9 +612,12 @@ export function IdeaGenerationForm() {
       case 2: // Target Audience
         return (
           <div className="space-y-4">
-            <p className="text-muted-foreground text-sm">
-              Who would you like to build products for? Think about your ideal customers.
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-muted-foreground text-sm">
+                Who would you like to build products for?
+              </p>
+              <Badge variant="destructive" className="text-xs">Required</Badge>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {audiences.map((audience) => (
                 <Button
@@ -638,7 +661,10 @@ export function IdeaGenerationForm() {
         return (
           <div className="space-y-6">
             <div>
-              <Label className="text-base font-semibold mb-3 block">Budget Range</Label>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-base font-semibold">Budget Range</Label>
+                <Badge variant="destructive" className="text-xs">Required</Badge>
+              </div>
               <p className="text-muted-foreground text-sm mb-4">
                 How much are you planning to invest initially?
               </p>
@@ -688,7 +714,10 @@ export function IdeaGenerationForm() {
             </div>
 
             <div>
-              <Label className="text-base font-semibold mb-3 block">Timeline</Label>
+              <div className="flex items-center justify-between mb-3">
+                <Label className="text-base font-semibold">Timeline</Label>
+                <Badge variant="destructive" className="text-xs">Required</Badge>
+              </div>
               <p className="text-muted-foreground text-sm mb-4">
                 When would you like to launch?
               </p>
