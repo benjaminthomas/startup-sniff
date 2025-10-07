@@ -73,11 +73,13 @@ export default async function DashboardPage() {
       planType?: string;
     };
 
+    // Get ideas for current user only
     const startupIdeas = await supabase
       .from('startup_ideas')
       .select('*')
+      .eq('user_id', session.userId)
       .order('created_at', { ascending: false })
-      .limit(5);
+      .limit(10);
 
     if (startupIdeas.data) {
       // Patch for legacy/JSON fields
@@ -110,9 +112,9 @@ export default async function DashboardPage() {
         </div>
         
         <div className="grid gap-6">
-          <StatsCards 
-            totalIdeas={ideas.length}
-            validatedIdeas={ideas.filter(idea => idea?.is_validated).length}
+          <StatsCards
+            totalIdeas={usageData?.usage.ideas_used ?? ideas.length}
+            validatedIdeas={usageData?.usage.validations_used ?? ideas.filter(idea => idea?.is_validated).length}
             favoriteIdeas={ideas.filter(idea => idea?.is_favorite).length}
             planType={(user?.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer'}
           />

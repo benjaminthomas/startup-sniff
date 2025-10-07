@@ -245,7 +245,12 @@ export async function generateIdea(formData: FormData) {
           pain_point_sources: isFromReddit && redditIdeaResult.success
             ? (redditIdeaResult.ideas[0] as unknown as Record<string, unknown>).source_pain_point_ids as string[] || []
             : [],
-          generation_method: isFromReddit ? 'reddit_pain_points' : 'openai_prompts'
+          generation_method: isFromReddit ? 'reddit_pain_points' : 'openai_prompts',
+          // New detailed fields
+          product_type: generatedIdea.productType,
+          specific_pain_points: generatedIdea.specificPainPoints,
+          target_personas: generatedIdea.targetPersonas,
+          technical_stack: generatedIdea.technicalStack
         },
         is_validated: false,
         is_favorite: false,

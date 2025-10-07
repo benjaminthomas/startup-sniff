@@ -155,10 +155,31 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
                         )}
                       </div>
 
-                      {/* Problem Statement */}
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                      {/* Product Type Badge */}
+                      {(idea.source_data as Record<string, unknown>)?.product_type && (
+                        <Badge variant="outline" className="mb-2 text-xs">
+                          {(idea.source_data as Record<string, unknown>).product_type as string}
+                        </Badge>
+                      )}
+
+                      {/* Problem Statement with Pain Points */}
+                      <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
                         {idea.problem_statement}
                       </p>
+
+                      {/* Specific Pain Points */}
+                      {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
+                       Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
+                       ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-xs font-medium text-muted-foreground mb-1">Key Pain Points:</p>
+                          <ul className="text-xs text-muted-foreground space-y-0.5">
+                            {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).slice(0, 2).map((point, idx) => (
+                              <li key={idx} className="line-clamp-1">• {point}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
 
                       {/* Enhanced Confidence Section */}
                       <div className="flex items-center justify-between">
