@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label'
 import { BarChart3, CheckCircle, AlertCircle, Loader2, Sparkles, Lightbulb, Plus } from 'lucide-react'
 import { validateExistingIdea } from '@/lib/actions/validation'
 import { usePlanLimits } from '@/lib/hooks/use-plan-limits'
-import { createClient } from '@/lib/auth/supabase-client'
+import { getUserIdeas } from '@/server/actions/ideas'
 
 interface GeneratedIdea {
   id: string
@@ -42,19 +42,18 @@ export function ValidationForm() {
 
   const loadGeneratedIdeas = async () => {
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const ideas = await getUserIdeas(50) // Get up to 50 ideas for validation
 
-      if (!user) return
+      // Map the ideas to the expected format
+      const mappedIdeas = ideas.map((idea) => ({
+        id: idea.id,
+        title: idea.title,
+        problem_statement: idea.problem_statement,
+        is_validated: idea.is_validated,
+        created_at: idea.created_at
+      }))
 
-      const { data: ideas, error } = await supabase
-        .from('startup_ideas')
-        .select('id, title, problem_statement, is_validated, created_at')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setGeneratedIdeas(ideas || [])
+      setGeneratedIdeas(mappedIdeas)
     } catch (err) {
       console.error('Error loading ideas:', err)
       setError('Failed to load your generated ideas')

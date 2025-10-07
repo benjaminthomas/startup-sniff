@@ -1,7 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server'
+import { createServerAdminClient } from '@/lib/auth/supabase-server'
+import { getCurrentSession } from '@/lib/auth/jwt'
 import OpenAI from 'openai'
 import { z } from 'zod'
 
@@ -73,22 +74,23 @@ interface ValidationResult {
 export async function validateExistingIdea(ideaId: string): Promise<ValidationResult> {
   try {
     console.log('🚀 Starting existing idea validation for ID:', ideaId)
-    
-    // Get user and validate authentication
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (!user || userError) {
-      console.error('❌ Authentication error:', userError)
+
+    // Get user session and validate authentication
+    const session = await getCurrentSession()
+
+    if (!session) {
+      console.error('❌ Authentication required')
       return { success: false, error: 'Authentication required' }
     }
+
+    const supabase = createServerAdminClient()
 
     // Get the existing idea
     const { data: idea, error: ideaError } = await supabase
       .from('startup_ideas')
       .select('*')
       .eq('id', ideaId)
-      .eq('user_id', user.id) // Ensure user owns this idea
+      .eq('user_id', session.userId) // Ensure user owns this idea
       .single()
 
     if (ideaError || !idea) {
@@ -104,7 +106,7 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
     const { data: usageLimits } = await supabase
       .from('usage_limits')
       .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single()
 
     if (usageLimits) {
@@ -245,7 +247,7 @@ Provide detailed market validation analysis.`
         updated_at: new Date().toISOString()
       })
       .eq('id', ideaId)
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .select()
       .single()
 
@@ -260,7 +262,7 @@ Provide detailed market validation analysis.`
     const { data: validatedIdeas, error: countError } = await supabase
       .from('startup_ideas')
       .select('id', { count: 'exact' })
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .eq('is_validated', true)
 
     if (!countError) {
@@ -273,7 +275,7 @@ Provide detailed market validation analysis.`
           validations_completed: actualValidatedCount,
           updated_at: new Date().toISOString()
         })
-        .eq('user_id', user.id)
+        .eq('user_id', session.userId)
 
       if (usageUpdateError) {
         console.error('❌ Usage limits update error:', usageUpdateError)
@@ -304,15 +306,16 @@ Provide detailed market validation analysis.`
 export async function validateIdea(formData: FormData): Promise<ValidationResult> {
   try {
     console.log('🚀 Starting idea validation...')
-    
-    // Get user and validate authentication
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    
-    if (!user || userError) {
-      console.error('❌ Authentication error:', userError)
+
+    // Get user session and validate authentication
+    const session = await getCurrentSession()
+
+    if (!session) {
+      console.error('❌ Authentication required')
       return { success: false, error: 'Authentication required' }
     }
+
+    const supabase = createServerAdminClient()
 
     // Validate form data
     const rawData = {
@@ -332,7 +335,7 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
     const { data: usageLimits } = await supabase
       .from('usage_limits')
       .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single()
 
     if (usageLimits) {
@@ -450,7 +453,7 @@ Provide detailed market validation analysis.`
     const { data: ideaData, error: ideaError } = await supabase
       .from('startup_ideas')
       .insert({
-        user_id: user.id,
+        user_id: session.userId,
         title: validatedData.ideaTitle,
         problem_statement: validatedData.ideaDescription,
         target_market: validationData.target_market,
@@ -487,7 +490,7 @@ Provide detailed market validation analysis.`
         validations_completed: (usageLimits?.validations_completed || 0) + 1,
         updated_at: new Date().toISOString()
       })
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
 
     if (usageUpdateError) {
       console.error('❌ Usage limits update error:', usageUpdateError)
