@@ -181,10 +181,18 @@ export async function generateIdea(formData: FormData) {
       const redditIdea = redditIdeaResult.ideas[0];
       generatedIdea = {
         title: redditIdea.title,
+        productType: (redditIdea as unknown as Record<string, unknown>).product_type as string || 'SaaS Platform',
         description: redditIdea.problem_statement,
         problemStatement: redditIdea.problem_statement,
+        specificPainPoints: (redditIdea as unknown as Record<string, unknown>).specific_pain_points as string[] || [redditIdea.problem_statement],
         solution: redditIdea.solution_approach,
         targetMarket: redditIdea.target_market.join(', '),
+        targetPersonas: (redditIdea as unknown as Record<string, unknown>).target_personas as Array<{name: string; role: string; painPoints: string[]}> || [{
+          name: 'Primary User',
+          role: redditIdea.target_market[0] || 'Target User',
+          painPoints: [redditIdea.problem_statement]
+        }],
+        technicalStack: (redditIdea as unknown as Record<string, unknown>).technical_stack as string[] || [],
         revenueModel: (redditIdea as unknown as Record<string, unknown>).business_model ? ((redditIdea as unknown as Record<string, unknown>).business_model as Record<string, unknown>).revenue_streams as string[] : [],
         estimatedCost: (redditIdea as unknown as Record<string, unknown>).business_model ? ((redditIdea as unknown as Record<string, unknown>).business_model as Record<string, unknown>).funding_requirements as string : 'To be determined',
         timeToMarket: (redditIdea as unknown as Record<string, unknown>).technical_requirements ? ((redditIdea as unknown as Record<string, unknown>).technical_requirements as Record<string, unknown>).estimated_development_time as string : '3-6 months',

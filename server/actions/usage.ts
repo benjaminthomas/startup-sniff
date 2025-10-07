@@ -54,7 +54,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       explorer: {
         ideas_per_month: 3,
         validations_per_month: 1,
-        content_per_month: 5,
+        content_per_month: 3, // Updated from 5 to 3
       },
       founder: {
         ideas_per_month: 25,
@@ -84,10 +84,29 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
 
     const ideasUsed = ideasCount?.length || 0;
 
+    // Count actual validations this month (ideas that were validated)
+    const { data: validationsCount } = await supabase
+      .from('startup_ideas')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+      .eq('is_validated', true)
+      .gte('updated_at', startOfMonth.toISOString());
+
+    const validationsUsed = validationsCount?.length || 0;
+
+    // Count actual content pieces generated this month
+    const { data: contentCount } = await supabase
+      .from('generated_content')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+      .gte('created_at', startOfMonth.toISOString());
+
+    const contentUsed = contentCount?.length || 0;
+
     const usageData = {
       ideas_used: ideasUsed,
-      validations_used: 0, // TODO: Count actual validations
-      content_used: 0, // TODO: Count actual content pieces
+      validations_used: validationsUsed,
+      content_used: contentUsed,
       last_reset: startOfMonth.toISOString()
     };
 

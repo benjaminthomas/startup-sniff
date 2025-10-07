@@ -218,7 +218,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
-                {planType === 'explorer' ? '5/month' : planType === 'founder' ? '50/month' : 'Unlimited'}
+                {planType === 'explorer' ? '3/month' : planType === 'founder' ? '50/month' : 'Unlimited'}
               </div>
             </div>
           </div>
@@ -479,7 +479,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
       featureType="content"
       currentPlan={planType}
       usedCount={usage.content_used || 0}
-      limitCount={planType === 'explorer' ? 5 : planType === 'founder' ? 50 : -1}
+      limitCount={planType === 'explorer' ? 3 : planType === 'founder' ? 50 : -1}
     />
     </>
   );

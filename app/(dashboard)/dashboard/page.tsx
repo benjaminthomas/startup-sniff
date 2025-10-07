@@ -134,7 +134,7 @@ export default async function DashboardPage() {
                 limits={usageData?.limits ?? {
                   ideas_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 25 : -1,
                   validations_per_month: user?.plan_type === 'explorer' ? 1 : user?.plan_type === 'founder' ? 10 : -1,
-                  content_per_month: user?.plan_type === 'explorer' ? 5 : user?.plan_type === 'founder' ? 50 : -1,
+                  content_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 50 : -1,
                 }}
               />
             </div>
