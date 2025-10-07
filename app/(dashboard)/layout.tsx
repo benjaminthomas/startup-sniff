@@ -1,7 +1,6 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { UserDatabase } from '@/lib/auth/database';
 import { redirect } from 'next/navigation';
@@ -47,13 +46,13 @@ export default async function DashboardLayout({
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b bg-white px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <div className="flex-1">
             <DynamicHeader user={displayUser} />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 bg-white">
+        <div className="flex flex-1 flex-col gap-4 p-4 bg-background">
           <TrialBanner />
           {children}
         </div>

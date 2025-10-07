@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server'
+import { getCurrentSession } from '@/lib/auth/jwt'
 import {
   getTrendingPainPoints,
   generateIdeasFromPainPoints,
@@ -14,15 +14,10 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient()
-
     // Get authenticated user
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
+    const session = await getCurrentSession()
 
-    if (authError || !user) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -140,15 +135,10 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerSupabaseClient()
-
     // Get authenticated user
-    const {
-      data: { user },
-      error: authError
-    } = await supabase.auth.getUser()
+    const session = await getCurrentSession()
 
-    if (authError || !user) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
