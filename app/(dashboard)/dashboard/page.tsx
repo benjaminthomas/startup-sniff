@@ -41,7 +41,7 @@ export default async function DashboardPage() {
           email: dbUser.email,
           full_name: dbUser.full_name || undefined,
           avatar_url: dbUser.avatar_url || undefined,
-          plan_type: (dbUser.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer',
+          plan_type: (dbUser.plan_type as 'free' | 'pro_monthly' | 'pro_yearly') || 'free',
           stripe_customer_id: dbUser.stripe_customer_id || undefined,
           subscription_status: (dbUser.subscription_status as 'active' | 'inactive' | 'cancelled' | 'past_due') || undefined,
           trial_ends_at: dbUser.trial_ends_at || undefined,
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
           full_name: undefined,
           avatar_url: undefined,
           subscription_status: undefined,
-          plan_type: 'explorer',
+          plan_type: 'free',
           stripe_customer_id: undefined,
           trial_ends_at: undefined,
           created_at: '',
@@ -134,9 +134,9 @@ export default async function DashboardPage() {
                   content_used: 0,
                 }}
                 limits={usageData?.limits ?? {
-                  ideas_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 25 : -1,
-                  validations_per_month: user?.plan_type === 'explorer' ? 1 : user?.plan_type === 'founder' ? 10 : -1,
-                  content_per_month: user?.plan_type === 'explorer' ? 3 : user?.plan_type === 'founder' ? 50 : -1,
+                  ideas_per_month: user?.plan_type === 'free' ? 3 : -1,
+                  validations_per_month: user?.plan_type === 'free' ? 1 : -1,
+                  content_per_month: user?.plan_type === 'free' ? 3 : -1,
                 }}
               />
             </div>

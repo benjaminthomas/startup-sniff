@@ -3,15 +3,16 @@
 import { redirect } from 'next/navigation';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
 import { getCurrentSession } from '@/lib/auth/jwt';
-import { 
-  stripe, 
-  getStripeCustomerId, 
-  createCheckoutSession, 
-  createBillingPortalSession 
-} from '@/lib/stripe';
+import {
+  razorpay,
+  createSubscription as createRazorpaySubscription,
+  cancelSubscription as cancelRazorpaySubscription,
+  updateSubscription as updateRazorpaySubscription,
+  toPaise
+} from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
 
-export async function createSubscription(priceId: string) {
+export async function createSubscription(planId: string) {
   const session = await getCurrentSession();
 
   if (!session) {
@@ -21,33 +22,42 @@ export async function createSubscription(priceId: string) {
   const supabase = createServerAdminClient();
 
   try {
-    // Get or create Stripe customer
-    const customerId = await getStripeCustomerId(session.userId, session.email);
-
-    // Update user with Stripe customer ID if not exists
-    const { data: profile } = await supabase
-      .from('users')
-      .select('stripe_customer_id')
-      .eq('id', session.userId)
-      .single();
-
-    if (!profile?.stripe_customer_id) {
-      await supabase
-        .from('users')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', session.userId);
+    // Find the plan details
+    const plan = PRICING_PLANS.find(p => p.id === planId);
+    if (!plan) {
+      return { error: 'Invalid plan selected' };
     }
 
-    // Create checkout session
-    const checkoutSession = await createCheckoutSession({
-      customerId,
-      priceId,
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
-      userId: session.userId,
+    // Create Razorpay subscription
+    const subscription = await createRazorpaySubscription({
+      plan_id: plan.priceId, // Using priceId as Razorpay plan_id
+      customer_notify: 1,
+      quantity: 1,
+      total_count: plan.id === 'pro_yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly (or use 0 for unlimited)
+      notes: {
+        user_id: session.userId,
+        user_email: session.email,
+        plan_type: plan.id
+      },
     });
 
-    redirect(checkoutSession.url!);
+    // Store subscription details in database
+    await supabase
+      .from('subscriptions')
+      .insert({
+        user_id: session.userId,
+        razorpay_subscription_id: subscription.id,
+        razorpay_plan_id: plan.priceId,
+        plan_type: plan.id as unknown as 'explorer' | 'founder' | 'growth',
+        status: subscription.status as 'trial' | 'active' | 'inactive' | 'cancelled',
+      } as never);
+
+    // Return subscription details for frontend to complete payment
+    return {
+      success: true,
+      subscriptionId: subscription.id,
+      planId: plan.priceId
+    };
   } catch (error) {
     console.error('Error creating subscription:', error);
     return { error: 'Failed to create subscription' };
@@ -61,31 +71,9 @@ export async function manageBilling() {
     return { error: 'User not authenticated' };
   }
 
-  const supabase = createServerAdminClient();
-
-  try {
-    // Get user's Stripe customer ID
-    const { data: profile } = await supabase
-      .from('users')
-      .select('stripe_customer_id')
-      .eq('id', session.userId)
-      .single();
-
-    if (!profile?.stripe_customer_id) {
-      return { error: 'No billing information found' };
-    }
-
-    // Create billing portal session
-    const billingSession = await createBillingPortalSession(
-      profile.stripe_customer_id,
-      `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
-    );
-
-    redirect(billingSession.url);
-  } catch (error) {
-    console.error('Error creating billing portal session:', error);
-    return { error: 'Failed to access billing portal' };
-  }
+  // Razorpay doesn't have a built-in billing portal like Stripe
+  // Redirect to the billing page where users can manage subscriptions
+  redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`);
 }
 
 export async function cancelSubscription(subscriptionId: string) {
@@ -103,24 +91,24 @@ export async function cancelSubscription(subscriptionId: string) {
       .from('subscriptions')
       .select('*')
       .eq('user_id', session.userId)
-      .eq('stripe_subscription_id', subscriptionId)
+      .eq('razorpay_subscription_id', subscriptionId)
       .single();
 
     if (!subscription) {
       return { error: 'Subscription not found' };
     }
 
-    // Cancel subscription in Stripe
-    await stripe.subscriptions.cancel(subscriptionId);
+    // Cancel subscription in Razorpay
+    await cancelRazorpaySubscription(subscriptionId);
 
     // Update subscription in database
     await supabase
       .from('subscriptions')
-      .update({ 
+      .update({
         status: 'cancelled',
-        cancel_at_period_end: true 
+        cancel_at_period_end: true
       })
-      .eq('stripe_subscription_id', subscriptionId);
+      .eq('razorpay_subscription_id', subscriptionId);
 
     return { success: true, message: 'Subscription cancelled successfully' };
   } catch (error) {
@@ -129,7 +117,7 @@ export async function cancelSubscription(subscriptionId: string) {
   }
 }
 
-export async function updateSubscription(newPriceId: string) {
+export async function updateSubscription(newPlanId: string) {
   const session = await getCurrentSession();
 
   if (!session) {
@@ -147,52 +135,48 @@ export async function updateSubscription(newPriceId: string) {
       .eq('status', 'active')
       .single();
 
-    if (!subscription) {
+    if (!subscription || !(subscription as unknown as { razorpay_subscription_id?: string }).razorpay_subscription_id) {
       return { error: 'No active subscription found' };
     }
 
-    // Update subscription in Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.stripe_subscription_id!);
-    
-    await stripe.subscriptions.update(subscription.stripe_subscription_id!, {
-      items: [
-        {
-          id: stripeSubscription.items.data[0].id,
-          price: newPriceId,
-        },
-      ],
-      proration_behavior: 'create_prorations',
+    // Find the new plan details
+    const newPlan = PRICING_PLANS.find(plan => plan.id === newPlanId);
+
+    if (!newPlan) {
+      return { error: 'Invalid plan selected' };
+    }
+
+    // Update subscription in Razorpay
+    const razorpaySubId = (subscription as unknown as { razorpay_subscription_id?: string }).razorpay_subscription_id!;
+    await updateRazorpaySubscription(razorpaySubId, {
+      plan_id: newPlan.priceId,
+      schedule_change_at: 'now'
     });
 
-    // Find the plan type for the new price
-    const newPlan = PRICING_PLANS.find(plan => plan.priceId === newPriceId);
-    
-    if (newPlan) {
-      // Update subscription in database
-      await supabase
-        .from('subscriptions')
-        .update({ 
-          stripe_price_id: newPriceId,
-          plan_type: newPlan.id
-        })
-        .eq('id', subscription.id);
+    // Update subscription in database
+    await supabase
+      .from('subscriptions')
+      .update({
+        razorpay_plan_id: newPlan.priceId,
+        plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth'
+      } as never)
+      .eq('id', subscription.id);
 
-      // Update user's plan type
-      await supabase
-        .from('users')
-        .update({ plan_type: newPlan.id })
-        .eq('id', session.userId);
+    // Update user's plan type
+    await supabase
+      .from('users')
+      .update({ plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth' } as never)
+      .eq('id', session.userId);
 
-      // Update usage limits
-      await supabase
-        .from('usage_limits')
-        .update({
-          plan_type: newPlan.id,
-          monthly_limit_ideas: newPlan.limits.ideas,
-          monthly_limit_validations: newPlan.limits.validations
-        })
-        .eq('user_id', session.userId);
-    }
+    // Update usage limits
+    await supabase
+      .from('usage_limits')
+      .update({
+        plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth',
+        monthly_limit_ideas: newPlan.limits.ideas,
+        monthly_limit_validations: newPlan.limits.validations
+      } as never)
+      .eq('user_id', session.userId);
 
     return { success: true, message: 'Subscription updated successfully' };
   } catch (error) {

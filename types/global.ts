@@ -1,4 +1,4 @@
-export type PlanType = 'explorer' | 'founder' | 'growth';
+export type PlanType = 'free' | 'pro_monthly' | 'pro_yearly';
 export type SubscriptionStatus = 'trial' | 'active' | 'inactive' | 'cancelled' | 'past_due';
 
 export interface User {
@@ -106,8 +106,10 @@ export interface GeneratedContent {
 export interface Subscription {
   id: string;
   user_id: string;
-  stripe_subscription_id?: string;
-  stripe_price_id: string;
+  stripe_subscription_id?: string; // Legacy field - to be deprecated
+  stripe_price_id?: string; // Legacy field - to be deprecated
+  razorpay_subscription_id?: string;
+  razorpay_plan_id?: string;
   status?: SubscriptionStatus;
   plan_type: PlanType;
   current_period_start?: string;
@@ -122,6 +124,7 @@ export interface PricingPlan {
   name: string;
   price: number;
   priceId: string;
+  billingCycle?: 'monthly' | 'yearly';
   features: string[];
   limits: {
     ideas: number;
@@ -129,6 +132,7 @@ export interface PricingPlan {
     content: number;
   };
   popular?: boolean;
+  badge?: string;
 }
 
 export interface AIIdeaGeneration {

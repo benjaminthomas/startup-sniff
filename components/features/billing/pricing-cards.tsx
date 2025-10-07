@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,20 +15,77 @@ interface PricingCardsProps {
   userId: string;
 }
 
+declare global {
+  interface Window {
+    Razorpay: unknown;
+  }
+}
+
 export function PricingCards({ currentPlanId }: PricingCardsProps) {
   const [isPending, startTransition] = useTransition();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
-  const handleSubscribe = (priceId: string, planId: string) => {
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const handleSubscribe = (planId: string) => {
     setSelectedPlan(planId);
     startTransition(async () => {
-      const result = await createSubscription(priceId);
-      
+      const result = await createSubscription(planId);
+
       if (result?.error) {
         toast.error(result.error);
         setSelectedPlan(null);
+        return;
       }
-      // Success case will redirect to Stripe Checkout
+
+      if (!result?.success || !result.subscriptionId) {
+        toast.error('Failed to create subscription');
+        setSelectedPlan(null);
+        return;
+      }
+
+      // Initialize Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        subscription_id: result.subscriptionId,
+        name: 'Startup Sniff',
+        description: `Subscribe to ${PRICING_PLANS.find(p => p.id === planId)?.name} plan`,
+        handler: function () {
+          toast.success('Subscription activated successfully!');
+          window.location.href = '/dashboard/billing/success';
+        },
+        modal: {
+          ondismiss: function () {
+            setSelectedPlan(null);
+            toast.info('Payment cancelled');
+          }
+        },
+        prefill: {
+          email: '',
+        },
+        theme: {
+          color: '#8B5CF6'
+        }
+      };
+
+      if (window.Razorpay) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const razorpay = new (window.Razorpay as any)(options);
+        razorpay.open();
+      } else {
+        toast.error('Payment gateway not loaded. Please refresh and try again.');
+        setSelectedPlan(null);
+      }
     });
   };
 
@@ -45,19 +102,40 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
                 Most Popular
               </Badge>
             )}
+            {plan.badge && !plan.popular && (
+              <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-600">
+                {plan.badge}
+              </Badge>
+            )}
             
             <CardHeader className="text-center">
               <CardTitle className="flex items-center justify-center gap-2">
                 {plan.name}
+                {plan.billingCycle && (
+                  <Badge variant="outline" className="font-normal">
+                    {plan.billingCycle === 'monthly' ? 'Monthly' : 'Yearly'}
+                  </Badge>
+                )}
                 {isCurrentPlan && <Badge variant="secondary">Current</Badge>}
               </CardTitle>
-              <CardDescription>{plan.name} plan features</CardDescription>
+              <CardDescription>
+                {plan.billingCycle
+                  ? `${plan.name} plan - Billed ${plan.billingCycle}`
+                  : `${plan.name} plan features`}
+              </CardDescription>
               <div className="mt-4">
                 <span className="text-4xl font-bold">
                   {formatCurrency(plan.price)}
                 </span>
                 {plan.price > 0 && (
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-muted-foreground">
+                    {plan.billingCycle === 'yearly' ? '/year' : '/month'}
+                  </span>
+                )}
+                {plan.billingCycle === 'yearly' && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    ${Math.round(plan.price / 12)}/month when paid annually
+                  </div>
                 )}
               </div>
             </CardHeader>
@@ -80,7 +158,7 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
                 ) : (
                   <Button
                     className="w-full"
-                    onClick={() => handleSubscribe(plan.priceId, plan.id)}
+                    onClick={() => handleSubscribe(plan.id)}
                     disabled={isPending || !plan.priceId}
                   >
                     {isLoading ? (
@@ -104,7 +182,7 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
                 )}
               </div>
 
-              {plan.id !== 'explorer' && (
+              {plan.id !== 'free' && (
                 <div className="text-xs text-muted-foreground text-center">
                   {plan.limits.ideas === -1 ? 'Unlimited' : plan.limits.ideas} ideas per month •{' '}
                   {plan.limits.validations === -1 ? 'Unlimited' : plan.limits.validations} validations per month

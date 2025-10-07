@@ -178,11 +178,12 @@ export async function middleware(request: NextRequest) {
       // Content Security Policy
       'Content-Security-Policy': [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://checkout.razorpay.com", // Next.js + Razorpay
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' blob: data:",
+        "img-src 'self' blob: data: https://cdn.razorpay.com",
         "font-src 'self'",
-        "connect-src 'self' https://*.supabase.co", // Allow Supabase DB connections
+        "connect-src 'self' https://*.supabase.co https://api.razorpay.com", // Allow Supabase + Razorpay
+        "frame-src 'self' https://api.razorpay.com", // Allow Razorpay payment iframe
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
