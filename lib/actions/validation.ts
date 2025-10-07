@@ -102,18 +102,51 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       return { success: false, error: 'Idea is already validated' }
     }
 
-    // Check validation limits
-    const { data: usageLimits } = await supabase
-      .from('usage_limits')
-      .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', session.userId)
-      .single()
+    // Check validation limits using actual validated ideas this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    if (usageLimits) {
-      const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
-        return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
-      }
+    const { data: allValidatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('id, validation_data')
+      .eq('user_id', session.userId)
+      .eq('is_validated', true);
+
+    // Filter to only count validations done this month
+    const validationsThisMonth = allValidatedIdeas?.filter(validatedIdea => {
+      const validationData = validatedIdea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
+
+    // Get user's plan limits
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan_type')
+      .eq('id', session.userId)
+      .single();
+
+    const planType = user?.plan_type || 'explorer';
+    const PLAN_LIMITS = {
+      explorer: { validations_per_month: 1 },
+      founder: { validations_per_month: 10 },
+      growth: { validations_per_month: -1 } // unlimited
+    } as const;
+
+    const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;
+
+    console.log('📊 Validation limit check:', {
+      planType,
+      limit,
+      used: validationsThisMonth,
+      remaining: limit === -1 ? 'unlimited' : Math.max(0, limit - validationsThisMonth)
+    });
+
+    if (limit > 0 && validationsThisMonth >= limit) {
+      return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
     }
 
     // Create AI validation prompt using existing idea data
@@ -331,18 +364,51 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
 
     const validatedData = validationSchema.parse(rawData)
 
-    // Check validation limits
-    const { data: usageLimits } = await supabase
-      .from('usage_limits')
-      .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', session.userId)
-      .single()
+    // Check validation limits using actual validated ideas this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    if (usageLimits) {
-      const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
-        return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
-      }
+    const { data: allValidatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('id, validation_data')
+      .eq('user_id', session.userId)
+      .eq('is_validated', true);
+
+    // Filter to only count validations done this month
+    const validationsThisMonth = allValidatedIdeas?.filter(validatedIdea => {
+      const validationData = validatedIdea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
+
+    // Get user's plan limits
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan_type')
+      .eq('id', session.userId)
+      .single();
+
+    const planType = user?.plan_type || 'explorer';
+    const PLAN_LIMITS = {
+      explorer: { validations_per_month: 1 },
+      founder: { validations_per_month: 10 },
+      growth: { validations_per_month: -1 } // unlimited
+    } as const;
+
+    const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;
+
+    console.log('📊 Validation limit check:', {
+      planType,
+      limit,
+      used: validationsThisMonth,
+      remaining: limit === -1 ? 'unlimited' : Math.max(0, limit - validationsThisMonth)
+    });
+
+    if (limit > 0 && validationsThisMonth >= limit) {
+      return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
     }
 
     // Create AI validation prompt
