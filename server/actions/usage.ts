@@ -84,15 +84,21 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
 
     const ideasUsed = ideasCount?.length || 0;
 
-    // Count actual validations this month (ideas that were validated)
-    const { data: validationsCount } = await supabase
+    // Count actual validations this month (by checking validation_data.validated_at)
+    const { data: allValidatedIdeas } = await supabase
       .from('startup_ideas')
-      .select('id', { count: 'exact' })
+      .select('id, validation_data')
       .eq('user_id', user.id)
-      .eq('is_validated', true)
-      .gte('updated_at', startOfMonth.toISOString());
+      .eq('is_validated', true);
 
-    const validationsUsed = validationsCount?.length || 0;
+    // Filter to only count validations done this month
+    const validationsUsed = allValidatedIdeas?.filter(idea => {
+      const validationData = idea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
 
     // Count actual content pieces generated this month
     const { data: contentCount } = await supabase
@@ -111,6 +117,11 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     };
 
     console.log('✅ Final usage data being returned:', usageData);
+    console.log('📅 Start of month:', startOfMonth.toISOString());
+    console.log('📊 Validation count details:', {
+      totalValidated: allValidatedIdeas?.length || 0,
+      thisMonth: validationsUsed
+    });
 
     return {
       planType,
