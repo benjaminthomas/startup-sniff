@@ -1,5 +1,5 @@
 export type PlanType = 'explorer' | 'founder' | 'growth';
-export type SubscriptionStatus = 'trial' | 'active' | 'inactive' | 'cancelled';
+export type SubscriptionStatus = 'trial' | 'active' | 'inactive' | 'cancelled' | 'past_due';
 
 export interface User {
   id: string;
@@ -126,6 +126,7 @@ export interface PricingPlan {
   limits: {
     ideas: number;
     validations: number;
+    content: number;
   };
   popular?: boolean;
 }

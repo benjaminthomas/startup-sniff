@@ -218,7 +218,7 @@ export default async function IdeaDetailPage({
               <CardDescription>Who will benefit from this solution?</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.primary_demographic ? (
+        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.demographics ? (
                 <div className="space-y-4">
                   {/* Target Demographics */}
                   <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
@@ -227,7 +227,7 @@ export default async function IdeaDetailPage({
                       Target Demographics
                     </h4>
                     <p className="text-muted-foreground leading-relaxed">
-                      {idea.target_market.primary_demographic || 'Students and professionals seeking better collaboration tools'}
+                      {idea.target_market.demographics || 'Students and professionals seeking better collaboration tools'}
                     </p>
                   </div>
 
@@ -265,16 +265,16 @@ export default async function IdeaDetailPage({
               <CardDescription>How this idea solves the problem</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.solution === 'object' && idea.solution && idea.solution.value_proposition ? (
+        {typeof idea.solution === 'object' && idea.solution && idea.solution.description ? (
                 <div className="space-y-6">
-                  {idea.solution.value_proposition && (
+                  {idea.solution.description && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Star className="h-4 w-4 text-violet-600" />
                         Solution Overview
                       </h4>
                       <p className="text-muted-foreground leading-relaxed">
-                        {idea.solution.value_proposition}
+                        {idea.solution.description}
                       </p>
                     </div>
                   )}

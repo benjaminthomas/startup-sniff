@@ -43,7 +43,7 @@ export default async function DashboardPage() {
           avatar_url: dbUser.avatar_url || undefined,
           plan_type: (dbUser.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer',
           stripe_customer_id: dbUser.stripe_customer_id || undefined,
-          subscription_status: dbUser.subscription_status || undefined,
+          subscription_status: (dbUser.subscription_status as 'active' | 'inactive' | 'cancelled' | 'past_due') || undefined,
           trial_ends_at: dbUser.trial_ends_at || undefined,
           created_at: dbUser.created_at || '',
           updated_at: dbUser.updated_at || '',
