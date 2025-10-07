@@ -89,7 +89,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
             >
-              <Badge variant="outline" className="mb-8 bg-purple-500/20 border-purple-400/30 text-white">
+              <Badge variant="outline" className="mb-8 bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-500/20 dark:border-purple-400/30 dark:text-white">
                 <TrendingUp className="w-3 h-3 mr-1" />
                 AI-Powered Startup Discovery
               </Badge>
@@ -99,7 +99,7 @@ export default function HomePage() {
               <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
                 <TextGenerateEffect
                   words="Discover Your Next Million-Dollar Startup Idea"
-                  className="text-5xl md:text-7xl font-bold text-white drop-shadow-lg"
+                  className="text-5xl md:text-7xl font-bold text-foreground dark:text-white"
                 />
               </h1>
             </div>
@@ -108,9 +108,9 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1 }}
-              className="text-xl md:text-2xl text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed"
+              className="text-xl md:text-2xl text-muted-foreground dark:text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed"
             >
-              Use AI to <Highlight className="text-white bg-gradient-to-r from-purple-600/80 to-blue-600/80">analyze Reddit trends</Highlight>, validate market opportunities, and generate startup ideas that actually solve real problems.
+              Use AI to <Highlight className="text-foreground dark:text-white bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-600/80 dark:to-blue-600/80">analyze Reddit trends</Highlight>, validate market opportunities, and generate startup ideas that actually solve real problems.
             </motion.p>
 
             <motion.div
@@ -139,16 +139,16 @@ export default function HomePage() {
               className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center"
             >
               <div className="space-y-2">
-                <AnimatedCounter value={10000} suffix="+" className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg" />
-                <div className="text-white/80 text-lg">Reddit Posts Analyzed</div>
+                <AnimatedCounter value={10000} suffix="+" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">Reddit Posts Analyzed</div>
               </div>
               <div className="space-y-2">
-                <AnimatedCounter value={2500} suffix="+" className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg" />
-                <div className="text-white/80 text-lg">Ideas Generated</div>
+                <AnimatedCounter value={2500} suffix="+" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">Ideas Generated</div>
               </div>
               <div className="space-y-2">
-                <AnimatedCounter value={87} suffix="%" className="text-4xl md:text-5xl font-bold text-white drop-shadow-lg" />
-                <div className="text-white/80 text-lg">Validation Accuracy</div>
+                <AnimatedCounter value={87} suffix="%" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">Validation Accuracy</div>
               </div>
             </motion.div>
           </div>
@@ -443,7 +443,7 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="max-w-4xl mx-auto text-center"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white drop-shadow-lg">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground dark:text-white">
               Ready to Find Your Next Big Idea?
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">

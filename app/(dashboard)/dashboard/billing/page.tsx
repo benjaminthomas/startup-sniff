@@ -40,8 +40,8 @@ export default async function BillingPage() {
     id: session.userId,
     email: session.email,
     full_name: null,
-    plan_type: 'explorer',
-    subscription_status: 'trial',
+    plan_type: 'free' as const,
+    subscription_status: 'trial' as const,
   };
 
   const currentPlan = PRICING_PLANS.find(plan => plan.id === displayUser.plan_type) || PRICING_PLANS[0];
@@ -63,7 +63,7 @@ export default async function BillingPage() {
         <div>
           <h2 className="text-2xl font-semibold mb-6">Available Plans</h2>
           <PricingCards
-            currentPlanId={displayUser.plan_type || 'explorer'}
+            currentPlanId={displayUser.plan_type || 'free'}
             userId={session.userId}
           />
         </div>

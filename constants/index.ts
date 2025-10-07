@@ -2,8 +2,8 @@ import type { PricingPlan } from '@/types/global';
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    id: 'explorer',
-    name: 'Explorer',
+    id: 'free',
+    name: 'Free',
     price: 0,
     priceId: '', // Free plan doesn't need a price ID
     features: [
@@ -21,46 +21,48 @@ export const PRICING_PLANS: PricingPlan[] = [
     },
   },
   {
-    id: 'founder',
-    name: 'Founder',
-    price: 19,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_FOUNDER_PRICE_ID || 'price_1234567890founder',
-    features: [
-      '25 AI-generated startup ideas per month',
-      '10 market validations per month',
-      '50 content generations per month',
-      'Advanced Reddit trend analysis',
-      'Premium content generation',
-      'Export to PDF/Notion',
-      'Priority email support'
-    ],
-    limits: {
-      ideas: 25,
-      validations: 10,
-      content: 50,
-    },
-    popular: true,
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    price: 49,
-    priceId: process.env.NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID || 'price_1234567890growth',
+    id: 'pro_monthly',
+    name: 'Pro',
+    price: 29,
+    priceId: process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID || 'plan_RQbJW54uNkoMwA',
+    billingCycle: 'monthly',
     features: [
       'Unlimited AI-generated startup ideas',
       'Unlimited market validations',
       'Unlimited content generations',
+      'Advanced Reddit trend analysis',
+      'Premium content generation',
       'Multi-platform trend analysis',
       'Custom brand voice content',
+      'Export to PDF/Notion',
       'Advanced analytics dashboard',
-      'API access',
-      'Priority support & consultation calls'
+      'Priority support',
+      'Cancel anytime'
     ],
     limits: {
       ideas: -1, // Unlimited
       validations: -1, // Unlimited
       content: -1, // Unlimited
     },
+    popular: true,
+  },
+  {
+    id: 'pro_yearly',
+    name: 'Pro',
+    price: 290, // ~24/month
+    priceId: process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID || 'plan_RQbJzVfk744fiY',
+    billingCycle: 'yearly',
+    features: [
+      'Everything in Pro plan',
+      'Save $58/year (2 months free)',
+      'Billed annually'
+    ],
+    limits: {
+      ideas: -1, // Unlimited
+      validations: -1, // Unlimited
+      content: -1, // Unlimited
+    },
+    badge: 'SAVE 17%',
   },
 ];
 
@@ -191,14 +193,14 @@ export const SUBREDDITS = [
 
 export const API_LIMITS = {
   RATE_LIMIT: {
-    explorer: { requests: 10, window: 60 * 1000 }, // 10 requests per minute
-    founder: { requests: 50, window: 60 * 1000 }, // 50 requests per minute
-    growth: { requests: 200, window: 60 * 1000 }, // 200 requests per minute
+    free: { requests: 10, window: 60 * 1000 }, // 10 requests per minute
+    pro_monthly: { requests: 200, window: 60 * 1000 }, // 200 requests per minute
+    pro_yearly: { requests: 200, window: 60 * 1000 }, // 200 requests per minute
   },
   OPENAI_TOKEN_LIMITS: {
-    explorer: 10000,
-    founder: 50000,
-    growth: 200000,
+    free: 10000,
+    pro_monthly: 200000,
+    pro_yearly: 200000,
   },
 };
 

@@ -16,7 +16,8 @@ export interface User {
   login_attempts: number
   locked_until: string | null
   plan_type: 'explorer' | 'founder' | 'growth' | null
-  stripe_customer_id: string | null
+  stripe_customer_id: string | null // Legacy field - to be deprecated
+  razorpay_customer_id: string | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at: string | null
   created_at: string
@@ -38,7 +39,8 @@ export interface UserInsert {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: 'explorer' | 'founder' | 'growth' | null
-  stripe_customer_id?: string | null
+  stripe_customer_id?: string | null // Legacy field - to be deprecated
+  razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
   created_at?: string
@@ -59,7 +61,8 @@ export interface UserUpdate {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: 'explorer' | 'founder' | 'growth' | null
-  stripe_customer_id?: string | null
+  stripe_customer_id?: string | null // Legacy field - to be deprecated
+  razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
   updated_at?: string
@@ -139,7 +142,7 @@ export interface AuthResponse {
 }
 
 // Plan and subscription types
-export type PlanType = 'explorer' | 'founder' | 'growth'
+export type PlanType = 'free' | 'pro_monthly' | 'pro_yearly'
 export type SubscriptionStatus = 'active' | 'inactive' | 'canceled' | 'past_due'
 
 // Helper types for existing tables (keeping compatibility)
