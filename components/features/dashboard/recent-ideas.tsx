@@ -139,47 +139,51 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
 
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0 pr-4">
-                      {/* Title and Status Badges */}
                       <div className="flex items-center space-x-2 mb-3">
                         <h3 className="font-semibold text-base truncate group-hover:text-primary transition-colors">
                           {idea.title}
                         </h3>
-                        {idea.is_favorite && (
-                          <Heart className="h-4 w-4 text-red-500 fill-current flex-shrink-0" />
-                        )}
-                        {idea.is_validated && (
-                          <Badge variant="secondary" className="text-xs">
-                            <TrendingUp className="h-3 w-3 mr-1" />
+                        <>
+                          {idea.is_favorite && (
+                            <Heart className="h-4 w-4 text-red-500 fill-current flex-shrink-0" />
+                          )}
+                        </>
+                        <>
+                          {idea.is_validated && (
+                            <Badge variant="secondary" className="text-xs">
+                              <TrendingUp className="h-3 w-3 mr-1" />
                             Validated
                           </Badge>
-                        )}
+                          )}
+                        </>
                       </div>
 
-                      {/* Product Type Badge */}
-                      {(idea.source_data as Record<string, unknown>)?.product_type && (
-                        <Badge variant="outline" className="mb-2 text-xs">
-                          {(idea.source_data as Record<string, unknown>).product_type as string}
+                      <>
+                        {(idea.source_data as Record<string, unknown>)?.product_type && (
+                          <Badge variant="outline" className="mb-2 text-xs">
+                            {(idea.source_data as Record<string, unknown>).product_type as string}
                         </Badge>
-                      )}
+                        )}
+                      </>
 
-                      {/* Problem Statement with Pain Points */}
                       <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
                         {idea.problem_statement}
                       </p>
 
-                      {/* Specific Pain Points */}
-                      {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
-                       Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
-                       ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
-                        <div className="mb-4">
-                          <p className="text-xs font-medium text-muted-foreground mb-1">Key Pain Points:</p>
-                          <ul className="text-xs text-muted-foreground space-y-0.5">
-                            {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).slice(0, 2).map((point, idx) => (
-                              <li key={idx} className="line-clamp-1">• {point}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
+                      <>
+                        {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
+                         Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
+                         ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">Key Pain Points:</p>
+                            <ul className="text-xs text-muted-foreground space-y-0.5">
+                              {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).slice(0, 2).map((point, idx) => (
+                                <li key={idx} className="line-clamp-1">• {point}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </>
 
                       {/* Enhanced Confidence Section */}
                       <div className="flex items-center justify-between">

@@ -100,24 +100,24 @@ function generateMockIdea(params: IdeaGenerationParams): GeneratedIdea {
 
   return {
     title: template.title,
-    productType: template.productType || 'SaaS Platform',
+    productType: (template as { productType?: string }).productType || 'SaaS Platform',
     description: template.description,
     problemStatement: template.problem,
-    specificPainPoints: template.specificPainPoints || [
+    specificPainPoints: (template as { specificPainPoints?: string[] }).specificPainPoints || [
       'Users face daily challenges without adequate solutions',
       'Current alternatives are expensive or ineffective',
       'Manual processes waste significant time'
     ],
     solution: template.solution,
     targetMarket: template.market,
-    targetPersonas: template.personas || [
+    targetPersonas: (template as { personas?: Array<{ name: string; role: string; painPoints: string[] }> }).personas || [
       {
         name: 'Typical User',
         role: 'Primary Target',
         painPoints: ['Needs efficient solution', 'Lacks time', 'Budget-conscious']
       }
     ],
-    technicalStack: template.techStack || ['React', 'Node.js', 'PostgreSQL'],
+    technicalStack: (template as { techStack?: string[] }).techStack || ['React', 'Node.js', 'PostgreSQL'],
     revenueModel: template.revenue,
     estimatedCost: template.cost,
     timeToMarket: template.timeline,

@@ -200,89 +200,85 @@ export default async function IdeaDetailPage({
           <CardDescription>Detailed breakdown of this startup concept</CardDescription>
         </CardHeader>
         <CardContent className="pt-6 space-y-6">
-          {/* Product Type */}
-          {(idea.source_data as Record<string, unknown>)?.product_type && (
-            <div>
-              <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Product Type</h4>
-              <Badge variant="secondary" className="text-sm">
-                {(idea.source_data as Record<string, unknown>).product_type as string}
-              </Badge>
-            </div>
-          )}
-
-          {/* Description */}
-          <div>
-            <h4 className="font-semibold mb-2 text-sm text-muted-foreground">What is it?</h4>
-            <p className="text-sm leading-relaxed">{idea.problem_statement}</p>
-          </div>
-
-          {/* Specific Pain Points */}
-          {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
-           Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
-           ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Pain Points Being Solved</h4>
-              <div className="space-y-2">
-                {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).map((point, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-                    <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">{point}</span>
-                  </div>
-                ))}
+          <>
+            {(idea.source_data as Record<string, unknown>)?.product_type && (
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Product Type</h4>
+                <Badge variant="secondary" className="text-sm">
+                  {(idea.source_data as Record<string, unknown>).product_type as string}
+                </Badge>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Target Personas from generation */}
-          {(idea.source_data as Record<string, unknown>)?.target_personas &&
-           Array.isArray((idea.source_data as Record<string, unknown>).target_personas) &&
-           ((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).length > 0 && (
             <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Target User Personas</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).map((persona, idx) => (
-                  <div key={idx} className="p-4 rounded-lg border bg-muted/30">
-                    <h5 className="font-medium mb-1">{persona.name}</h5>
-                    <p className="text-xs text-muted-foreground mb-3">{persona.role}</p>
-                    {persona.painPoints && persona.painPoints.length > 0 && (
-                      <div className="space-y-1">
-                        <p className="text-xs font-medium">Their challenges:</p>
-                        <ul className="text-xs text-muted-foreground space-y-0.5">
-                          {persona.painPoints.map((point, i) => (
-                            <li key={i}>• {point}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                ))}
+              <h4 className="font-semibold mb-2 text-sm text-muted-foreground">What is it?</h4>
+              <p className="text-sm leading-relaxed">{idea.problem_statement}</p>
+            </div>
+
+            {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
+             Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
+             ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Pain Points Being Solved</h4>
+                <div className="space-y-2">
+                  {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).map((point, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
+                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{point}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Technical Stack Suggestions from generation */}
-          {(idea.source_data as Record<string, unknown>)?.technical_stack &&
-           Array.isArray((idea.source_data as Record<string, unknown>).technical_stack) &&
-           ((idea.source_data as Record<string, unknown>).technical_stack as string[]).length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Suggested Tech Stack</h4>
-              <div className="flex flex-wrap gap-2">
-                {((idea.source_data as Record<string, unknown>).technical_stack as string[]).map((tech, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
-                    {tech}
-                  </Badge>
-                ))}
+            {(idea.source_data as Record<string, unknown>)?.target_personas &&
+             Array.isArray((idea.source_data as Record<string, unknown>).target_personas) &&
+             ((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Target User Personas</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).map((persona, idx) => (
+                    <div key={idx} className="p-4 rounded-lg border bg-muted/30">
+                      <h5 className="font-medium mb-1">{persona.name}</h5>
+                      <p className="text-xs text-muted-foreground mb-3">{persona.role}</p>
+                      {persona.painPoints && persona.painPoints.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium">Their challenges:</p>
+                          <ul className="text-xs text-muted-foreground space-y-0.5">
+                            {persona.painPoints.map((point, i) => (
+                              <li key={i}>• {point}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Target Market */}
-          {idea.target_market && typeof idea.target_market === 'string' && (
-            <div>
-              <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Target Market</h4>
-              <p className="text-sm">{idea.target_market}</p>
-            </div>
-          )}
+            {(idea.source_data as Record<string, unknown>)?.technical_stack &&
+             Array.isArray((idea.source_data as Record<string, unknown>).technical_stack) &&
+             ((idea.source_data as Record<string, unknown>).technical_stack as string[]).length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Suggested Tech Stack</h4>
+                <div className="flex flex-wrap gap-2">
+                  {((idea.source_data as Record<string, unknown>).technical_stack as string[]).map((tech, idx) => (
+                    <Badge key={idx} variant="outline" className="text-xs">
+                      {tech}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {idea.target_market && typeof idea.target_market === 'string' && (
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Target Market</h4>
+                <p className="text-sm">{idea.target_market}</p>
+              </div>
+            )}
+          </>
         </CardContent>
       </Card>
 
@@ -316,49 +312,50 @@ export default async function IdeaDetailPage({
               <CardDescription>Who will benefit from this solution?</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.primary_demographic ? (
-                <div className="space-y-4">
-                  {/* Target Demographics */}
-                  <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <Users className="h-5 w-5 text-blue-600" />
-                      Target Demographics
-                    </h4>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {idea.target_market.primary_demographic}
-                    </p>
-                  </div>
-
-                  {/* User Personas */}
-                  {idea.target_market.user_personas && Array.isArray(idea.target_market.user_personas) && idea.target_market.user_personas.length > 0 && (
-                    <div>
+              <>
+                {typeof idea.target_market === 'object' && idea.target_market && (idea.target_market as unknown as Record<string, unknown>).primary_demographic ? (
+                  <div className="space-y-4">
+                    <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Target className="h-4 w-4 text-purple-600" />
-                        User Personas
+                        <Users className="h-5 w-5 text-blue-600" />
+                        Target Demographics
                       </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {idea.target_market.user_personas.map((persona: { name: string; description: string; pain_points: string[] }, idx: number) => (
-                          <div key={idx} className="p-4 rounded-lg bg-muted/30 border">
-                            <h5 className="font-medium mb-2">{persona.name}</h5>
-                            <p className="text-sm text-muted-foreground mb-3">{persona.description}</p>
-                            {persona.pain_points && persona.pain_points.length > 0 && (
-                              <div className="space-y-1">
-                                <p className="text-xs font-medium text-muted-foreground">Pain Points:</p>
-                                <ul className="text-xs text-muted-foreground space-y-0.5">
-                                  {persona.pain_points.map((point, i) => (
-                                    <li key={i}>• {point}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {(idea.target_market as unknown as Record<string, unknown>).primary_demographic as string}
+                      </p>
                     </div>
-                  )}
 
-                </div>
-              ) : (
+                    <>
+                      {(idea.target_market as unknown as Record<string, unknown>).user_personas && Array.isArray((idea.target_market as unknown as Record<string, unknown>).user_personas) && ((idea.target_market as unknown as Record<string, unknown>).user_personas as Array<unknown>).length > 0 && (
+                        <div>
+                          <h4 className="font-semibold mb-3 flex items-center gap-2">
+                            <Target className="h-4 w-4 text-purple-600" />
+                            User Personas
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {((idea.target_market as unknown as Record<string, unknown>).user_personas as Array<{ name: string; description: string; pain_points: string[] }>).map((persona, idx) => (
+                              <div key={idx} className="p-4 rounded-lg bg-muted/30 border">
+                                <h5 className="font-medium mb-2">{persona.name}</h5>
+                                <p className="text-sm text-muted-foreground mb-3">{persona.description}</p>
+                                {persona.pain_points && persona.pain_points.length > 0 && (
+                                  <div className="space-y-1">
+                                    <p className="text-xs font-medium text-muted-foreground">Pain Points:</p>
+                                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                                      {persona.pain_points.map((point, i) => (
+                                        <li key={i}>• {point}</li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+
+                  </div>
+                ) : (
                 <div className="text-center py-12">
                   <div className="relative">
                     <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -375,7 +372,8 @@ export default async function IdeaDetailPage({
                     <ValidationMessage className="text-center" />
                   </div>
                 </div>
-              )}
+                )}
+              </>
             </CardContent>
           </Card>
 
@@ -537,8 +535,8 @@ export default async function IdeaDetailPage({
             <CardContent className="px-6 pb-6">
               {idea.is_validated && typeof idea.market_analysis === 'object' && idea.market_analysis ? (
                 <div className="space-y-6">
-                  {/* Market Size */}
-                  {idea.market_analysis.market_size && (
+                  <>
+                    {(idea.market_analysis as unknown as Record<string, unknown>).market_size && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
                       <h4 className="font-semibold mb-4 flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-indigo-600" />
@@ -547,19 +545,19 @@ export default async function IdeaDetailPage({
                       <div className="grid grid-cols-3 gap-4">
                         <div>
                           <div className="text-2xl font-bold text-blue-600">
-                            ${Math.round((idea.market_analysis.market_size.tam || 0) / 1000000)}M
+                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.tam as number || 0) / 1000000)}M
                           </div>
                           <div className="text-xs text-muted-foreground">TAM (Total Addressable)</div>
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-indigo-600">
-                            ${Math.round((idea.market_analysis.market_size.sam || 0) / 1000000)}M
+                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.sam as number || 0) / 1000000)}M
                           </div>
                           <div className="text-xs text-muted-foreground">SAM (Serviceable)</div>
                         </div>
                         <div>
                           <div className="text-2xl font-bold text-purple-600">
-                            ${Math.round((idea.market_analysis.market_size.som || 0) / 1000000)}M
+                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.som as number || 0) / 1000000)}M
                           </div>
                           <div className="text-xs text-muted-foreground">SOM (Obtainable)</div>
                         </div>
@@ -567,8 +565,7 @@ export default async function IdeaDetailPage({
                     </div>
                   )}
 
-                  {/* Competition Level */}
-                  {idea.market_analysis.competition_level && (
+                  {(idea.market_analysis as unknown as Record<string, unknown>).competition_level && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/10 dark:to-red-950/10 border border-rose-200 dark:border-rose-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Target className="h-5 w-5 text-rose-600" />
@@ -577,48 +574,54 @@ export default async function IdeaDetailPage({
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-muted-foreground">Competition Level</span>
-                          <Badge variant="outline" className="capitalize">{idea.market_analysis.competition_level}</Badge>
+                          <Badge variant="outline" className="capitalize">{(idea.market_analysis as unknown as Record<string, unknown>).competition_level as string}</Badge>
                         </div>
-                        {idea.market_analysis.entry_barriers && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Entry Barriers</span>
-                            <Badge variant="outline" className="capitalize">{idea.market_analysis.entry_barriers}</Badge>
-                          </div>
-                        )}
+                        <>
+                          {(idea.market_analysis as unknown as Record<string, unknown>).entry_barriers && (
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Entry Barriers</span>
+                              <Badge variant="outline" className="capitalize">{(idea.market_analysis as unknown as Record<string, unknown>).entry_barriers as string}</Badge>
+                            </div>
+                          )}
+                        </>
                       </div>
                     </div>
                   )}
 
-                  {/* Competitive Advantages */}
-                  {idea.market_analysis.competitive_advantages && Array.isArray(idea.market_analysis.competitive_advantages) && idea.market_analysis.competitive_advantages.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        Competitive Advantages
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {idea.market_analysis.competitive_advantages.map((advantage: string, idx: number) => (
-                          <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{advantage}</span>
-                          </div>
-                        ))}
+                  <>
+                    {(idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages && Array.isArray((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages) && ((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages as Array<unknown>).length > 0 && (
+                      <div>
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          Competitive Advantages
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages as string[]).map((advantage, idx) => (
+                            <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
+                              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                              <span className="text-sm">{advantage}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </>
 
-                  {/* Market Timing */}
-                  {idea.market_analysis.market_timing && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-purple-600" />
-                        Market Timing
-                      </h4>
-                      <p className="text-muted-foreground text-sm leading-relaxed">
-                        {idea.market_analysis.market_timing}
-                      </p>
-                    </div>
-                  )}
+                  <>
+                    {(idea.market_analysis as unknown as Record<string, unknown>).market_timing && (
+                      <div className="p-6 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
+                        <h4 className="font-semibold mb-3 flex items-center gap-2">
+                          <Clock className="h-5 w-5 text-purple-600" />
+                          Market Timing
+                        </h4>
+                        <p className="text-muted-foreground text-sm leading-relaxed">
+                          {(idea.market_analysis as unknown as Record<string, unknown>).market_timing as string}
+                        </p>
+                      </div>
+                    )}
+                  </>
+
+                  </>
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -708,32 +711,35 @@ export default async function IdeaDetailPage({
             <CardContent className="px-6 pb-6">
               {typeof idea.implementation === 'object' && idea.implementation ? (
                 <div className="space-y-6">
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
+                      <>
+                        {(idea.implementation as unknown as Record<string, unknown>).technical_complexity && (
+                          <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
+                            <h4 className="font-semibold mb-2 text-sm">Technical Complexity</h4>
+                            <Badge variant="outline" className="capitalize">{(idea.implementation as unknown as Record<string, unknown>).technical_complexity as string}</Badge>
+                          </div>
+                        )}
+                      </>
+                      <>
+                        {(idea.implementation as unknown as Record<string, unknown>).time_to_market && (
+                          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
+                            <h4 className="font-semibold mb-2 text-sm">Time to Market</h4>
+                            <p className="text-sm text-muted-foreground">{(idea.implementation as unknown as Record<string, unknown>).time_to_market as string}</p>
+                          </div>
+                        )}
+                      </>
+                    </div>
 
-                  {/* Technical Complexity & Timeline */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {idea.implementation.technical_complexity && (
-                      <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
-                        <h4 className="font-semibold mb-2 text-sm">Technical Complexity</h4>
-                        <Badge variant="outline" className="capitalize">{idea.implementation.technical_complexity}</Badge>
-                      </div>
-                    )}
-                    {idea.implementation.time_to_market && (
-                      <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
-                        <h4 className="font-semibold mb-2 text-sm">Time to Market</h4>
-                        <p className="text-sm text-muted-foreground">{idea.implementation.time_to_market}</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Development Phases */}
-                  {idea.implementation.phases && Array.isArray(idea.implementation.phases) && idea.implementation.phases.length > 0 && (
+                    <>
+                      {(idea.implementation as unknown as Record<string, unknown>).phases && Array.isArray((idea.implementation as unknown as Record<string, unknown>).phases) && ((idea.implementation as unknown as Record<string, unknown>).phases as Array<unknown>).length > 0 && (
                     <div>
                       <h4 className="font-semibold mb-4 flex items-center gap-2">
                         <Zap className="h-5 w-5 text-indigo-600" />
                         Development Phases
                       </h4>
                       <div className="space-y-3">
-                        {idea.implementation.phases.map((phase: { phase: string; duration: string; description: string }, idx: number) => (
+                        {((idea.implementation as unknown as Record<string, unknown>).phases as Array<{ phase: string; duration: string; description: string }>).map((phase, idx) => (
                           <div key={idx} className="p-4 rounded-lg border bg-muted/30">
                             <div className="flex items-start justify-between mb-2">
                               <h5 className="font-medium">{phase.phase}</h5>
@@ -744,17 +750,18 @@ export default async function IdeaDetailPage({
                         ))}
                       </div>
                     </div>
-                  )}
+                      )}
+                    </>
 
-                  {/* Key Milestones */}
-                  {idea.implementation.milestones && Array.isArray(idea.implementation.milestones) && idea.implementation.milestones.length > 0 && (
+                    <>
+                      {(idea.implementation as unknown as Record<string, unknown>).milestones && Array.isArray((idea.implementation as unknown as Record<string, unknown>).milestones) && ((idea.implementation as unknown as Record<string, unknown>).milestones as Array<unknown>).length > 0 && (
                     <div>
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <CheckCircle className="h-4 w-4 text-green-600" />
                         Key Milestones
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {idea.implementation.milestones.map((milestone: string, idx: number) => (
+                        {((idea.implementation as unknown as Record<string, unknown>).milestones as string[]).map((milestone, idx) => (
                           <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
                             <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                             <span className="text-sm">{milestone}</span>
@@ -762,53 +769,58 @@ export default async function IdeaDetailPage({
                         ))}
                       </div>
                     </div>
-                  )}
+                      )}
+                    </>
 
-                  {/* Tech Stack Suggestions */}
-                  {idea.implementation.tech_stack && Array.isArray(idea.implementation.tech_stack) && idea.implementation.tech_stack.length > 0 && (
+                    <>
+                      {(idea.implementation as unknown as Record<string, unknown>).tech_stack && Array.isArray((idea.implementation as unknown as Record<string, unknown>).tech_stack) && ((idea.implementation as unknown as Record<string, unknown>).tech_stack as Array<unknown>).length > 0 && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/10 dark:to-cyan-950/10 border border-blue-200 dark:border-blue-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Zap className="h-5 w-5 text-blue-600" />
                         Recommended Tech Stack
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {idea.implementation.tech_stack.map((tech: string, idx: number) => (
+                        {((idea.implementation as unknown as Record<string, unknown>).tech_stack as string[]).map((tech, idx) => (
                           <Badge key={idx} variant="secondary" className="text-xs">
                             {tech}
                           </Badge>
                         ))}
                       </div>
                     </div>
-                  )}
+                      )}
+                    </>
 
-                  {/* Team Capacity */}
-                  {idea.implementation.team_capacity && (
+                    <>
+                      {(idea.implementation as unknown as Record<string, unknown>).team_capacity && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Users className="h-5 w-5 text-violet-600" />
                         Team Capacity
                       </h4>
                       <p className="text-sm text-muted-foreground leading-relaxed">
-                        {idea.implementation.team_capacity}
+                        {(idea.implementation as unknown as Record<string, unknown>).team_capacity as string}
                       </p>
                     </div>
-                  )}
+                      )}
+                    </>
 
-                  {/* Resource Requirements */}
-                  {idea.implementation.resource_requirements && Array.isArray(idea.implementation.resource_requirements) && idea.implementation.resource_requirements.length > 0 && (
+                    <>
+                      {(idea.implementation as unknown as Record<string, unknown>).resource_requirements && Array.isArray((idea.implementation as unknown as Record<string, unknown>).resource_requirements) && ((idea.implementation as unknown as Record<string, unknown>).resource_requirements as Array<unknown>).length > 0 && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/10 dark:to-orange-950/10 border border-amber-200 dark:border-amber-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-amber-600" />
                         Resource Requirements
                       </h4>
                       <ul className="space-y-2">
-                        {idea.implementation.resource_requirements.map((req: string, idx: number) => (
+                        {((idea.implementation as unknown as Record<string, unknown>).resource_requirements as string[]).map((req, idx) => (
                           <li key={idx} className="text-sm text-muted-foreground">• {req}</li>
                         ))}
                       </ul>
                     </div>
-                  )}
+                      )}
+                    </>
 
+                  </>
                 </div>
               ) : (
                 <div className="text-center py-12">

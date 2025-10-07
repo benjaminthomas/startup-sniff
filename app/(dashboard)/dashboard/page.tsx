@@ -77,7 +77,7 @@ export default async function DashboardPage() {
     const startupIdeas = await supabase
       .from('startup_ideas')
       .select('*')
-      .eq('user_id', session.userId)
+      .eq('user_id', session?.userId || '')
       .order('created_at', { ascending: false })
       .limit(10);
 
