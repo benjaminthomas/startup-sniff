@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           }
 
           const data = await response.json();
-          return { subreddit, posts: data.data.children.map((child: any) => child.data) };
+          return { subreddit, posts: data.data.children.map((child: { data: unknown }) => child.data) };
         } catch (error) {
           console.error(`Error fetching r/${subreddit}:`, error);
           return null;
