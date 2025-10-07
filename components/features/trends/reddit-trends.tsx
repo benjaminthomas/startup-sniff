@@ -74,17 +74,26 @@ export function RedditTrends() {
         credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
+        // Handle specific error cases
+        if (response.status === 503 && data.status === 'service_unavailable') {
+          setError(data.message || 'Reddit data is temporarily unavailable. This is a known issue we are working to resolve.');
+        } else if (response.status === 401) {
+          setError('Please sign in to view Reddit trends.');
+        } else {
+          setError(data.details || 'Failed to load Reddit trends. Please try again.');
+        }
+        return;
       }
 
-      const summaryData = await response.json();
-      setSummary(summaryData);
-      if (summaryData.fullAnalysis) {
-        setFullAnalysis(summaryData.fullAnalysis);
+      setSummary(data);
+      if (data.fullAnalysis) {
+        setFullAnalysis(data.fullAnalysis);
       }
     } catch (err) {
-      setError('Failed to load Reddit trends. Please try again.');
+      setError('Unable to connect to the trends service. Please check your internet connection and try again.');
       console.error('Error loading trends:', err);
     } finally {
       setIsLoading(false);
