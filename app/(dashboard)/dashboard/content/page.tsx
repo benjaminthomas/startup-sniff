@@ -1,7 +1,8 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, BarChart3, Library } from "lucide-react";
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
+import { redirect } from 'next/navigation';
 import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
 import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
 import { ContentAnalytics } from '@/components/features/content/content-analytics';
@@ -10,21 +11,21 @@ import { getUserContent } from '@/server/actions/content';
 import { StartupIdea, GeneratedContent } from '@/types/global';
 
 export default async function ContentPage() {
-  const supabase = await createServerSupabaseClient();
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
+
+  if (!session) {
+    redirect('/auth/signin');
+  }
 
   // Note: Content stats calculation removed - not currently displayed in UI
   // Can be re-added when analytics dashboard is implemented
 
   // Get user's startup ideas for content generation
-  const userIdeasRaw = user ? await getUserIdeas(10) : [];
+  const userIdeasRaw = await getUserIdeas(10);
   const typedUserIdeas: StartupIdea[] = userIdeasRaw as unknown as StartupIdea[];
 
   // Get user's generated content
-  const userContentRaw = user ? await getUserContent(20) : [];
+  const userContentRaw = await getUserContent(20);
   const typedUserContent: GeneratedContent[] = userContentRaw as unknown as GeneratedContent[];
   
   return (

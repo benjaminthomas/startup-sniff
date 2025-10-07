@@ -3,9 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 import { openai } from '@/lib/openai';
 import { CONTENT_TYPES, BRAND_VOICES, VALIDATION_SCHEMAS } from '@/constants';
+import { incrementUsage } from '@/server/actions/plan-limits';
 
 const generateContentSchema = z.object({
   contentType: z.enum(['blog_post', 'tweet', 'email', 'landing_page']),
@@ -17,13 +19,13 @@ const generateContentSchema = z.object({
 });
 
 export async function generateContent(formData: FormData) {
-  const supabase = await createServerSupabaseClient();
-  
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     redirect('/auth/signin');
   }
+
+  const supabase = createServerAdminClient();
 
   // Validate form data
   const rawData = {
@@ -45,11 +47,11 @@ export async function generateContent(formData: FormData) {
     const { data: userData } = await supabase
       .from('users')
       .select('plan_type')
-      .eq('id', user.id)
+      .eq('id', session.userId)
       .single();
 
     const planLimits = {
-      explorer: 5,
+      explorer: 3,
       founder: 50,
       growth: -1 // Unlimited
     };
@@ -62,7 +64,7 @@ export async function generateContent(formData: FormData) {
       const { data: existingContent, error: countError } = await supabase
         .from('generated_content')
         .select('id', { count: 'exact' })
-        .eq('user_id', user.id);
+        .eq('user_id', session.userId);
 
       const currentContentCount = existingContent?.length || 0;
       
@@ -78,7 +80,7 @@ export async function generateContent(formData: FormData) {
     const { data: savedContent, error: saveError } = await supabase
       .from('generated_content')
       .insert({
-        user_id: user.id,
+        user_id: session.userId,
         content_type: validationResult.data.contentType,
         title: generatedContent.title,
         content: generatedContent.content,
@@ -93,7 +95,10 @@ export async function generateContent(formData: FormData) {
       throw new Error('Failed to save generated content');
     }
 
-    console.log(`📝 Content generated successfully for user ${user.id}: ${savedContent.title}`);
+    console.log(`📝 Content generated successfully for user ${session.userId}: ${savedContent.title}`);
+
+    // Increment usage count
+    await incrementUsage('content');
 
     // Revalidate the content page
     revalidatePath('/dashboard/content');
@@ -461,28 +466,27 @@ A: If you don't see measurable progress within 60 days, we'll refund every penny
 }
 
 export async function getUserContent(limit: number = 10) {
-  const supabase = await createServerSupabaseClient();
-  
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     console.log('❌ getUserContent: No authenticated user');
     return [];
   }
 
-  console.log('🔍 getUserContent called for user:', { 
-    userId: user?.id, 
-    userEmail: user?.email 
+  const supabase = createServerAdminClient();
+
+  console.log('🔍 getUserContent called for user:', {
+    userId: session.userId
   });
 
   try {
     const { data: content, error } = await supabase
       .from('generated_content')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    console.log(`📄 Found ${content?.length || 0} content pieces for user ${user.id}`);
+    console.log(`📄 Found ${content?.length || 0} content pieces for user ${session.userId}`);
 
     if (error) {
       console.error('Error fetching content:', error);
@@ -497,26 +501,26 @@ export async function getUserContent(limit: number = 10) {
 }
 
 export async function deleteContent(contentId: string) {
-  const supabase = await createServerSupabaseClient();
-  
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     throw new Error('Authentication required');
   }
+
+  const supabase = createServerAdminClient();
 
   try {
     const { error } = await supabase
       .from('generated_content')
       .delete()
       .eq('id', contentId)
-      .eq('user_id', user.id);
+      .eq('user_id', session.userId);
 
     if (error) {
       throw new Error('Failed to delete content');
     }
 
-    console.log(`🗑️ Content deleted successfully for user ${user.id}: ${contentId}`);
+    console.log(`🗑️ Content deleted successfully for user ${session.userId}: ${contentId}`);
 
     revalidatePath('/dashboard/content');
     return { success: true };

@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@/lib/auth/supabase-client';
+import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/server/actions/plan-limits';
 
 // Plan limits configuration
 export const PLAN_LIMITS = {
   explorer: {
     ideas_per_month: 3,
     validations_per_month: 1,
-    content_per_month: 5,
+    content_per_month: 3,
     features: ['basic_ai_generation', 'basic_templates']
   },
   founder: {
@@ -66,124 +66,30 @@ export function usePlanLimits(): PlanLimitsState {
   useEffect(() => {
     console.log('⚡ USEEFFECT RUNNING: usePlanLimits useEffect triggered');
     let mounted = true;
-    
+
     async function fetchPlanAndUsage() {
       console.log('🚀 usePlanLimits: fetchPlanAndUsage called, refreshTrigger:', refreshTrigger);
-      
+
       if (!mounted) return;
-      
+
       try {
         setIsLoading(true);
-        const supabase = createClient();
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        console.log('👤 User auth result:', { 
-          userId: user?.id, 
-          userEmail: user?.email,
-          userError 
-        });
+        const data = await getUserPlanAndUsage();
 
-        if (!mounted || !user || userError) {
-          console.log('❌ Early exit: no user or error');
+        if (!mounted || !data) {
+          console.log('❌ Early exit: no data from server action');
           setIsLoading(false);
           return;
         }
 
-        // Get user plan and usage in parallel
-        const [profileResult, usageLimitsResult] = await Promise.all([
-          supabase.from('users').select('plan_type').eq('id', user.id).single(),
-          supabase.from('usage_limits').select('*').eq('user_id', user.id).single()
-        ]);
+        console.log('📊 Server action result:', data);
 
-        console.log('📊 Database results:', { 
-          profile: profileResult.data, 
-          profileError: profileResult.error,
-          usageLimits: usageLimitsResult.data, 
-          usageLimitsError: usageLimitsResult.error 
-        });
+        // Set plan type and usage
+        setPlanType(data.planType);
+        setUsage(data.usage);
 
-        if (!mounted) return;
-
-        // Set plan type
-        if (profileResult.data) {
-          const newPlanType = (profileResult.data.plan_type as PlanType) || 'explorer';
-          console.log('📋 Setting plan type:', newPlanType);
-          setPlanType(newPlanType);
-        }
-
-        // Set usage data with validation against actual data
-        if (usageLimitsResult.data && !usageLimitsResult.error) {
-          // Get actual counts from startup_ideas to validate usage_limits data
-          const [ideasResult, validatedIdeasResult] = await Promise.all([
-            supabase
-              .from('startup_ideas')
-              .select('id', { count: 'exact' })
-              .eq('user_id', user.id),
-            supabase
-              .from('startup_ideas')
-              .select('id', { count: 'exact' })
-              .eq('user_id', user.id)
-              .eq('is_validated', true)
-          ]);
-
-          const actualIdeasCount = ideasResult.count || 0;
-          const actualValidatedCount = validatedIdeasResult.count || 0;
-          const recordedIdeasCount = Number(usageLimitsResult.data.ideas_generated || 0);
-          const recordedValidatedCount = Number(usageLimitsResult.data.validations_completed || 0);
-
-          // Check for data inconsistency and fix it
-          if (actualIdeasCount !== recordedIdeasCount || actualValidatedCount !== recordedValidatedCount) {
-            console.log('🔧 Data inconsistency detected, fixing usage_limits:', {
-              actual: { ideas: actualIdeasCount, validated: actualValidatedCount },
-              recorded: { ideas: recordedIdeasCount, validated: recordedValidatedCount }
-            });
-
-            // Update usage_limits with correct data
-            await supabase
-              .from('usage_limits')
-              .update({
-                ideas_generated: actualIdeasCount,
-                validations_completed: actualValidatedCount,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', user.id);
-
-            console.log('✅ Usage counters fixed in database');
-          }
-
-          const newUsage = {
-            ideas_used: actualIdeasCount,
-            validations_used: actualValidatedCount,
-            content_used: 0, // content_generated field doesn't exist in schema
-            last_reset: usageLimitsResult.data.created_at || new Date().toISOString()
-          };
-          console.log('✅ Setting usage from usage_limits (validated):', newUsage);
-          setUsage(newUsage);
-        } else {
-          console.log('⚠️ No usage_limits record, counting from startup_ideas');
-          
-          // Get actual counts from startup_ideas
-          const [ideasResult, validatedIdeasResult] = await Promise.all([
-            supabase
-              .from('startup_ideas')
-              .select('id', { count: 'exact' })
-              .eq('user_id', user.id),
-            supabase
-              .from('startup_ideas')
-              .select('id', { count: 'exact' })
-              .eq('user_id', user.id)
-              .eq('is_validated', true)
-          ]);
-            
-          const newUsage = {
-            ideas_used: ideasResult.count || 0,
-            validations_used: validatedIdeasResult.count || 0,
-            content_used: 0,
-            last_reset: new Date().toISOString()
-          };
-          console.log('📝 Setting usage from startup_ideas count:', newUsage);
-          setUsage(newUsage);
-        }
+        console.log('✅ Plan and usage updated from server action');
       } catch (error) {
         console.error('💥 Error in fetchPlanAndUsage:', error);
       } finally {
@@ -194,7 +100,7 @@ export function usePlanLimits(): PlanLimitsState {
     }
 
     fetchPlanAndUsage();
-    
+
     return () => {
       mounted = false;
     };
@@ -250,30 +156,18 @@ export function usePlanLimits(): PlanLimitsState {
     }
 
     try {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const success = await incrementUsageAction(type);
 
-      if (!user) return false;
+      if (success) {
+        // Update local state
+        const currentUsage = usage[`${type}_used` as keyof UsageStats] as number;
+        setUsage(prev => ({
+          ...prev,
+          [`${type}_used`]: currentUsage + 1
+        }));
+      }
 
-      // Update usage in database
-      const updateField = `${type}_generated`;
-      const currentUsage = usage[`${type}_used` as keyof UsageStats] as number;
-      
-      await supabase
-        .from('usage_limits')
-        .update({
-          [updateField]: currentUsage + 1,
-          updated_at: new Date().toISOString()
-        })
-        .eq('user_id', user.id);
-
-      // Update local state
-      setUsage(prev => ({
-        ...prev,
-        [`${type}_used`]: currentUsage + 1
-      }));
-
-      return true;
+      return success;
     } catch (error) {
       console.error('Error incrementing usage:', error);
       return false;
