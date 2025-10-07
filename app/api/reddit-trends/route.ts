@@ -1,9 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth/jwt';
 
-// Reddit public API endpoints - no authentication required
-const REDDIT_API_BASE = 'https://www.reddit.com';
+// Reddit OAuth API configuration
+const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';
+const REDDIT_TOKEN_URL = 'https://www.reddit.com/api/v1/access_token';
 const SUBREDDITS = ['entrepreneur', 'startups', 'SaaS', 'smallbusiness', 'webdev', 'freelance', 'business', 'sidehustle'];
+
+// OAuth credentials from environment
+const REDDIT_CLIENT_ID = process.env.REDDIT_CLIENT_ID;
+const REDDIT_CLIENT_SECRET = process.env.REDDIT_CLIENT_SECRET;
+const REDDIT_USER_AGENT = process.env.REDDIT_USER_AGENT || 'StartupSniff/1.0';
+
+// Token cache (in production, use Redis or similar)
+let cachedToken: { token: string; expiresAt: number } | null = null;
 
 interface RedditPost {
   id: string;
@@ -49,39 +58,99 @@ interface TrendAnalysis {
   top_posts: ProcessedPost[];
 }
 
+/**
+ * Get Reddit OAuth access token
+ * Uses client credentials flow for server-side authentication
+ */
+async function getRedditAccessToken(): Promise<string> {
+  // Check if we have a valid cached token
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.token;
+  }
+
+  if (!REDDIT_CLIENT_ID || !REDDIT_CLIENT_SECRET) {
+    throw new Error('Reddit OAuth credentials not configured');
+  }
+
+  const auth = Buffer.from(`${REDDIT_CLIENT_ID}:${REDDIT_CLIENT_SECRET}`).toString('base64');
+
+  const response = await fetch(REDDIT_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'User-Agent': REDDIT_USER_AGENT,
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error('Failed to get Reddit access token:', response.status, error);
+    throw new Error('Failed to authenticate with Reddit API');
+  }
+
+  const data = await response.json();
+
+  // Cache token (expires in 1 hour by default, we'll cache for 55 minutes to be safe)
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + (55 * 60 * 1000), // 55 minutes
+  };
+
+  console.log('✅ Successfully obtained Reddit OAuth token');
+  return data.access_token;
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
     const session = await getCurrentSession();
     if (!session) {
+      console.error('Reddit trends: No valid session found');
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+
+    console.log(`Reddit trends: Request from user ${session.userId}`);
 
     const searchParams = request.nextUrl.searchParams;
     const forceRefresh = searchParams.get('refresh') === 'true';
 
-    console.log('🔍 Fetching Reddit trends data...');
+    console.log('🔍 Fetching Reddit trends data with OAuth...');
+
+    // Get OAuth access token
+    const accessToken = await getRedditAccessToken();
 
     // Fetch data from multiple subreddits in parallel
     const subredditPromises = SUBREDDITS.map(async (subreddit) => {
       try {
-        // Fetch hot posts from each subreddit
-        const response = await fetch(`${REDDIT_API_BASE}/r/${subreddit}/hot.json?limit=25`, {
+        // Add timeout to prevent hanging requests
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        // Fetch hot posts from each subreddit using OAuth
+        const response = await fetch(`${REDDIT_OAUTH_BASE}/r/${subreddit}/hot?limit=25`, {
           headers: {
-            'User-Agent': 'StartupSniff/1.0 (web scraper for startup ideas)',
+            'Authorization': `Bearer ${accessToken}`,
+            'User-Agent': REDDIT_USER_AGENT,
           },
+          signal: controller.signal,
           next: forceRefresh ? { revalidate: 0 } : { revalidate: 3600 } // Cache for 1 hour unless forced refresh
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
-          console.error(`Failed to fetch r/${subreddit}: ${response.status}`);
+          const errorText = await response.text();
+          console.error(`Failed to fetch r/${subreddit}: ${response.status} ${response.statusText}`, errorText);
           return null;
         }
 
         const data: RedditApiResponse = await response.json();
         return { subreddit, posts: data.data.children.map(child => child.data) };
       } catch (error) {
-        console.error(`Error fetching r/${subreddit}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error(`Error fetching r/${subreddit}:`, errorMessage);
         return null;
       }
     });
@@ -90,7 +159,15 @@ export async function GET(request: NextRequest) {
     const validResults = results.filter(result => result !== null);
 
     if (validResults.length === 0) {
-      return NextResponse.json({ error: 'Failed to fetch Reddit data' }, { status: 500 });
+      console.error('All Reddit requests failed - likely being blocked (403)');
+
+      // Return helpful error message suggesting alternative solutions
+      return NextResponse.json({
+        error: 'Unable to fetch live Reddit data',
+        message: 'Reddit is currently blocking requests from this server. This is a known issue with cloud hosting providers.',
+        suggestion: 'We are working on implementing Reddit OAuth authentication to resolve this issue.',
+        status: 'service_unavailable'
+      }, { status: 503 });
     }
 
     // Process and analyze the data
@@ -186,8 +263,16 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in Reddit trends API:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
+    console.error('Error details:', { message: errorMessage, stack: errorStack });
+
     return NextResponse.json(
-      { error: 'Failed to fetch Reddit trends' },
+      {
+        error: 'Failed to fetch Reddit trends',
+        details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+      },
       { status: 500 }
     );
   }
