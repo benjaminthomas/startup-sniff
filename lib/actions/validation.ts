@@ -577,11 +577,17 @@ Provide detailed market validation analysis.`
 
     console.log('✅ Idea saved to database:', ideaData.id)
 
-    // Update usage limits
+    // Update usage limits - fetch current usage first
+    const { data: currentUsage } = await supabase
+      .from('usage_limits')
+      .select('validations_completed')
+      .eq('user_id', session.userId)
+      .single()
+
     const { error: usageUpdateError } = await supabase
       .from('usage_limits')
       .update({
-        validations_completed: (usageLimits?.validations_completed || 0) + 1,
+        validations_completed: (currentUsage?.validations_completed || 0) + 1,
         updated_at: new Date().toISOString()
       })
       .eq('user_id', session.userId)
