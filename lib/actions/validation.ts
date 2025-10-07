@@ -53,8 +53,15 @@ const validationResponseSchema = z.object({
   implementation: z.object({
     technical_complexity: z.enum(['low', 'medium', 'high']),
     time_to_market: z.string(),
-    required_resources: z.array(z.string()),
-    key_milestones: z.array(z.string())
+    tech_stack: z.array(z.string()),
+    team_capacity: z.string(),
+    phases: z.array(z.object({
+      phase: z.string(),
+      duration: z.string(),
+      description: z.string()
+    })),
+    milestones: z.array(z.string()),
+    resource_requirements: z.array(z.string())
   }),
   success_metrics: z.object({
     viability_score: z.number().min(0).max(100),
@@ -102,29 +109,69 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       return { success: false, error: 'Idea is already validated' }
     }
 
-    // Check validation limits
-    const { data: usageLimits } = await supabase
-      .from('usage_limits')
-      .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', session.userId)
-      .single()
+    // Check validation limits using actual validated ideas this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    if (usageLimits) {
-      const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
-        return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
-      }
+    const { data: allValidatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('id, validation_data')
+      .eq('user_id', session.userId)
+      .eq('is_validated', true);
+
+    // Filter to only count validations done this month
+    const validationsThisMonth = allValidatedIdeas?.filter(validatedIdea => {
+      const validationData = validatedIdea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
+
+    // Get user's plan limits
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan_type')
+      .eq('id', session.userId)
+      .single();
+
+    const planType = user?.plan_type || 'explorer';
+    const PLAN_LIMITS = {
+      explorer: { validations_per_month: 1 },
+      founder: { validations_per_month: 10 },
+      growth: { validations_per_month: -1 } // unlimited
+    } as const;
+
+    const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;
+
+    console.log('📊 Validation limit check:', {
+      planType,
+      limit,
+      used: validationsThisMonth,
+      remaining: limit === -1 ? 'unlimited' : Math.max(0, limit - validationsThisMonth)
+    });
+
+    if (limit > 0 && validationsThisMonth >= limit) {
+      return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
     }
 
     // Create AI validation prompt using existing idea data
-    const systemPrompt = `You are a startup validation expert. Analyze the provided startup idea and return a comprehensive validation report in valid JSON format. 
+    const systemPrompt = `You are a startup validation expert. Analyze the provided startup idea and return a comprehensive validation report in valid JSON format.
 
 Focus on:
-1. Market analysis with realistic market size estimates
-2. Target market demographics and pain points  
+1. Market analysis with realistic market size estimates (TAM, SAM, SOM)
+2. Target market demographics and detailed user personas with pain points
 3. Solution differentiation and value proposition
-4. Implementation feasibility and complexity
+4. Implementation feasibility with tech stack, team capacity, phases, and milestones
 5. Success probability and risk assessment
+
+For implementation, provide:
+- tech_stack: Array of recommended technologies (e.g., ["React", "Node.js", "PostgreSQL", "AWS"])
+- team_capacity: String describing ideal team size and roles (e.g., "2-3 developers, 1 designer, 1 product manager")
+- phases: Array of development phases with phase name, duration, and description
+- milestones: Array of key milestone strings
+- resource_requirements: Array of required resources
 
 Return valid JSON matching this exact structure. Be specific and realistic in your analysis.`
 
@@ -206,8 +253,15 @@ Provide detailed market validation analysis.`
           implementation: {
             technical_complexity: 'medium' as const,
             time_to_market: '6-12 months',
-            required_resources: ['Development team', 'UX/UI designers', 'Marketing'],
-            key_milestones: ['MVP development', 'Beta testing', 'Market launch']
+            tech_stack: ['React', 'Node.js', 'PostgreSQL', 'AWS', 'TypeScript'],
+            team_capacity: '2-3 full-stack developers, 1 UI/UX designer, 1 product manager',
+            phases: [
+              { phase: 'Phase 1: MVP Development', duration: '3-4 months', description: 'Core features and basic functionality' },
+              { phase: 'Phase 2: Beta Testing', duration: '2 months', description: 'User testing and feedback collection' },
+              { phase: 'Phase 3: Launch', duration: '1-2 months', description: 'Marketing and initial rollout' }
+            ],
+            milestones: ['MVP completion', 'Beta launch', 'First 100 users', 'Product-market fit', 'Market launch'],
+            resource_requirements: ['Development team', 'UX/UI designers', 'Marketing budget', 'Cloud infrastructure']
           },
           success_metrics: {
             viability_score: 75,
@@ -331,29 +385,69 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
 
     const validatedData = validationSchema.parse(rawData)
 
-    // Check validation limits
-    const { data: usageLimits } = await supabase
-      .from('usage_limits')
-      .select('validations_completed, monthly_limit_validations')
-      .eq('user_id', session.userId)
-      .single()
+    // Check validation limits using actual validated ideas this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
-    if (usageLimits) {
-      const { validations_completed, monthly_limit_validations } = usageLimits
-      if (monthly_limit_validations > 0 && (validations_completed || 0) >= monthly_limit_validations) {
-        return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
-      }
+    const { data: allValidatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('id, validation_data')
+      .eq('user_id', session.userId)
+      .eq('is_validated', true);
+
+    // Filter to only count validations done this month
+    const validationsThisMonth = allValidatedIdeas?.filter(validatedIdea => {
+      const validationData = validatedIdea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
+
+    // Get user's plan limits
+    const { data: user } = await supabase
+      .from('users')
+      .select('plan_type')
+      .eq('id', session.userId)
+      .single();
+
+    const planType = user?.plan_type || 'explorer';
+    const PLAN_LIMITS = {
+      explorer: { validations_per_month: 1 },
+      founder: { validations_per_month: 10 },
+      growth: { validations_per_month: -1 } // unlimited
+    } as const;
+
+    const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;
+
+    console.log('📊 Validation limit check:', {
+      planType,
+      limit,
+      used: validationsThisMonth,
+      remaining: limit === -1 ? 'unlimited' : Math.max(0, limit - validationsThisMonth)
+    });
+
+    if (limit > 0 && validationsThisMonth >= limit) {
+      return { success: false, error: 'Monthly validation limit reached. Please upgrade your plan.' }
     }
 
     // Create AI validation prompt
-    const systemPrompt = `You are a startup validation expert. Analyze the provided startup idea and return a comprehensive validation report in valid JSON format. 
+    const systemPrompt = `You are a startup validation expert. Analyze the provided startup idea and return a comprehensive validation report in valid JSON format.
 
 Focus on:
-1. Market analysis with realistic market size estimates
-2. Target market demographics and pain points  
+1. Market analysis with realistic market size estimates (TAM, SAM, SOM)
+2. Target market demographics and detailed user personas with pain points
 3. Solution differentiation and value proposition
-4. Implementation feasibility and complexity
+4. Implementation feasibility with tech stack, team capacity, phases, and milestones
 5. Success probability and risk assessment
+
+For implementation, provide:
+- tech_stack: Array of recommended technologies (e.g., ["React", "Node.js", "PostgreSQL", "AWS"])
+- team_capacity: String describing ideal team size and roles (e.g., "2-3 developers, 1 designer, 1 product manager")
+- phases: Array of development phases with phase name, duration, and description
+- milestones: Array of key milestone strings
+- resource_requirements: Array of required resources
 
 Return valid JSON matching this exact structure. Be specific and realistic in your analysis.`
 

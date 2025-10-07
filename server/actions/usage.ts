@@ -54,7 +54,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       explorer: {
         ideas_per_month: 3,
         validations_per_month: 1,
-        content_per_month: 5,
+        content_per_month: 3, // Updated from 5 to 3
       },
       founder: {
         ideas_per_month: 25,
@@ -84,14 +84,44 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
 
     const ideasUsed = ideasCount?.length || 0;
 
+    // Count actual validations this month (by checking validation_data.validated_at)
+    const { data: allValidatedIdeas } = await supabase
+      .from('startup_ideas')
+      .select('id, validation_data')
+      .eq('user_id', user.id)
+      .eq('is_validated', true);
+
+    // Filter to only count validations done this month
+    const validationsUsed = allValidatedIdeas?.filter(idea => {
+      const validationData = idea.validation_data as Record<string, unknown> | null;
+      if (!validationData?.validated_at) return false;
+
+      const validatedAt = new Date(validationData.validated_at as string);
+      return validatedAt >= startOfMonth;
+    }).length || 0;
+
+    // Count actual content pieces generated this month
+    const { data: contentCount } = await supabase
+      .from('generated_content')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+      .gte('created_at', startOfMonth.toISOString());
+
+    const contentUsed = contentCount?.length || 0;
+
     const usageData = {
       ideas_used: ideasUsed,
-      validations_used: 0, // TODO: Count actual validations
-      content_used: 0, // TODO: Count actual content pieces
+      validations_used: validationsUsed,
+      content_used: contentUsed,
       last_reset: startOfMonth.toISOString()
     };
 
     console.log('✅ Final usage data being returned:', usageData);
+    console.log('📅 Start of month:', startOfMonth.toISOString());
+    console.log('📊 Validation count details:', {
+      totalValidated: allValidatedIdeas?.length || 0,
+      thisMonth: validationsUsed
+    });
 
     return {
       planType,

@@ -8,7 +8,7 @@ export const PLAN_LIMITS = {
   explorer: {
     ideas_per_month: 3,
     validations_per_month: 1,
-    content_per_month: 3,
+    content_per_month: 3, // Updated from 5 to 3
     features: ['basic_ai_generation', 'basic_templates']
   },
   founder: {

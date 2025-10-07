@@ -174,8 +174,21 @@ export function ValidationForm() {
         {generatedIdeas.length > 0 ? (
           <div className="space-y-4">
             <Label className="text-sm font-medium">Select an idea to validate:</Label>
+            {generatedIdeas.filter(idea => !idea.is_validated).length === 0 ? (
+              <div className="text-center py-8 border-2 border-dashed rounded-lg">
+                <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+                <h3 className="font-semibold mb-2">All Ideas Validated!</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  You've validated all your generated ideas. Generate more ideas to validate them.
+                </p>
+                <Button onClick={() => router.push('/dashboard/generate')} variant="outline">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Generate More Ideas
+                </Button>
+              </div>
+            ) : (
             <RadioGroup value={selectedIdeaId} onValueChange={setSelectedIdeaId}>
-              {generatedIdeas.map((idea) => (
+              {generatedIdeas.filter(idea => !idea.is_validated).map((idea) => (
                 <div key={idea.id} className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50">
                   <RadioGroupItem value={idea.id} id={idea.id} className="mt-1" />
                   <div className="flex-1 space-y-2">
@@ -183,8 +196,8 @@ export function ValidationForm() {
                       <Label htmlFor={idea.id} className="font-medium cursor-pointer">
                         {idea.title}
                       </Label>
-                      <Badge variant={idea.is_validated ? "default" : "secondary"}>
-                        {idea.is_validated ? "Validated" : "Not Validated"}
+                      <Badge variant="secondary">
+                        Not Validated
                       </Badge>
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2">
@@ -197,7 +210,9 @@ export function ValidationForm() {
                 </div>
               ))}
             </RadioGroup>
+            )}
 
+            {generatedIdeas.filter(idea => !idea.is_validated).length > 0 && (
             <Button
               onClick={handleSubmit}
               className="w-full"
@@ -216,6 +231,7 @@ export function ValidationForm() {
                 </>
               )}
             </Button>
+            )}
           </div>
         ) : (
           <div className="text-center py-8">

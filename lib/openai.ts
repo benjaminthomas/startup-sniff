@@ -21,10 +21,18 @@ export interface IdeaGenerationParams {
 
 export interface GeneratedIdea {
   title: string;
+  productType: string; // "Web App", "Mobile App", "SaaS Platform", "API Service", "Chrome Extension", etc.
   description: string;
   problemStatement: string;
+  specificPainPoints: string[]; // 3-5 specific pain point examples
   solution: string;
   targetMarket: string;
+  targetPersonas: Array<{
+    name: string;
+    role: string;
+    painPoints: string[];
+  }>; // 2-3 detailed user personas
+  technicalStack: string[]; // Suggested technologies
   revenueModel: string[];
   estimatedCost: string;
   timeToMarket: string;
@@ -41,10 +49,30 @@ function generateMockIdea(params: IdeaGenerationParams): GeneratedIdea {
   const industries = {
     technology: {
       title: 'CodeMentor AI',
+      productType: 'SaaS Platform',
       description: 'AI-powered personalized coding tutor that adapts to individual learning styles and provides real-time feedback on code quality.',
       problem: 'New developers struggle with personalized guidance and lack immediate feedback',
+      specificPainPoints: [
+        'Junior developers spend 3+ hours daily debugging syntax errors without mentorship',
+        'Coding bootcamp graduates lack real-time code review feedback',
+        'Self-taught programmers struggle to identify bad coding practices early',
+        'New developers feel overwhelmed by generic tutorials that don\'t match their learning pace'
+      ],
       solution: 'AI tutor that provides instant code reviews, suggests improvements, and adapts teaching methods to individual learning patterns',
       market: 'Aspiring software developers, coding bootcamp students, and junior developers',
+      personas: [
+        {
+          name: 'Sarah the Bootcamp Graduate',
+          role: 'Junior Developer',
+          painPoints: ['Lacks real-time mentorship', 'Struggles with code quality', 'Needs personalized feedback']
+        },
+        {
+          name: 'Mike the Self-Taught Developer',
+          role: 'Aspiring Developer',
+          painPoints: ['Overwhelmed by generic tutorials', 'No immediate feedback on code', 'Uncertain about best practices']
+        }
+      ],
+      techStack: ['Next.js', 'OpenAI API', 'PostgreSQL', 'TypeScript', 'Tailwind CSS'],
       revenue: ['Monthly subscription ($29/month)', 'Corporate training licenses'],
       cost: '$15K for MVP development and initial AI training',
       timeline: '4-6 months to beta launch',
@@ -72,10 +100,24 @@ function generateMockIdea(params: IdeaGenerationParams): GeneratedIdea {
 
   return {
     title: template.title,
+    productType: template.productType || 'SaaS Platform',
     description: template.description,
     problemStatement: template.problem,
+    specificPainPoints: template.specificPainPoints || [
+      'Users face daily challenges without adequate solutions',
+      'Current alternatives are expensive or ineffective',
+      'Manual processes waste significant time'
+    ],
     solution: template.solution,
     targetMarket: template.market,
+    targetPersonas: template.personas || [
+      {
+        name: 'Typical User',
+        role: 'Primary Target',
+        painPoints: ['Needs efficient solution', 'Lacks time', 'Budget-conscious']
+      }
+    ],
+    technicalStack: template.techStack || ['React', 'Node.js', 'PostgreSQL'],
     revenueModel: template.revenue,
     estimatedCost: template.cost,
     timeToMarket: template.timeline,
@@ -128,10 +170,24 @@ ${parameterContext || 'No specific parameters provided - generate a general star
 Return a JSON object with these exact fields:
 {
   "title": "Brief, catchy startup name",
+  "productType": "Product category (Web App, Mobile App, SaaS Platform, API Service, Chrome Extension, Desktop App, etc.)",
   "description": "2-3 sentence overview",
   "problemStatement": "Clear problem being solved",
-  "solution": "How your startup solves this problem",
+  "specificPainPoints": [
+    "Specific pain point example 1 with measurable impact",
+    "Specific pain point example 2 with measurable impact",
+    "Specific pain point example 3 with measurable impact"
+  ],
+  "solution": "How your startup solves this problem with implementation details",
   "targetMarket": "Specific target market description",
+  "targetPersonas": [
+    {
+      "name": "Persona Name (e.g., 'Sarah the Freelancer')",
+      "role": "Their role or position",
+      "painPoints": ["Pain point 1", "Pain point 2", "Pain point 3"]
+    }
+  ],
+  "technicalStack": ["Technology 1", "Technology 2", "Technology 3"],
   "revenueModel": ["Primary revenue model", "Secondary revenue model"],
   "estimatedCost": "Realistic cost estimate to launch",
   "timeToMarket": "Realistic timeline to launch",
