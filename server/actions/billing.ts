@@ -1,7 +1,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 import { 
   stripe, 
   getStripeCustomerId, 
@@ -11,41 +12,42 @@ import {
 import { PRICING_PLANS } from '@/constants';
 
 export async function createSubscription(priceId: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
 
-  if (!user) {
+  if (!session) {
     return { error: 'User not authenticated' };
   }
 
+  const supabase = createServerAdminClient();
+
   try {
     // Get or create Stripe customer
-    const customerId = await getStripeCustomerId(user.id, user.email!);
+    const customerId = await getStripeCustomerId(session.userId, session.email);
 
     // Update user with Stripe customer ID if not exists
     const { data: profile } = await supabase
       .from('users')
       .select('stripe_customer_id')
-      .eq('id', user.id)
+      .eq('id', session.userId)
       .single();
 
     if (!profile?.stripe_customer_id) {
       await supabase
         .from('users')
         .update({ stripe_customer_id: customerId })
-        .eq('id', user.id);
+        .eq('id', session.userId);
     }
 
     // Create checkout session
-    const session = await createCheckoutSession({
+    const checkoutSession = await createCheckoutSession({
       customerId,
       priceId,
       successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing/success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
-      userId: user.id,
+      userId: session.userId,
     });
 
-    redirect(session.url!);
+    redirect(checkoutSession.url!);
   } catch (error) {
     console.error('Error creating subscription:', error);
     return { error: 'Failed to create subscription' };
@@ -53,19 +55,20 @@ export async function createSubscription(priceId: string) {
 }
 
 export async function manageBilling() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
 
-  if (!user) {
+  if (!session) {
     return { error: 'User not authenticated' };
   }
+
+  const supabase = createServerAdminClient();
 
   try {
     // Get user's Stripe customer ID
     const { data: profile } = await supabase
       .from('users')
       .select('stripe_customer_id')
-      .eq('id', user.id)
+      .eq('id', session.userId)
       .single();
 
     if (!profile?.stripe_customer_id) {
@@ -73,12 +76,12 @@ export async function manageBilling() {
     }
 
     // Create billing portal session
-    const session = await createBillingPortalSession(
+    const billingSession = await createBillingPortalSession(
       profile.stripe_customer_id,
       `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`
     );
 
-    redirect(session.url);
+    redirect(billingSession.url);
   } catch (error) {
     console.error('Error creating billing portal session:', error);
     return { error: 'Failed to access billing portal' };
@@ -86,19 +89,20 @@ export async function manageBilling() {
 }
 
 export async function cancelSubscription(subscriptionId: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
 
-  if (!user) {
+  if (!session) {
     return { error: 'User not authenticated' };
   }
+
+  const supabase = createServerAdminClient();
 
   try {
     // Verify the subscription belongs to this user
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .eq('stripe_subscription_id', subscriptionId)
       .single();
 
@@ -126,19 +130,20 @@ export async function cancelSubscription(subscriptionId: string) {
 }
 
 export async function updateSubscription(newPriceId: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
 
-  if (!user) {
+  if (!session) {
     return { error: 'User not authenticated' };
   }
+
+  const supabase = createServerAdminClient();
 
   try {
     // Get current active subscription
     const { data: subscription } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .eq('status', 'active')
       .single();
 
@@ -176,7 +181,7 @@ export async function updateSubscription(newPriceId: string) {
       await supabase
         .from('users')
         .update({ plan_type: newPlan.id })
-        .eq('id', user.id);
+        .eq('id', session.userId);
 
       // Update usage limits
       await supabase
@@ -186,7 +191,7 @@ export async function updateSubscription(newPriceId: string) {
           monthly_limit_ideas: newPlan.limits.ideas,
           monthly_limit_validations: newPlan.limits.validations
         })
-        .eq('user_id', user.id);
+        .eq('user_id', session.userId);
     }
 
     return { success: true, message: 'Subscription updated successfully' };

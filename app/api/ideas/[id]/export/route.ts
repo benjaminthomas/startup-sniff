@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 
 export async function GET(
   request: NextRequest,
@@ -7,20 +8,20 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const supabase = await createServerSupabaseClient();
-
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const session = await getCurrentSession();
+    if (!session) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+
+    const supabase = createServerAdminClient();
 
     // Get the startup idea
     const { data: idea, error: ideaError } = await supabase
       .from('startup_ideas')
       .select('*')
       .eq('id', id)
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single();
 
     if (ideaError || !idea) {

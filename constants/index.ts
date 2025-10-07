@@ -9,6 +9,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       '3 AI-generated startup ideas per month',
       '1 market validation per month',
+      '3 content generations per month',
       'Basic Reddit trend analysis',
       'Standard content generation',
       'Email support'
@@ -16,6 +17,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     limits: {
       ideas: 3,
       validations: 1,
+      content: 3,
     },
   },
   {
@@ -26,6 +28,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       '25 AI-generated startup ideas per month',
       '10 market validations per month',
+      '50 content generations per month',
       'Advanced Reddit trend analysis',
       'Premium content generation',
       'Export to PDF/Notion',
@@ -34,6 +37,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     limits: {
       ideas: 25,
       validations: 10,
+      content: 50,
     },
     popular: true,
   },
@@ -45,6 +49,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       'Unlimited AI-generated startup ideas',
       'Unlimited market validations',
+      'Unlimited content generations',
       'Multi-platform trend analysis',
       'Custom brand voice content',
       'Advanced analytics dashboard',
@@ -54,6 +59,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     limits: {
       ideas: -1, // Unlimited
       validations: -1, // Unlimited
+      content: -1, // Unlimited
     },
   },
 ];

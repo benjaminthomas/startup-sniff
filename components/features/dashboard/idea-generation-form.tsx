@@ -146,7 +146,24 @@ export function IdeaGenerationForm() {
     }
   ];
 
-  const completedSteps = Object.keys(formData).filter(key => formData[key as keyof FormData]).length;
+  // Count completed steps more accurately
+  const getCompletedStepsCount = () => {
+    let count = 0;
+    if (formData.industry) count++;
+    if (formData.problemArea) count++;
+    if (formData.targetAudience) count++;
+    if (formData.budget || formData.timeframe) count++;
+    if (formData.userPrompt) count++;
+    return count;
+  };
+
+  // Check if minimum required steps are completed (first 4 steps, 5th is optional)
+  const getRequiredStepsCompleted = () => {
+    return !!(formData.industry && formData.problemArea && formData.targetAudience && (formData.budget || formData.timeframe));
+  };
+
+  const completedSteps = getCompletedStepsCount();
+  const requiredStepsCompleted = getRequiredStepsCompleted();
   const progress = (completedSteps / steps.length) * 100;
 
   const updateFormData = (key: keyof FormData, value: string | undefined) => {
@@ -209,6 +226,11 @@ export function IdeaGenerationForm() {
         // Convert database row to properly typed StartupIdea
         const typedIdea = result.idea ? mapDatabaseRowToStartupIdea(result.idea as unknown as StartupIdeaRow) : null;
         setGeneratedIdea(typedIdea);
+
+        // Reset form for next idea generation
+        setFormData({});
+        setCurrentStep(0);
+
         toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
           id: loadingToast,
           duration: 5000
@@ -254,7 +276,11 @@ export function IdeaGenerationForm() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setGeneratedIdea(null)}
+              onClick={() => {
+                setGeneratedIdea(null);
+                setFormData({});
+                setCurrentStep(0);
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               <AlertCircle className="h-4 w-4" />
@@ -294,7 +320,11 @@ export function IdeaGenerationForm() {
               <TrendingUp className="w-4 h-4 mr-2" />
               View Full Details
             </Button>
-            <Button variant="outline" onClick={() => setGeneratedIdea(null)}>
+            <Button variant="outline" onClick={() => {
+              setGeneratedIdea(null);
+              setFormData({});
+              setCurrentStep(0);
+            }}>
               Generate Another
             </Button>
           </div>
@@ -315,7 +345,9 @@ export function IdeaGenerationForm() {
           </div>
           <div className="text-right">
             <div className="text-sm font-medium">{completedSteps} / {steps.length} completed</div>
-            <div className="text-xs text-muted-foreground">All steps optional</div>
+            <div className="text-xs text-muted-foreground">
+              {requiredStepsCompleted ? "Ready to generate" : "4 steps required, 5th optional"}
+            </div>
           </div>
         </div>
         
@@ -422,10 +454,12 @@ export function IdeaGenerationForm() {
             
             <Button
               onClick={handleSkipToGenerate}
-              disabled={isGenerating || limitsLoading}
+              disabled={isGenerating || limitsLoading || !requiredStepsCompleted}
               className={cn(
                 "font-semibold shadow-lg hover:shadow-xl transition-all duration-200",
-                isAtLimit('ideas') && !limitsLoading
+                !requiredStepsCompleted
+                  ? "bg-muted text-muted-foreground cursor-not-allowed"
+                  : isAtLimit('ideas') && !limitsLoading
                   ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
                   : "bg-gradient-to-r from-primary via-blue-600 to-purple-600 hover:from-primary/90 hover:via-blue-600/90 hover:to-purple-600/90 text-white"
               )}

@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { getOrGenerateCSRFToken } from '@/lib/auth/csrf'
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server'
+import { createServerAdminClient } from '@/lib/auth/supabase-server'
 import { ResetPasswordForm } from '@/components/auth/reset-password-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
@@ -45,8 +45,8 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const cookieStore = await cookies()
   const recoverySession = cookieStore.get('auth-recovery')
   
-  // Get user session directly from Supabase client  
-  const supabase = await createServerSupabaseClient()
+  // Get user session directly from Supabase client
+  const supabase = createServerAdminClient()
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   
   // Debug logging
@@ -59,7 +59,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   // Handle password reset code if present
   if (code) {
     try {
-      const supabase = await createServerSupabaseClient()
+      const supabase = createServerAdminClient()
       
       // Exchange the code for a session
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)

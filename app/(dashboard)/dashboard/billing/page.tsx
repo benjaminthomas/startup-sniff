@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/ui/page-header';
@@ -14,22 +15,20 @@ export const metadata: Metadata = {
 };
 
 export default async function BillingPage() {
-  const supabase = await createServerSupabaseClient();
+  const session = await getCurrentSession();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
+  if (!session) {
     redirect('/auth/signin');
   }
+
+  const supabase = createServerAdminClient();
 
   // Get user profile (subscription table not yet implemented)
   const [userProfile] = await Promise.allSettled([
     supabase
       .from('users')
       .select('*')
-      .eq('id', user.id)
+      .eq('id', session.userId)
       .single(),
   ]);
 
@@ -38,9 +37,9 @@ export default async function BillingPage() {
 
   // Use auth user data as fallback
   const displayUser = profile || {
-    id: user.id,
-    email: user.email,
-    full_name: user.user_metadata?.full_name || null,
+    id: session.userId,
+    email: session.email,
+    full_name: null,
     plan_type: 'explorer',
     subscription_status: 'trial',
   };
@@ -65,14 +64,14 @@ export default async function BillingPage() {
           <h2 className="text-2xl font-semibold mb-6">Available Plans</h2>
           <PricingCards
             currentPlanId={displayUser.plan_type || 'explorer'}
-            userId={user.id}
+            userId={session.userId}
           />
         </div>
 
         {profile?.stripe_customer_id && (
           <div>
             <h2 className="text-2xl font-semibold mb-6">Billing History</h2>
-            <BillingHistory userId={user.id} />
+            <BillingHistory userId={session.userId} />
           </div>
         )}
       </div>

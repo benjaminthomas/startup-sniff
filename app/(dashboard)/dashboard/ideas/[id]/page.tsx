@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 import { mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -46,32 +47,32 @@ function getConfidenceLevel(score: number) {
 function getConfidenceColors(level: string) {
   const colors = {
     excellent: {
-      bg: 'bg-emerald-50',
-      text: 'text-emerald-700',
-      icon: 'text-emerald-600',
+      bg: 'bg-emerald-50 dark:bg-emerald-950/20',
+      text: 'text-emerald-700 dark:text-emerald-300',
+      icon: 'text-emerald-600 dark:text-emerald-400',
       progress: 'bg-gradient-to-r from-emerald-500 to-green-500',
-      border: 'border-emerald-200',
+      border: 'border-emerald-200 dark:border-emerald-800',
     },
     good: {
-      bg: 'bg-blue-50',
-      text: 'text-blue-700',
-      icon: 'text-blue-600',
+      bg: 'bg-blue-50 dark:bg-blue-950/20',
+      text: 'text-blue-700 dark:text-blue-300',
+      icon: 'text-blue-600 dark:text-blue-400',
       progress: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-      border: 'border-blue-200',
+      border: 'border-blue-200 dark:border-blue-800',
     },
     moderate: {
-      bg: 'bg-amber-50',
-      text: 'text-amber-700',
-      icon: 'text-amber-600',
+      bg: 'bg-amber-50 dark:bg-amber-950/20',
+      text: 'text-amber-700 dark:text-amber-300',
+      icon: 'text-amber-600 dark:text-amber-400',
       progress: 'bg-gradient-to-r from-amber-500 to-orange-500',
-      border: 'border-amber-200',
+      border: 'border-amber-200 dark:border-amber-800',
     },
     low: {
-      bg: 'bg-red-50',
-      text: 'text-red-700',
-      icon: 'text-red-600',
+      bg: 'bg-red-50 dark:bg-red-950/20',
+      text: 'text-red-700 dark:text-red-300',
+      icon: 'text-red-600 dark:text-red-400',
       progress: 'bg-gradient-to-r from-red-500 to-rose-500',
-      border: 'border-red-200',
+      border: 'border-red-200 dark:border-red-800',
     }
   };
   return colors[level as keyof typeof colors] || colors.moderate;
@@ -90,12 +91,20 @@ export default async function IdeaDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const supabase = await createServerSupabaseClient();
+
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession();
+  if (!session) {
+    notFound();
+  }
+
+  const supabase = createServerAdminClient();
 
   const { data: ideaRaw, error } = await supabase
     .from('startup_ideas')
     .select('*')
     .eq('id', id)
+    .eq('user_id', session.userId)
     .single();
 
   if (error || !ideaRaw) {
@@ -209,7 +218,7 @@ export default async function IdeaDetailPage({
               <CardDescription>Who will benefit from this solution?</CardDescription>
             </CardHeader>
             <CardContent className="px-6 pb-6">
-        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.description ? (
+        {typeof idea.target_market === 'object' && idea.target_market && idea.target_market.demographics ? (
                 <div className="space-y-4">
                   {/* Target Demographics */}
                   <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
@@ -218,7 +227,7 @@ export default async function IdeaDetailPage({
                       Target Demographics
                     </h4>
                     <p className="text-muted-foreground leading-relaxed">
-                      {idea.target_market.description || 'Students and professionals seeking better collaboration tools'}
+                      {idea.target_market.demographics || 'Students and professionals seeking better collaboration tools'}
                     </p>
                   </div>
 

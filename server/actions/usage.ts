@@ -2,6 +2,7 @@
 
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { UserDatabase } from '@/lib/auth/database';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
 
 export interface UsageData {
   planType: 'explorer' | 'founder' | 'growth';
@@ -67,13 +68,27 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       }
     } as const;
 
-    // For now, return default usage data since tables may not exist yet
-    // This prevents the dashboard from breaking due to missing tables
+    // Get actual usage counts from the database
+    const supabase = createServerAdminClient();
+
+    // Count actual startup ideas generated this month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const { data: ideasCount } = await supabase
+      .from('startup_ideas')
+      .select('id', { count: 'exact' })
+      .eq('user_id', user.id)
+      .gte('created_at', startOfMonth.toISOString());
+
+    const ideasUsed = ideasCount?.length || 0;
+
     const usageData = {
-      ideas_used: 0,
-      validations_used: 0,
-      content_used: 0,
-      last_reset: new Date().toISOString()
+      ideas_used: ideasUsed,
+      validations_used: 0, // TODO: Count actual validations
+      content_used: 0, // TODO: Count actual content pieces
+      last_reset: startOfMonth.toISOString()
     };
 
     console.log('✅ Final usage data being returned:', usageData);

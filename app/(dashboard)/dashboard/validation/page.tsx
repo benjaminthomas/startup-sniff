@@ -2,14 +2,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Target, Users, DollarSign, CheckCircle } from "lucide-react";
 import { ValidationForm } from "@/components/features/validation/validation-form";
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
+import { redirect } from 'next/navigation';
 
 export default async function ValidationPage() {
-  const supabase = await createServerSupabaseClient();
-  
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const session = await getCurrentSession();
+
+  if (!session) {
+    redirect('/auth/signin');
+  }
+
+  const supabase = createServerAdminClient();
 
   const validationStats = {
     ideasValidated: 0,
@@ -18,13 +22,12 @@ export default async function ValidationPage() {
     revenueEstimate: '-'
   };
 
-  if (user) {
-    // Fetch actual validation statistics
-    const { data: validatedIdeas } = await supabase
-      .from('startup_ideas')
-      .select('market_analysis')
-      .eq('user_id', user.id)
-      .eq('is_validated', true);
+  // Fetch actual validation statistics
+  const { data: validatedIdeas } = await supabase
+    .from('startup_ideas')
+    .select('market_analysis')
+    .eq('user_id', session.userId)
+    .eq('is_validated', true);
 
     if (validatedIdeas && validatedIdeas.length > 0) {
       validationStats.ideasValidated = validatedIdeas.length;
@@ -51,19 +54,25 @@ export default async function ValidationPage() {
           : `${Math.round(avgUsers / 1000)}K`;
       }
 
-      // Calculate revenue estimate from validated ideas
+      // Calculate revenue estimate based on market size (fallback since revenue_potential.monthly doesn't exist)
+      // Use a simple heuristic: assume 1% market penetration of SAM with $10 average revenue per user monthly
       const revenueEstimates = validatedIdeas
-        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.revenue_potential && ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>)?.monthly)
-        .map(idea => ((idea.market_analysis as Record<string, unknown>).revenue_potential as Record<string, unknown>).monthly as number);
+        .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.sam)
+        .map(idea => {
+          const sam = ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).sam as number;
+          // Assume 1% market penetration with $10 ARPU monthly
+          return (sam * 0.01 * 10);
+        });
 
       if (revenueEstimates.length > 0) {
         const avgRevenue = revenueEstimates.reduce((sum, rev) => sum + rev, 0) / revenueEstimates.length;
-        validationStats.revenueEstimate = avgRevenue > 1000
+        validationStats.revenueEstimate = avgRevenue > 1000000
+          ? `$${(avgRevenue / 1000000).toFixed(1)}M`
+          : avgRevenue > 1000
           ? `$${Math.round(avgRevenue / 1000)}K`
           : `$${Math.round(avgRevenue)}`;
       }
     }
-  }
   return (
     <div className="space-y-6">
       <PageHeader

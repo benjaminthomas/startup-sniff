@@ -3,9 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createServerSupabaseClient } from '@/lib/auth/supabase-server';
+import { createServerSupabaseClient, createServerAdminClient } from '@/lib/auth/supabase-server';
+import { getCurrentSession } from '@/lib/auth/jwt';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
 import { getTrendingPainPoints, generateIdeasFromPainPoints } from '@/lib/actions/reddit';
+import { getCurrentUserUsage } from '@/server/actions/usage';
 
 const generateIdeaSchema = z.object({
   industry: z.string().optional(),
@@ -109,11 +111,11 @@ export async function toggleFavorite(ideaId: string) {
 }
 
 export async function generateIdea(formData: FormData) {
-  const supabase = await createServerSupabaseClient();
-  
-  // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const supabase = createServerAdminClient();
+
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession();
+  if (!session) {
     redirect('/auth/signin');
   }
 
@@ -138,18 +140,10 @@ export async function generateIdea(formData: FormData) {
   }
 
   try {
-    // Check usage limits
-    const { data: usageData, error: usageError } = await supabase
-      .from('usage_limits')
-      .select('ideas_generated, monthly_limit_ideas')
-      .eq('user_id', user.id)
-      .single();
+    // Check usage limits using the getCurrentUserUsage function
+    const usageData = await getCurrentUserUsage();
 
-    if (usageError) {
-      throw new Error('Failed to check usage limits');
-    }
-
-    if (usageData && (usageData.ideas_generated ?? 0) >= usageData.monthly_limit_ideas) {
+    if (usageData && (usageData.usage.ideas_used ?? 0) >= usageData.limits.ideas_per_month && usageData.limits.ideas_per_month !== -1) {
       throw new Error('Usage limit reached. Please upgrade your plan.');
     }
 
@@ -208,7 +202,7 @@ export async function generateIdea(formData: FormData) {
     const { data: savedIdea, error: saveError } = await supabase
       .from('startup_ideas')
       .insert({
-        user_id: user.id,
+        user_id: session.userId,
         title: generatedIdea.title,
         problem_statement: generatedIdea.problemStatement,
         target_market: {
@@ -257,32 +251,7 @@ export async function generateIdea(formData: FormData) {
       throw new Error('Failed to save generated idea');
     }
 
-    // Update usage limits - count actual ideas to ensure accuracy
-    const { data: allIdeas, error: countError } = await supabase
-      .from('startup_ideas')
-      .select('id', { count: 'exact' })
-      .eq('user_id', user.id)
-
-    if (!countError) {
-      const actualIdeasCount = allIdeas.length || 0
-      console.log(`📊 Updating usage limits: ${actualIdeasCount} ideas generated`)
-      
-      const { error: updateError } = await supabase
-        .from('usage_limits')
-        .update({
-          ideas_generated: actualIdeasCount,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', user.id);
-
-      if (updateError) {
-        console.error('❌ Usage limits update error:', updateError);
-      } else {
-        console.log('✅ Usage limits updated with actual count:', actualIdeasCount)
-      }
-    } else {
-      console.error('❌ Error counting ideas:', countError);
-    }
+    console.log('✅ Idea saved successfully');
 
     // Revalidate the dashboard page
     revalidatePath('/dashboard');
@@ -352,28 +321,29 @@ export async function validateIdea(ideaId: string) {
 }
 
 export async function getUserIdeas(limit: number = 10) {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createServerAdminClient();
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession();
+  if (!session) {
     console.log('❌ getUserIdeas: No authenticated user');
     return [];
   }
 
   console.log('🔍 getUserIdeas called for user:', {
-    userId: user?.id,
-    userEmail: user?.email
+    userId: session.userId,
+    userEmail: session.email
   });
 
   try {
     const { data: ideas, error } = await supabase
       .from('startup_ideas')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    console.log(`📋 Found ${ideas?.length || 0} ideas for user ${user.id}`);
+    console.log(`📋 Found ${ideas?.length || 0} ideas for user ${session.userId}`);
 
     if (error) {
       console.error('Error fetching ideas:', error);

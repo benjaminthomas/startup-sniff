@@ -40,7 +40,21 @@ export async function getRedditTrendsSummary(forceRefresh = false): Promise<Tren
   try {
     console.log('📊 Getting Reddit trends summary...')
 
-    const summary = await redditIntegrationService.getTrendsSummary(forceRefresh)
+    // Use our API route that fetches fresh Reddit data
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/reddit-trends${forceRefresh ? '?refresh=true' : ''}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: forceRefresh ? { revalidate: 0 } : { revalidate: 3600 } // Cache for 1 hour unless forced refresh
+    })
+
+    if (!response.ok) {
+      throw new Error(`Reddit API failed: ${response.status}`)
+    }
+
+    const summary = await response.json()
     return summary
 
   } catch (error) {

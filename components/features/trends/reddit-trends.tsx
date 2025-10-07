@@ -15,7 +15,7 @@ import {
   Activity,
   ChevronRight
 } from "lucide-react";
-import { getRedditTrendsSummary } from "@/lib/actions/reddit";
+// import { getRedditTrendsSummary } from "@/lib/actions/reddit";
 
 interface RedditTrendAnalysis {
   subreddit: string;
@@ -64,9 +64,21 @@ export function RedditTrends() {
   const loadTrends = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const summaryData = await getRedditTrendsSummary();
+      const response = await fetch('/api/reddit-trends', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status}`);
+      }
+
+      const summaryData = await response.json();
       setSummary(summaryData);
       if (summaryData.fullAnalysis) {
         setFullAnalysis(summaryData.fullAnalysis);
