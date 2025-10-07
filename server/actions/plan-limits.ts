@@ -63,7 +63,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       const actualContentCount = contentResult.count || 0;
       const recordedIdeasCount = Number(usageLimitsResult.data.ideas_generated || 0);
       const recordedValidatedCount = Number(usageLimitsResult.data.validations_completed || 0);
-      const recordedContentCount = Number(usageLimitsResult.data.content_generated || 0);
+      const recordedContentCount = 0; // Content is tracked separately in generated_content table
 
       // Check for data inconsistency and fix it
       if (actualIdeasCount !== recordedIdeasCount || actualValidatedCount !== recordedValidatedCount || actualContentCount !== recordedContentCount) {
@@ -78,7 +78,6 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           .update({
             ideas_generated: actualIdeasCount,
             validations_completed: actualValidatedCount,
-            content_generated: actualContentCount,
             updated_at: new Date().toISOString()
           })
           .eq('user_id', session.userId);
@@ -145,19 +144,19 @@ export async function incrementUsage(type: 'ideas' | 'validations' | 'content'):
     const currentData = await getUserPlanAndUsage();
     if (!currentData) return false;
 
-    // Update usage in database
-    const updateField = type === 'validations' ? 'validations_completed' :
-                       type === 'content' ? 'content_generated' : 'ideas_generated';
-    const currentUsage = type === 'validations' ? currentData.usage.validations_used :
-                        type === 'content' ? currentData.usage.content_used : currentData.usage.ideas_used;
+    // Update usage in database (content is tracked separately in generated_content table)
+    if (type !== 'content') {
+      const updateField = type === 'validations' ? 'validations_completed' : 'ideas_generated';
+      const currentUsage = type === 'validations' ? currentData.usage.validations_used : currentData.usage.ideas_used;
 
-    await supabase
-      .from('usage_limits')
-      .update({
-        [updateField]: currentUsage + 1,
-        updated_at: new Date().toISOString()
-      })
-      .eq('user_id', session.userId);
+      await supabase
+        .from('usage_limits')
+        .update({
+          [updateField]: currentUsage + 1,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', session.userId);
+    }
 
     return true;
   } catch (error) {
