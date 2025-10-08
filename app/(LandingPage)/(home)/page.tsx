@@ -1,8 +1,9 @@
-'use client';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+"use client";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   Lightbulb,
@@ -12,15 +13,60 @@ import {
   Users,
   Globe,
   Star,
-  Check
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { HeroHighlight, Highlight } from '@/components/ui/aceternity/hero-highlight';
-import { TextGenerateEffect } from '@/components/ui/aceternity/text-generate-effect';
-import { AnimatedCounter } from '@/components/ui/aceternity/animated-counter';
-import { CardContainer, CardBody, CardItem } from '@/components/ui/aceternity/3d-card';
+  Check,
+} from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  HeroHighlight,
+  Highlight,
+} from "@/components/ui/aceternity/hero-highlight";
+import { TextGenerateEffect } from "@/components/ui/aceternity/text-generate-effect";
+import { AnimatedCounter } from "@/components/ui/aceternity/animated-counter";
+import {
+  CardContainer,
+  CardBody,
+  CardItem,
+} from "@/components/ui/aceternity/3d-card";
 
 export default function HomePage() {
+  const router = useRouter();
+
+  /**
+   * Robust navigation helper:
+   * - For free plan: go to signup (nice UX)
+   * - For paid plan: go to signin with next param pointing to checkout
+   * - Try client-side push, but fallback to full page navigation on failure
+   */
+  const redirectToAuth = async (planId: string, isFree = false) => {
+    try {
+      if (isFree) {
+        // Signup for free plan (better UX)
+        const nextUrl = encodeURIComponent(`/dashboard?plan=${planId}`);
+        // try client side
+        await router.push(`/auth/signup?next=${nextUrl}`);
+        return;
+      }
+
+      // Paid plans -> signin then checkout
+      const nextUrl = encodeURIComponent(`/checkout?plan=${planId}`);
+      await router.push(`/auth/signin?next=${nextUrl}`);
+    } catch (err) {
+      // router.push rejected (network or internal). Fall back to full navigation.
+      // This avoids "Failed to fetch" bubbling up to the console as a TypeError.
+      // eslint-disable-next-line no-console
+      console.warn("router.push failed, falling back to full navigation:", err);
+      if (isFree) {
+        window.location.href = `/auth/signup?next=${encodeURIComponent(
+          `/dashboard?plan=${planId}`
+        )}`;
+      } else {
+        window.location.href = `/auth/signin?next=${encodeURIComponent(
+          `/checkout?plan=${planId}`
+        )}`;
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
@@ -41,7 +87,9 @@ export default function HomePage() {
               <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
                 <span className="text-white font-bold text-lg">S</span>
               </div>
-              <span className="font-bold text-xl text-gradient">StartupSniff</span>
+              <span className="font-bold text-xl text-gradient">
+                StartupSniff
+              </span>
             </motion.div>
 
             <motion.div
@@ -51,13 +99,22 @@ export default function HomePage() {
               className="flex items-center space-x-6"
             >
               <div className="hidden md:flex items-center space-x-6">
-                <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="#features"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Features
                 </Link>
-                <Link href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="#pricing"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Pricing
                 </Link>
-                <Link href="#about" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="#about"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
                   About
                 </Link>
               </div>
@@ -89,7 +146,10 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.5 }}
             >
-              <Badge variant="outline" className="mb-8 bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-500/20 dark:border-purple-400/30 dark:text-white">
+              <Badge
+                variant="outline"
+                className="mb-8 bg-purple-100 border-purple-300 text-purple-700 dark:bg-purple-500/20 dark:border-purple-400/30 dark:text-white"
+              >
                 <TrendingUp className="w-3 h-3 mr-1" />
                 AI-Powered Startup Discovery
               </Badge>
@@ -110,7 +170,12 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 1 }}
               className="text-xl md:text-2xl text-muted-foreground dark:text-white/90 mb-12 max-w-4xl mx-auto leading-relaxed"
             >
-              Use AI to <Highlight className="text-foreground dark:text-white bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-600/80 dark:to-blue-600/80">analyze Reddit trends</Highlight>, validate market opportunities, and generate startup ideas that actually solve real problems.
+              Use AI to{" "}
+              <Highlight className="text-foreground dark:text-white bg-gradient-to-r from-purple-100 to-blue-100 dark:from-purple-600/80 dark:to-blue-600/80">
+                analyze Reddit trends
+              </Highlight>
+              , validate market opportunities, and generate startup ideas that
+              actually solve real problems.
             </motion.p>
 
             <motion.div
@@ -119,16 +184,23 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 1.2 }}
               className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
             >
-              <Button size="lg" asChild className="text-lg px-8 py-4 gradient-primary glow-purple">
+              <Button
+                size="lg"
+                asChild
+                className="text-lg px-8 py-4 gradient-primary glow-purple"
+              >
                 <Link href="/auth/signup">
                   Start Free Today
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10">
-                <Link href="#demo">
-                  Watch Demo
-                </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10"
+              >
+                <Link href="#demo">Watch Demo</Link>
               </Button>
             </motion.div>
 
@@ -139,16 +211,34 @@ export default function HomePage() {
               className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center"
             >
               <div className="space-y-2">
-                <AnimatedCounter value={10000} suffix="+" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
-                <div className="text-muted-foreground dark:text-white/80 text-lg">Reddit Posts Analyzed</div>
+                <AnimatedCounter
+                  value={10000}
+                  suffix="+"
+                  className="text-4xl md:text-5xl font-bold text-foreground dark:text-white"
+                />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">
+                  Reddit Posts Analyzed
+                </div>
               </div>
               <div className="space-y-2">
-                <AnimatedCounter value={2500} suffix="+" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
-                <div className="text-muted-foreground dark:text-white/80 text-lg">Ideas Generated</div>
+                <AnimatedCounter
+                  value={2500}
+                  suffix="+"
+                  className="text-4xl md:text-5xl font-bold text-foreground dark:text-white"
+                />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">
+                  Ideas Generated
+                </div>
               </div>
               <div className="space-y-2">
-                <AnimatedCounter value={87} suffix="%" className="text-4xl md:text-5xl font-bold text-foreground dark:text-white" />
-                <div className="text-muted-foreground dark:text-white/80 text-lg">Validation Accuracy</div>
+                <AnimatedCounter
+                  value={87}
+                  suffix="%"
+                  className="text-4xl md:text-5xl font-bold text-foreground dark:text-white"
+                />
+                <div className="text-muted-foreground dark:text-white/80 text-lg">
+                  Validation Accuracy
+                </div>
               </div>
             </motion.div>
           </div>
@@ -156,7 +246,10 @@ export default function HomePage() {
       </HeroHighlight>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gradient-to-b from-background to-muted/20">
+      <section
+        id="features"
+        className="py-20 bg-gradient-to-b from-background to-muted/20"
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -169,7 +262,8 @@ export default function HomePage() {
               Everything You Need to Launch Smart
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              From Reddit trend analysis to market validation, we&apos;ve got your startup journey covered
+              From Reddit trend analysis to market validation, we&apos;ve got
+              your startup journey covered
             </p>
           </motion.div>
 
@@ -178,39 +272,45 @@ export default function HomePage() {
               {
                 icon: Lightbulb,
                 title: "AI Idea Generation",
-                description: "Generate unique startup ideas based on real market problems and trending discussions from Reddit communities.",
-                gradient: "from-purple-500 to-pink-500"
+                description:
+                  "Generate unique startup ideas based on real market problems and trending discussions from Reddit communities.",
+                gradient: "from-purple-500 to-pink-500",
               },
               {
                 icon: TrendingUp,
                 title: "Reddit Trend Analysis",
-                description: "Analyze millions of Reddit posts to identify emerging problems and untapped market opportunities.",
-                gradient: "from-blue-500 to-cyan-500"
+                description:
+                  "Analyze millions of Reddit posts to identify emerging problems and untapped market opportunities.",
+                gradient: "from-blue-500 to-cyan-500",
               },
               {
                 icon: BarChart3,
                 title: "Market Validation",
-                description: "Validate your ideas with AI-powered market research, competitive analysis, and opportunity scoring.",
-                gradient: "from-green-500 to-emerald-500"
+                description:
+                  "Validate your ideas with AI-powered market research, competitive analysis, and opportunity scoring.",
+                gradient: "from-green-500 to-emerald-500",
               },
               {
                 icon: Target,
                 title: "Content Generation",
-                description: "Generate blog posts, social media content, and marketing materials tailored to your startup idea.",
-                gradient: "from-orange-500 to-red-500"
+                description:
+                  "Generate blog posts, social media content, and marketing materials tailored to your startup idea.",
+                gradient: "from-orange-500 to-red-500",
               },
               {
                 icon: Users,
                 title: "ICP Analysis",
-                description: "Identify your ideal customer profile with detailed demographics, pain points, and market size estimates.",
-                gradient: "from-indigo-500 to-purple-500"
+                description:
+                  "Identify your ideal customer profile with detailed demographics, pain points, and market size estimates.",
+                gradient: "from-indigo-500 to-purple-500",
               },
               {
                 icon: Globe,
                 title: "Export & Share",
-                description: "Export your research to PDF, Notion, or share directly with your team and potential investors.",
-                gradient: "from-teal-500 to-blue-500"
-              }
+                description:
+                  "Export your research to PDF, Notion, or share directly with your team and potential investors.",
+                gradient: "from-teal-500 to-blue-500",
+              },
             ].map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -225,7 +325,9 @@ export default function HomePage() {
                       translateZ="50"
                       className="text-xl font-bold text-foreground mb-2"
                     >
-                      <div className={`w-12 h-12 bg-gradient-to-r ${feature.gradient} rounded-lg flex items-center justify-center mb-4 glow-purple`}>
+                      <div
+                        className={`w-12 h-12 bg-gradient-to-r ${feature.gradient} rounded-lg flex items-center justify-center mb-4 glow-purple`}
+                      >
                         <feature.icon className="h-6 w-6 text-white" />
                       </div>
                       {feature.title}
@@ -237,20 +339,25 @@ export default function HomePage() {
                     >
                       {feature.description}
                     </CardItem>
-                    <CardItem
-                      translateZ="100"
-                      className="w-full mt-4"
-                    >
+                    <CardItem translateZ="100" className="w-full mt-4">
                       <div className="h-32 w-full bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg p-4 text-xs">
                         {feature.title === "AI Idea Generation" && (
                           <div className="space-y-2">
                             <div className="bg-white/10 rounded p-2">
-                              <div className="font-semibold">💡 SaaS for Pet Owners</div>
-                              <div className="text-muted-foreground">Reddit r/dogs • 89% match</div>
+                              <div className="font-semibold">
+                                💡 SaaS for Pet Owners
+                              </div>
+                              <div className="text-muted-foreground">
+                                Reddit r/dogs • 89% match
+                              </div>
                             </div>
                             <div className="bg-white/10 rounded p-2">
-                              <div className="font-semibold">🏠 Remote Work Tools</div>
-                              <div className="text-muted-foreground">Reddit r/remotework • 76% match</div>
+                              <div className="font-semibold">
+                                🏠 Remote Work Tools
+                              </div>
+                              <div className="text-muted-foreground">
+                                Reddit r/remotework • 76% match
+                              </div>
                             </div>
                           </div>
                         )}
@@ -273,22 +380,36 @@ export default function HomePage() {
                         {feature.title === "Market Validation" && (
                           <div className="space-y-2">
                             <div className="bg-green-500/20 rounded p-2">
-                              <div className="font-semibold">Market Score: 87/100</div>
-                              <div className="text-green-400">✓ High demand detected</div>
+                              <div className="font-semibold">
+                                Market Score: 87/100
+                              </div>
+                              <div className="text-green-400">
+                                ✓ High demand detected
+                              </div>
                             </div>
-                            <div className="text-xs">Competition: Medium • TAM: $2.3B</div>
+                            <div className="text-xs">
+                              Competition: Medium • TAM: $2.3B
+                            </div>
                           </div>
                         )}
                         {feature.title === "Content Generation" && (
                           <div className="space-y-1">
-                            <div className="font-semibold">📝 Blog Post: &ldquo;5 Pain Points...&rdquo;</div>
-                            <div className="font-semibold">🐦 Tweet: &ldquo;Just discovered...&rdquo;</div>
-                            <div className="font-semibold">📊 Landing Page: Hero section</div>
+                            <div className="font-semibold">
+                              📝 Blog Post: &ldquo;5 Pain Points...&rdquo;
+                            </div>
+                            <div className="font-semibold">
+                              🐦 Tweet: &ldquo;Just discovered...&rdquo;
+                            </div>
+                            <div className="font-semibold">
+                              📊 Landing Page: Hero section
+                            </div>
                           </div>
                         )}
                         {feature.title === "ICP Analysis" && (
                           <div className="space-y-1">
-                            <div className="font-semibold">👤 Primary: Tech professionals</div>
+                            <div className="font-semibold">
+                              👤 Primary: Tech professionals
+                            </div>
                             <div>Age: 25-40 • Income: $75k+</div>
                             <div>Pain: Remote collaboration tools</div>
                           </div>
@@ -320,7 +441,10 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 bg-gradient-to-b from-muted/20 to-background">
+      <section
+        className="py-20 bg-gradient-to-b from-muted/20 to-background"
+        id="pricing"
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -333,95 +457,124 @@ export default function HomePage() {
               Choose Your Startup Discovery Plan
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Get unlimited access to AI-powered startup idea generation and market validation
+              Get unlimited access to AI-powered startup idea generation and
+              market validation
             </p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
               {
-                name: "Explorer",
+                id: "free",
+                name: "Free",
                 price: 0,
-                period: "month",
-                description: "Perfect for individual entrepreneurs just starting their startup journey",
+                priceId: "",
                 features: [
-                  "3 AI-generated ideas per month",
+                  "3 AI-generated startup ideas per month",
                   "1 market validation per month",
-                  "5 content pieces per month",
-                  "Basic AI generation",
-                  "Community access"
+                  "3 content generations per month",
+                  "Basic Reddit trend analysis",
+                  "Standard content generation",
+                  "Email support",
                 ],
-                popular: false
+                limits: { ideas: 3, validations: 1, content: 3 },
               },
               {
-                name: "Founder",
-                price: 29,
-                period: "month",
-                description: "Advanced features for serious entrepreneurs ready to scale their startup discovery",
+                id: "pro_monthly",
+                name: "Pro",
+                price: 2900,
+                priceId:
+                  process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID ||
+                  "plan_RQbJW54uNkoMwA",
+                billingCycle: "monthly",
                 features: [
-                  "25 AI-generated ideas per month",
-                  "10 market validations per month",
-                  "50 content pieces per month",
-                  "Advanced AI generation",
-                  "Premium templates",
-                  "Market analysis",
-                  "PDF export"
-                ],
-                popular: true
-              },
-              {
-                name: "Growth",
-                price: 99,
-                period: "month",
-                description: "Unlimited access for teams and accelerators with comprehensive business analysis needs",
-                features: [
-                  "Unlimited AI-generated ideas",
+                  "Unlimited AI-generated startup ideas",
                   "Unlimited market validations",
-                  "Unlimited content generation",
-                  "Advanced market analysis",
-                  "API access",
+                  "Unlimited content generations",
+                  "Advanced Reddit trend analysis",
+                  "Premium content generation",
+                  "Multi-platform trend analysis",
+                  "Custom brand voice content",
+                  "Export to PDF/Notion",
+                  "Advanced analytics dashboard",
                   "Priority support",
-                  "Team collaboration"
+                  "Cancel anytime",
                 ],
-                popular: false
-              }
+                limits: { ideas: -1, validations: -1, content: -1 },
+                popular: true,
+              },
+              {
+                id: "pro_yearly",
+                name: "Pro",
+                price: 29000,
+                priceId:
+                  process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID ||
+                  "plan_RQbJzVfk744fiY",
+                billingCycle: "yearly",
+                features: [
+                  "Everything in Pro plan",
+                  "Save $58/year (2 months free)",
+                  "Billed annually",
+                ],
+                limits: { ideas: -1, validations: -1, content: -1 },
+                badge: "SAVE 17%",
+              },
             ].map((plan, index) => (
               <motion.div
-                key={plan.name}
+                key={plan.id}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: index * 0.1 }}
                 viewport={{ once: true }}
               >
-                <Card className={`relative h-full ${plan.popular ? 'border-primary glow-purple' : 'border-border'}`}>
+                <Card
+                  className={`relative h-full ${
+                    plan.popular
+                      ? "border-primary glow-purple"
+                      : "border-border"
+                  }`}
+                >
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      <Badge className="gradient-primary text-white px-3 py-1">Most Popular</Badge>
+                      <Badge className="gradient-primary text-white px-3 py-1">
+                        Most Popular
+                      </Badge>
                     </div>
                   )}
                   <CardHeader className="text-center pb-8">
-                    <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
+                    <CardTitle className="text-2xl font-bold">
+                      {plan.name}
+                    </CardTitle>
                     <div className="mt-4">
-                      <span className="text-4xl font-bold text-gradient">${plan.price}</span>
-                      <span className="text-muted-foreground">/{plan.period}</span>
+                      <span className="text-4xl font-bold text-gradient">
+                        {plan.price === 0 ? "Free" : `₹${plan.price}`}
+                      </span>
+                      <span className="text-muted-foreground">
+                        /
+                        {plan.billingCycle ??
+                          (plan.price === 0 ? "free" : "month")}
+                      </span>
                     </div>
-                    <CardDescription className="mt-4 text-base">
-                      {plan.description}
-                    </CardDescription>
                   </CardHeader>
                   <CardHeader className="pt-0">
                     <Button
                       size="lg"
-                      className={`w-full ${plan.popular ? 'gradient-primary glow-purple' : ''}`}
-                      variant={plan.popular ? 'default' : 'outline'}
+                      className={`w-full ${
+                        plan.popular ? "gradient-primary glow-purple" : ""
+                      }`}
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => redirectToAuth(plan.id, plan.price === 0)}
                     >
-                      Get Started
+                      {plan.price === 0 ? "Get Started (Free)" : "Get Started"}
                     </Button>
+
                     <div className="mt-8 space-y-4">
                       {plan.features.map((feature, featureIndex) => (
                         <div key={featureIndex} className="flex items-center">
                           <Check className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">{feature}</span>
+                          <span className="text-sm text-muted-foreground">
+                            {feature}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -447,19 +600,27 @@ export default function HomePage() {
               Ready to Find Your Next Big Idea?
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Join thousands of entrepreneurs using AI to discover and validate startup opportunities from Reddit trends
+              Join thousands of entrepreneurs using AI to discover and validate
+              startup opportunities from Reddit trends
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild className="text-lg px-8 py-4 gradient-primary glow-purple">
+              <Button
+                size="lg"
+                asChild
+                className="text-lg px-8 py-4 gradient-primary glow-purple"
+              >
                 <Link href="/auth/signup">
                   Start Free Today
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10">
-                <Link href="#demo">
-                  Schedule Demo
-                </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10"
+              >
+                <Link href="#demo">Schedule Demo</Link>
               </Button>
             </div>
             <p className="text-sm text-white/70 mt-6">
@@ -478,10 +639,13 @@ export default function HomePage() {
                 <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
                   <span className="text-white font-bold text-lg">S</span>
                 </div>
-                <span className="font-bold text-xl text-gradient">StartupSniff</span>
+                <span className="font-bold text-xl text-gradient">
+                  StartupSniff
+                </span>
               </div>
               <p className="text-sm text-muted-foreground max-w-xs">
-                Empowering entrepreneurs with AI-driven insights to discover and validate the next generation of business opportunities.
+                Empowering entrepreneurs with AI-driven insights to discover and
+                validate the next generation of business opportunities.
               </p>
               <div className="flex space-x-4">
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center hover:bg-primary/20 transition-colors cursor-pointer">
@@ -495,36 +659,6 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Product</h3>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link></li>
-                <li><Link href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link></li>
-                <li><Link href="#integrations" className="text-muted-foreground hover:text-foreground transition-colors">Integrations</Link></li>
-                <li><Link href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Company</h3>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="#about" className="text-muted-foreground hover:text-foreground transition-colors">About</Link></li>
-                <li><Link href="#careers" className="text-muted-foreground hover:text-foreground transition-colors">Careers</Link></li>
-                <li><Link href="#contact" className="text-muted-foreground hover:text-foreground transition-colors">Contact</Link></li>
-                <li><Link href="#press" className="text-muted-foreground hover:text-foreground transition-colors">Press</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-semibold text-foreground mb-4">Resources</h3>
-              <ul className="space-y-3 text-sm">
-                <li><Link href="#docs" className="text-muted-foreground hover:text-foreground transition-colors">Documentation</Link></li>
-                <li><Link href="#help" className="text-muted-foreground hover:text-foreground transition-colors">Help Center</Link></li>
-                <li><Link href="#community" className="text-muted-foreground hover:text-foreground transition-colors">Community</Link></li>
-                <li><Link href="#status" className="text-muted-foreground hover:text-foreground transition-colors">Status</Link></li>
-              </ul>
-            </div>
           </div>
 
           <div className="mt-12 pt-8 border-t border-border/40">
@@ -533,14 +667,23 @@ export default function HomePage() {
                 © 2024 StartupSniff. All rights reserved.
               </div>
               <div className="flex space-x-6 mt-4 md:mt-0">
-                <Link href="#privacy" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="/privacy_policy"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Privacy Policy
                 </Link>
-                <Link href="#terms" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                <Link
+                  href="/T&C"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
                   Terms of Service
                 </Link>
-                <Link href="#cookies" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  Cookie Policy
+                <Link
+                  href="/refund_policy"
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Refund Policy
                 </Link>
               </div>
             </div>
