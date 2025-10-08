@@ -16,11 +16,11 @@ export const HeroHighlight = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 1 }}
       className={cn(
-        "relative w-full min-h-screen flex items-center justify-center gradient-hero overflow-hidden",
+        "relative w-full bg-background overflow-hidden",
         className
       )}
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 aurora-background opacity-30" />
+      <div className="absolute inset-0 bg-gradient-to-b from-secondary/30 via-background to-accent/20" />
       <div className="relative z-10 w-full">{children}</div>
     </motion.div>
   );
