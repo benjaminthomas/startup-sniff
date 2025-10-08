@@ -668,22 +668,22 @@ export default function HomePage() {
               </div>
               <div className="flex space-x-6 mt-4 md:mt-0">
                 <Link
-                  href="#privacy"
+                  href="/privacy_policy"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Privacy Policy
                 </Link>
                 <Link
-                  href="#terms"
+                  href="/T&C"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                   Terms of Service
                 </Link>
                 <Link
-                  href="#cookies"
+                  href="/refund_policy"
                   className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Cookie Policy
+                  Refund Policy
                 </Link>
               </div>
             </div>
