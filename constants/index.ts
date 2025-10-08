@@ -231,3 +231,6 @@ export const UI_CONSTANTS = {
   TOAST_DURATION: 5000,
   MODAL_ANIMATION_DURATION: 200,
 };
+
+// Re-export modular policy content
+export { POLICY_CONTENT } from './policies';
