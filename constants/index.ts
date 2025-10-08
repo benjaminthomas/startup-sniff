@@ -234,3 +234,6 @@ export const UI_CONSTANTS = {
 
 // Re-export modular policy content
 export { POLICY_CONTENT } from './policies';
+
+// Re-export modular contact content
+export { CONTACT_CONTENT } from './contact';

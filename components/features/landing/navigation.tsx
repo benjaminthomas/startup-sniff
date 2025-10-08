@@ -20,12 +20,14 @@ export function Navigation() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="flex items-center space-x-3"
           >
-            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
-              <span className="text-white font-bold text-lg">S</span>
-            </div>
-            <span className="font-bold text-xl text-gradient">
-              StartupSniff
-            </span>
+            <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
+              <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <span className="font-bold text-xl text-gradient">
+                StartupSniff
+              </span>
+            </Link>
           </motion.div>
 
           <motion.div
@@ -52,6 +54,12 @@ export function Navigation() {
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
                 About
+              </Link>
+              <Link
+                href="/contact"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Contact
               </Link>
             </div>
             <Button variant="ghost" asChild className="text-sm">
