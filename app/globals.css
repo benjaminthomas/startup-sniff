@@ -46,54 +46,54 @@
 :root {
   --radius: 10px;
 
-  /* AI Business Theme Design System v3.0.0 - Light First with Purple Accents */
-  --background: #FFFFFF;
-  --foreground: #0F172A;
+  /* Prodify-Inspired Light Purple Theme v1.0.0 */
+  --background: #FEFBFF;
+  --foreground: #1A1625;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #1A1625;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #8B5CF6;
+  --popover-foreground: #1A1625;
+  --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
-  --secondary: #F8FAFC;
-  --secondary-foreground: #0F172A;
-  --muted: #F8FAFC;
-  --muted-foreground: #64748B;
-  --accent: #F1F5F9;
-  --accent-foreground: #0F172A;
+  --secondary: #F5F3FF;
+  --secondary-foreground: #1A1625;
+  --muted: #F5F3FF;
+  --muted-foreground: #6B7280;
+  --accent: #EDE9FE;
+  --accent-foreground: #1A1625;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #8B5CF6;
-  --chart-1: #8B5CF6;
-  --chart-2: #6366F1;
-  --chart-3: #3B82F6;
+  --border: #E5E7EB;
+  --input: #F9FAFB;
+  --ring: #7C3AED;
+  --chart-1: #7C3AED;
+  --chart-2: #A855F7;
+  --chart-3: #8B5CF6;
   --chart-4: #22C55E;
   --chart-5: #F59E0B;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #8B5CF6;
+  --sidebar: #FEFBFF;
+  --sidebar-foreground: #1A1625;
+  --sidebar-primary: #7C3AED;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F8FAFC;
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #8B5CF6;
+  --sidebar-accent: #F5F3FF;
+  --sidebar-accent-foreground: #1A1625;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #7C3AED;
 
   /* Brand Colors */
-  --color-brand-primary: #8B5CF6;
-  --color-brand-secondary: #6366F1;
+  --color-brand-primary: #7C3AED;
+  --color-brand-secondary: #A855F7;
 
   /* Background Colors */
-  --color-background-default: #FFFFFF;
-  --color-background-alt: #F8FAFC;
+  --color-background-default: #FEFBFF;
+  --color-background-alt: #F5F3FF;
 
   /* Text Colors */
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #64748B;
+  --color-text-primary: #1A1625;
+  --color-text-secondary: #6B7280;
 
   /* Utility Colors */
-  --color-border: #E2E8F0;
+  --color-border: #E5E7EB;
   --color-success: #22C55E;
   --color-warning: #FACC15;
   --color-error: #EF4444;
@@ -189,21 +189,21 @@
   }
 }
 
-/* AI Business Theme Gradients - Vibrant Light Theme */
+/* Prodify-Inspired Theme Gradients */
 .gradient-primary {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%);
 }
 
 .gradient-hero {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #8B5CF6 100%);
 }
 
 .gradient-hero-light {
-  background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 50%, #DDD6FE 100%);
+  background: linear-gradient(135deg, #FEFBFF 0%, #F5F3FF 50%, #EDE9FE 100%);
 }
 
 .text-gradient {
-  background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 50%, #3B82F6 100%);
+  background: linear-gradient(135deg, #7C3AED 0%, #A855F7 50%, #8B5CF6 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -223,7 +223,7 @@
 }
 
 .aurora-background {
-  background: linear-gradient(-45deg, #8B5CF6, #6366F1, #3B82F6, #8B5CF6);
+  background: linear-gradient(-45deg, #7C3AED, #A855F7, #8B5CF6, #7C3AED);
   background-size: 400% 400%;
   animation: aurora 15s ease infinite;
 }
@@ -239,9 +239,39 @@
 
 /* Glowing effects */
 .glow-purple {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
 }
 
-.glow-blue {
-  box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+.glow-violet {
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+/* Line clamping utilities */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.line-clamp-3 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Grid pattern background for policy headers */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(124, 58, 237, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124, 58, 237, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
 }

@@ -5,8 +5,11 @@ import crypto from 'crypto';
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
 const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
 
-if ((!razorpayKeyId || !razorpayKeySecret) && process.env.NODE_ENV === 'production') {
-  throw new Error('Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET environment variable in production');
+// Only check for required environment variables at runtime, not build time
+function checkRazorpayCredentials() {
+  if ((!razorpayKeyId || !razorpayKeySecret) && process.env.NODE_ENV === 'production') {
+    throw new Error('Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET environment variable in production');
+  }
 }
 
 // Use placeholder keys during build time if not available
@@ -36,9 +39,7 @@ export const createOrder = async ({
   receipt,
   notes,
 }: RazorpayOrderParams) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   return await razorpay.orders.create({
     amount,
@@ -55,9 +56,7 @@ export const createSubscription = async ({
   notes,
   total_count,
 }: RazorpaySubscriptionParams) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const subscriptionData: any = {
@@ -75,9 +74,7 @@ export const createSubscription = async ({
 };
 
 export const cancelSubscription = async (subscriptionId: string) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   return await razorpay.subscriptions.cancel(subscriptionId);
 };
@@ -90,25 +87,19 @@ export const updateSubscription = async (
     schedule_change_at?: 'now' | 'cycle_end';
   }
 ) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   return await razorpay.subscriptions.update(subscriptionId, updates);
 };
 
 export const fetchSubscription = async (subscriptionId: string) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   return await razorpay.subscriptions.fetch(subscriptionId);
 };
 
 export const fetchPayment = async (paymentId: string) => {
-  if (!razorpayKeyId || !razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are required for Razorpay operations');
-  }
+  checkRazorpayCredentials();
 
   return await razorpay.payments.fetch(paymentId);
 };
@@ -122,7 +113,11 @@ export const verifyWebhookSignature = (
   const webhookSecret = secret || process.env.RAZORPAY_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    throw new Error('Missing RAZORPAY_WEBHOOK_SECRET environment variable');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Missing RAZORPAY_WEBHOOK_SECRET environment variable');
+    }
+    // During build time, return false gracefully
+    return false;
   }
 
   const expectedSignature = crypto
@@ -144,7 +139,11 @@ export const verifyPaymentSignature = ({
   signature: string;
 }): boolean => {
   if (!razorpayKeySecret) {
-    throw new Error('RAZORPAY_KEY_SECRET is required for signature verification');
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('RAZORPAY_KEY_SECRET is required for signature verification');
+    }
+    // During build time, return false gracefully
+    return false;
   }
 
   const text = `${orderId}|${paymentId}`;

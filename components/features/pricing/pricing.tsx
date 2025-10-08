@@ -70,7 +70,6 @@ export const Pricing: React.FC<PricingProps> = ({
       if (handled) return;
     } catch (err) {
       // don't crash UI for parent errors
-      // eslint-disable-next-line no-console
       console.error("onPlanSelect handler threw:", err);
     }
 

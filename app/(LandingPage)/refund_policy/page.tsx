@@ -1,38 +1,34 @@
 import React from "react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Navigation } from "@/components/features/landing/navigation";
+import { PolicyHeader } from "@/components/features/landing/policy-header";
+import { PolicyContent } from "@/components/features/landing/policy-content";
+import { Footer } from "@/components/features/landing/footer";
+import { POLICY_CONTENT } from "@/constants";
 
 export default function RefundPage() {
+  const { REFUND, CONTACT } = POLICY_CONTENT;
+
   return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Refund &amp; Cancellation Policy</CardTitle>
-        </CardHeader>
-        <CardContent className="prose max-w-none">
-          <p>
-            Applicable to all web services purchased via{" "}
-            <strong>startupsniff.com</strong>.
-          </p>
+    <div className="min-h-screen bg-background text-foreground">
+      <Navigation />
 
-          <h3>Strictly Non-Refundable</h3>
-          <p>
-            All services provided by <strong>Adrieluxe Digital Studio</strong>{" "}
-            are strictly non-refundable under any circumstances.
-          </p>
+      {/* Spacer for fixed nav */}
+      <div className="h-16"></div>
 
-          <Separator />
+      <PolicyHeader 
+        title={REFUND.title}
+        subtitle={REFUND.subtitle}
+        lastUpdated={REFUND.lastUpdated}
+        type="refund"
+      />
 
-          <h4>Owner &amp; Contact</h4>
-          <p>
-            <strong>Owner:</strong> Benjamin B
-            <br />
-            <strong>Email:</strong> contact@adrieluxedigitalstudio.com
-            <br />
-            <strong>Phone:</strong> +91 97873 33558
-          </p>
-        </CardContent>
-      </Card>
+      <PolicyContent
+        intro={REFUND.content.intro}
+        sections={REFUND.content.sections}
+        contactInfo={CONTACT}
+      />
+
+      <Footer />
     </div>
   );
 }
