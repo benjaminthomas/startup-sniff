@@ -34,11 +34,19 @@ function isRateLimited(key: string): boolean {
   return false;
 }
 
-function validateContactForm(data: any): { isValid: boolean; errors: string[]; formData?: ContactFormData } {
+interface ContactFormInput {
+  name?: unknown;
+  email?: unknown;
+  subject?: unknown;
+  message?: unknown;
+  company?: unknown;
+}
+
+function validateContactForm(data: ContactFormInput): { isValid: boolean; errors: string[]; formData?: ContactFormData } {
   const errors: string[] = [];
 
   // Validate required fields
-  if (!data?.name?.trim()) {
+  if (!data?.name || typeof data.name !== 'string' || !data.name.trim()) {
     errors.push('Name is required');
   } else if (data.name.trim().length < 2) {
     errors.push('Name must be at least 2 characters');
@@ -46,7 +54,7 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
     errors.push('Name must be no more than 50 characters');
   }
 
-  if (!data.email?.trim()) {
+  if (!data.email || typeof data.email !== 'string' || !data.email.trim()) {
     errors.push('Email is required');
   } else {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -55,7 +63,7 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
     }
   }
 
-  if (!data.subject?.trim()) {
+  if (!data.subject || typeof data.subject !== 'string' || !data.subject.trim()) {
     errors.push('Subject is required');
   } else {
     const validSubjects = ['technical_support', 'billing', 'feature_request', 'partnership', 'bug_report', 'general'];
@@ -64,7 +72,7 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
     }
   }
 
-  if (!data.message?.trim()) {
+  if (!data.message || typeof data.message !== 'string' || !data.message.trim()) {
     errors.push('Message is required');
   } else if (data.message.trim().length < 10) {
     errors.push('Message must be at least 10 characters');
@@ -73,7 +81,7 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
   }
 
   // Optional company field validation
-  if (data.company && data.company.trim().length > 100) {
+  if (data.company && typeof data.company === 'string' && data.company.trim().length > 100) {
     errors.push('Company name must be no more than 100 characters');
   }
 
@@ -82,12 +90,16 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
   }
 
   const formData: ContactFormData = {
-    name: data.name.trim(),
-    email: data.email.trim().toLowerCase(),
-    subject: data.subject,
-    message: data.message.trim(),
-    ...(data.company && { company: data.company.trim() })
+    name: (data.name as string).trim(),
+    email: (data.email as string).trim().toLowerCase(),
+    subject: data.subject as string,
+    message: (data.message as string).trim(),
   };
+
+  // Add optional company field if provided
+  if (data.company && typeof data.company === 'string') {
+    formData.company = data.company.trim();
+  }
 
   return { isValid: true, errors: [], formData };
 }

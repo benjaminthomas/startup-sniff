@@ -58,9 +58,7 @@ export default function ContactPage() {
             />
           </div>
           
-          <ContactInfo
-            methods={CONTACT_PAGE.methods}
-          />
+          <ContactInfo />
         </div>
       </div>
 
