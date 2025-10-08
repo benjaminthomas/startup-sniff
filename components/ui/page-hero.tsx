@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   HeroHighlight,
-  Highlight,
 } from "@/components/ui/aceternity/hero-highlight";
 import { TextGenerateEffect } from "@/components/ui/aceternity/text-generate-effect";
 import { AnimatedCounter } from "@/components/ui/aceternity/animated-counter";

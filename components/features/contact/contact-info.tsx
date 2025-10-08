@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Shield, Zap, Users } from "lucide-react";
 
-interface ContactInfoProps {
-  methods: any[];
-}
-
 const features = [
   {
     icon: Clock,
@@ -38,7 +34,7 @@ const stats = [
   { label: "Users Helped", value: "10K+" }
 ];
 
-export function ContactInfo({ methods }: ContactInfoProps) {
+export function ContactInfo() {
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -52,7 +48,7 @@ export function ContactInfo({ methods }: ContactInfoProps) {
           Support Information
         </Badge>
         <div className="space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">We're Here to Help</h2>
+          <h2 className="text-3xl font-bold tracking-tight">We&apos;re Here to Help</h2>
           <p className="text-xl text-muted-foreground">
             Our dedicated support team is committed to providing you with the best experience possible.
           </p>

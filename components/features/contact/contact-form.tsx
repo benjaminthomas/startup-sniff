@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion } from "framer-motion";
-import { Send, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Send, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -138,7 +138,7 @@ export function ContactForm({ title, subtitle }: ContactFormProps) {
                 Message sent successfully!
               </p>
               <p className="text-sm text-green-700 dark:text-green-300">
-                We'll get back to you within 24 hours. Check your email for confirmation.
+                We&apos;ll get back to you within 24 hours. Check your email for confirmation.
               </p>
             </div>
           </motion.div>
@@ -276,7 +276,7 @@ export function ContactForm({ title, subtitle }: ContactFormProps) {
               <a href="/privacy_policy" className="text-primary hover:underline">
                 Privacy Policy
               </a>
-              . We'll never share your information.
+              . We&apos;ll never share your information.
             </p>
           </form>
         </Form>

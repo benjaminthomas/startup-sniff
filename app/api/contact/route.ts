@@ -38,7 +38,7 @@ function validateContactForm(data: any): { isValid: boolean; errors: string[]; f
   const errors: string[] = [];
 
   // Validate required fields
-  if (!data.name?.trim()) {
+  if (!data?.name?.trim()) {
     errors.push('Name is required');
   } else if (data.name.trim().length < 2) {
     errors.push('Name must be at least 2 characters');
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Handle preflight requests for CORS
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {

@@ -12,7 +12,7 @@ interface ContactInfoProps {
 }
 
 // Icon mapping for contact methods
-const iconMap: { [key: string]: any } = {
+const iconMap: { [key: string]: React.ComponentType<{ className?: string }> } = {
   Mail: MailIcon,
   Users: Users,
   MessageSquare: MessageSquare,

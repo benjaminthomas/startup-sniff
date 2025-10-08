@@ -85,7 +85,7 @@ export function ContactFAQ({ faqs }: ContactFAQProps) {
               </h2>
               
               <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                Find quick answers to common questions. Can't find what you're looking for? 
+                Find quick answers to common questions. Can&apos;t find what you&apos;re looking for? 
                 <span className="text-primary font-medium"> Reach out to us directly.</span>
               </p>
             </div>

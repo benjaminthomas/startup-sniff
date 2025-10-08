@@ -26,7 +26,6 @@ export const redirectToAuth = async (
   } catch (err) {
     // router.push rejected (network or internal). Fall back to full navigation.
     // This avoids "Failed to fetch" bubbling up to the console as a TypeError.
-    // eslint-disable-next-line no-console
     console.warn("router.push failed, falling back to full navigation:", err);
     if (isFree) {
       window.location.href = `/auth/signup?next=${encodeURIComponent(
