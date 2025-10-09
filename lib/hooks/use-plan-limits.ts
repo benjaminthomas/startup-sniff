@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/server/actions/plan-limits';
+import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/modules/usage';
 import { PlanType } from '@/types/database';
 
 // Plan limits configuration

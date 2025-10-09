@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCurrentUserUsage, type UsageData } from '@/server/actions/usage';
+import { getCurrentUserUsage, type UsageData } from '@/modules/usage';
 
 export function useServerPlanLimits() {
   const [data, setData] = useState<UsageData | null>(null);

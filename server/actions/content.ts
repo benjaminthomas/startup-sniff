@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { openai } from '@/lib/openai';
 import { VALIDATION_SCHEMAS } from '@/constants';
-import { incrementUsage } from '@/server/actions/plan-limits';
+import { incrementUsage } from '@/modules/usage';
 
 const generateContentSchema = z.object({
   contentType: z.enum(['blog_post', 'tweet', 'email', 'landing_page']),

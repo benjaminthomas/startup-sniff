@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createServerSupabaseClient, createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
 import { generateIdeasFromPainPoints } from '@/lib/actions/reddit';
-import { getCurrentUserUsage } from '@/server/actions/usage';
+import { getCurrentUserUsage } from '@/modules/usage';
 
 const generateIdeaSchema = z.object({
   industry: z.string().optional(),

@@ -6,7 +6,7 @@ import { StatsCards } from "@/components/features/dashboard/stats-cards";
 import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";
 import { QuickActions } from "@/components/features/dashboard/quick-actions";
 import { UsageTracker } from "@/components/ui/usage-tracker";
-import { getCurrentUserUsage } from "@/server/actions/usage";
+import { getCurrentUserUsage } from "@/modules/usage";
 
 export const metadata: Metadata = {
   title: "Dashboard | StartupSniff",
