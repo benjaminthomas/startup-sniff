@@ -192,7 +192,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
       full_name: fullName,
       email_verified: false,
       email_verification_token: verificationToken,
-      email_verification_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
+      email_verification_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
       plan_type: 'pro_monthly', // Default to pro monthly plan
       subscription_status: 'inactive',
     })
