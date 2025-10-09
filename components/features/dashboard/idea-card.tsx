@@ -9,7 +9,7 @@ import { Progress } from '@/components/ui/progress';
 import { validateExistingIdea } from '@/modules/validation';
 import { toggleFavorite } from '@/modules/ideas';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
-import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
+import { useServerPlanLimits } from '@/modules/usage/hooks';
 import {
   DollarSign,
   Clock,

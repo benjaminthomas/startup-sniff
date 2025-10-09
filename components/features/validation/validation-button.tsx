@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
-import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
+import { useServerPlanLimits } from '@/modules/usage/hooks';
 import { validateExistingIdea } from '@/modules/validation';
 import {
   BarChart3,

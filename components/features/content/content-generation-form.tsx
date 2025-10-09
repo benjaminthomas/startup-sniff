@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { FileText, Loader2, Lightbulb, Sparkles, Crown, Plus } from "lucide-react";
 import { generateContent } from '@/modules/content';
-import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
+import { useServerPlanLimits } from '@/modules/usage/hooks';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { CONTENT_TEMPLATES } from '@/constants';
 import { toast } from 'sonner';

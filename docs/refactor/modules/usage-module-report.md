@@ -3,6 +3,7 @@
 ### Extracted Files
 - modules/usage/actions/usage.ts (migrated from `server/actions/usage.ts`)
 - modules/usage/actions/plan-limits.ts (migrated from `server/actions/plan-limits.ts`)
+- modules/usage/hooks/{use-plan-limits,use-server-plan-limits}.ts (from `lib/hooks`)
 - modules/usage/index.ts (barrel export)
 - modules/usage/README.md (module overview)
 
@@ -10,19 +11,20 @@
 - `getCurrentUserUsage()`
 - `getUserPlanAndUsage()`
 - `incrementUsage(type)`
+- `usePlanLimits()`, `useServerPlanLimits()`
 - `UsageData` interface and supporting helpers
 
 ### Dependencies
 - Auth module for session utilities and UserDatabase access.
-- Supabase client for usage/plan queries.
-- Shared hooks (`lib/hooks/use-plan-limits`, `lib/hooks/use-server-plan-limits`) consume the public API.
+- Supabase module for usage/plan queries.
+- Hooks now distributed via `@/modules/usage`.
 
 ### Files Updated (Consumers)
 - modules/ideas/actions/index.ts
-- lib/hooks/use-plan-limits.ts
-- lib/hooks/use-server-plan-limits.ts
+- modules/usage/hooks/{use-plan-limits,use-server-plan-limits}.ts
+- components relying on usage hooks and server actions
 - app/(dashboard)/dashboard/page.tsx
-- server/actions/content.ts
+- modules/content/actions/index.ts
 
 ### Validation
 - [x] All usage-related imports now point to `@/modules/usage`.

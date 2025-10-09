@@ -25,7 +25,7 @@ import {
   Plus,
 } from "lucide-react";
 import { validateExistingIdea } from "@/modules/validation";
-import { usePlanLimits } from "@/lib/hooks/use-plan-limits";
+import { usePlanLimits } from "@/modules/usage/hooks";
 import { getUserIdeas } from "@/modules/ideas";
 
 interface GeneratedIdea {
