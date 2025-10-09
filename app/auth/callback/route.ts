@@ -115,7 +115,7 @@ export async function GET(request: NextRequest) {
     //   .from('usage_limits')
     //   .upsert({
     //     user_id: data.user.id,
-    //     plan_type: 'explorer',
+    //     plan_type: 'free',
     //     monthly_limit_ideas: 5,
     //     monthly_limit_validations: 3,
     //     ideas_generated: 0,
