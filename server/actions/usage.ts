@@ -3,9 +3,10 @@
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { UserDatabase } from '@/lib/auth/database';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { PlanType } from '@/types/database';
 
 export interface UsageData {
-  planType: 'explorer' | 'founder' | 'growth';
+  planType: PlanType;
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -35,13 +36,26 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     }
 
     // Get user data from database instead of Supabase
+    console.log('🔍 Looking up user in database:', session.userId);
     const user = await UserDatabase.findById(session.userId);
+    
     if (!user) {
-      console.log('❌ User not found in database');
+      console.error('❌ User not found in database:', {
+        userId: session.userId,
+        email: session.email,
+        sessionId: session.sessionId
+      });
       return null;
     }
+    
+    console.log('✅ User found in database:', {
+      userId: user.id,
+      email: user.email,
+      planType: user.plan_type
+    });
 
-    const planType = user.plan_type || 'explorer';
+    // Ensure user has a valid plan type, default to free if not set
+    const planType = (user.plan_type || 'free') as PlanType;
 
     console.log('📊 Server-side usage data:', {
       userId: user.id,
@@ -51,17 +65,17 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
 
     // Plan limits configuration
     const PLAN_LIMITS = {
-      explorer: {
-        ideas_per_month: 3,
-        validations_per_month: 1,
-        content_per_month: 3, // Updated from 5 to 3
+      free: {
+        ideas_per_month: 3, // 3 AI-generated ideas per month
+        validations_per_month: 1, // 1 validation per month
+        content_per_month: 2, // 2 content generations per month
       },
-      founder: {
-        ideas_per_month: 25,
-        validations_per_month: 10,
-        content_per_month: 50,
+      pro_monthly: {
+        ideas_per_month: -1, // unlimited
+        validations_per_month: -1, // unlimited
+        content_per_month: -1, // unlimited
       },
-      growth: {
+      pro_yearly: {
         ideas_per_month: -1, // unlimited
         validations_per_month: -1, // unlimited
         content_per_month: -1, // unlimited
@@ -123,11 +137,18 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       thisMonth: validationsUsed
     });
 
-    return {
+    const limits = PLAN_LIMITS[planType];
+    
+    // Ensure we always return a complete data structure
+    const result: UsageData = {
       planType,
       usage: usageData,
-      limits: PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]
+      limits: limits || PLAN_LIMITS.free // Fallback to free plan limits
     };
+
+    console.log('📦 Returning complete usage data with limits:', result);
+
+    return result;
   } catch (error) {
     console.error('💥 Error in getCurrentUserUsage:', error);
     return null;

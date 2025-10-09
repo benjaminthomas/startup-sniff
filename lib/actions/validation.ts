@@ -136,11 +136,11 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       .eq('id', session.userId)
       .single();
 
-    const planType = user?.plan_type || 'explorer';
+    const planType = user?.plan_type || 'free';
     const PLAN_LIMITS = {
-      explorer: { validations_per_month: 1 },
-      founder: { validations_per_month: 10 },
-      growth: { validations_per_month: -1 } // unlimited
+      free: { validations_per_month: 1 },
+      pro_monthly: { validations_per_month: -1 }, // unlimited
+      pro_yearly: { validations_per_month: -1 }, // unlimited
     } as const;
 
     const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;
@@ -412,11 +412,11 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
       .eq('id', session.userId)
       .single();
 
-    const planType = user?.plan_type || 'explorer';
+    const planType = user?.plan_type || 'free';
     const PLAN_LIMITS = {
-      explorer: { validations_per_month: 1 },
-      founder: { validations_per_month: 10 },
-      growth: { validations_per_month: -1 } // unlimited
+      free: { validations_per_month: 1 },
+      pro_monthly: { validations_per_month: -1 }, // unlimited
+      pro_yearly: { validations_per_month: -1 }, // unlimited
     } as const;
 
     const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1;

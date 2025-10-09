@@ -31,16 +31,13 @@ export function useServerPlanLimits() {
 
   const canUseFeature = (feature: string): boolean => {
     if (!data) return false;
-    const features = {
-      explorer: ['basic_ai_generation', 'basic_templates'],
-      founder: ['advanced_ai_generation', 'premium_templates', 'market_analysis', 'export_pdf'],
-      growth: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support']
-    };
-    return features[data.planType].includes(feature);
+    // Both pro plans have all features
+    const proFeatures = ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support'];
+    return proFeatures.includes(feature);
   };
 
   const getRemainingLimit = (type: 'ideas' | 'validations' | 'content'): number => {
-    if (!data) return 0;
+    if (!data || !data.limits) return 0;
     
     const limitKey = `${type}_per_month` as keyof typeof data.limits;
     const usageKey = `${type}_used` as keyof typeof data.usage;
@@ -48,22 +45,23 @@ export function useServerPlanLimits() {
     const limit = data.limits[limitKey];
     if (limit === -1) return -1; // unlimited
     
-    const used = data.usage[usageKey];
-    const remaining = Math.max(0, limit - Number(used || 0));
+    const used = data.usage?.[usageKey] ?? 0;
+    const remaining = Math.max(0, limit - Number(used));
     
     console.log(`getRemainingLimit(${type}):`, {
       planType: data.planType,
       limit,
       used,
       remaining,
-      usage: data.usage
+      usage: data.usage,
+      hasLimits: !!data.limits
     });
     
     return remaining;
   };
 
   const getUsagePercentage = (type: 'ideas' | 'validations' | 'content'): number => {
-    if (!data) return 0;
+    if (!data || !data.limits) return 0;
     
     const limitKey = `${type}_per_month` as keyof typeof data.limits;
     const usageKey = `${type}_used` as keyof typeof data.usage;
@@ -71,8 +69,8 @@ export function useServerPlanLimits() {
     const limit = data.limits[limitKey];
     if (limit === -1) return 0; // unlimited
     
-    const used = data.usage[usageKey];
-    return Math.min(100, (Number(used || 0) / limit) * 100);
+    const used = data.usage?.[usageKey] ?? 0;
+    return Math.min(100, (Number(used) / limit) * 100);
   };
 
   const isAtLimit = (type: 'ideas' | 'validations' | 'content'): boolean => {
@@ -90,7 +88,7 @@ export function useServerPlanLimits() {
   };
 
   return {
-    planType: data?.planType || 'explorer',
+    planType: data?.planType || 'free', // Default to free plan to be safe
     usage: data?.usage || {
       ideas_used: 0,
       validations_used: 0,

@@ -55,7 +55,10 @@ export class UserDatabase {
       .single()
 
     if (error) {
-      if (error.code === 'PGRST116') return null // No rows found
+      if (error.code === 'PGRST116') {
+        console.warn(`User not found in database for ID: ${id}`)
+        return null // No rows found
+      }
       console.error('Database error finding user by ID:', error)
       throw new Error('Failed to find user')
     }

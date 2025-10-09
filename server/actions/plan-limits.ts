@@ -2,9 +2,10 @@
 
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { PlanType } from '@/types/database';
 
 interface PlanAndUsageData {
-  planType: 'explorer' | 'founder' | 'growth';
+  planType: PlanType;
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -36,8 +37,8 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       usageLimitsError: usageLimitsResult.error
     });
 
-    // Set plan type
-    const planType = (profileResult.data?.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer';
+    // Set plan type, default to free if not set
+    const planType = (profileResult.data?.plan_type as PlanType) || 'free';
 
     // Set usage data with validation against actual data
     if (usageLimitsResult.data && !usageLimitsResult.error) {

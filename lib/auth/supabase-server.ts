@@ -107,8 +107,7 @@ export const createMiddlewareSupabaseClient = (request: NextRequest) => {
 // Rate limiting storage using Supabase
 export const checkRateLimit = async (
   identifier: string,
-  limit: number,
-  _windowMs: number // eslint-disable-line @typescript-eslint/no-unused-vars
+  limit: number
 ): Promise<{ allowed: boolean; remaining: number }> => {
 
   try {

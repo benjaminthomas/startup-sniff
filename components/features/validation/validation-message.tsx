@@ -9,13 +9,10 @@ interface ValidationMessageProps {
 }
 
 export function ValidationMessage({ className }: ValidationMessageProps) {
-  const { isAtLimit, planType, usage } = useServerPlanLimits();
+  const { isAtLimit } = useServerPlanLimits();
 
-  const remainingValidations = planType === 'explorer'
-    ? Math.max(0, 1 - (usage.validations_used || 0))
-    : planType === 'founder'
-    ? Math.max(0, 10 - (usage.validations_used || 0))
-    : -1; // Unlimited for growth plan
+  // Pro plans have unlimited validations
+  const remainingValidations = -1; // Unlimited
 
   return (
     <div className={cn("text-sm", className)}>
@@ -23,9 +20,7 @@ export function ValidationMessage({ className }: ValidationMessageProps) {
         <div className="flex items-center justify-center gap-2 text-amber-600 dark:text-amber-400">
           <Crown className="h-4 w-4" />
           <span>
-            {planType === 'explorer'
-              ? 'Free plan validation limit reached'
-              : 'Monthly validation limit reached'}
+            Validation limit reached
           </span>
         </div>
       ) : (

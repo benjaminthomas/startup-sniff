@@ -12,11 +12,8 @@
 
 # testing
 /coverage
-/tests
 /test-results
-playwright-report/
-*.spec.ts
-playwright.config.ts
+/playwright-report
 
 # next.js
 /.next/

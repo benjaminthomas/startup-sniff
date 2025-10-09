@@ -2,25 +2,25 @@
  * Custom JWT Authentication Middleware
  *
  * This middleware provides:
- * - JWT session verification
+ * - JWT session verification with database user validation
  * - CSRF protection for state-changing operations
  * - Rate limiting for auth endpoints
- * - Secure route protection
+ * - Secure route protection with proper redirects
  * - Attack prevention (XSS, session fixation, replay attacks)
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
 import { verifySessionToken } from '@/lib/auth/jwt'
 import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/lib/auth/csrf'
+import { UserDatabase } from '@/lib/auth/database'
 
 // Define protected and public routes
 const PUBLIC_ROUTES = [
   '/',
-  '/auth/signin',
-  '/auth/signup',
-  '/auth/forgot-password',
-  '/auth/reset-password',
-  '/auth/verify-email',
+  '/contact',
+  '/privacy_policy',
+  '/refund_policy',
+  '/T&C',
 ]
 
 const AUTH_ROUTES = [
@@ -29,6 +29,7 @@ const AUTH_ROUTES = [
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/verify-email',
+  '/auth/callback',
 ]
 
 const PROTECTED_ROUTES = ['/dashboard']
@@ -92,7 +93,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Get JWT session token
+    // Get JWT session token and verify user exists
     const sessionToken = request.cookies.get('session-token')?.value
     let user = null
 
@@ -100,35 +101,46 @@ export async function middleware(request: NextRequest) {
       try {
         const sessionPayload = await verifySessionToken(sessionToken)
         if (sessionPayload) {
-          user = {
-            id: sessionPayload.userId,
-            email: sessionPayload.email
+          // Verify user still exists in database and is verified
+          const dbUser = await UserDatabase.findById(sessionPayload.userId)
+          if (dbUser && dbUser.email_verified) {
+            user = {
+              id: sessionPayload.userId,
+              email: sessionPayload.email
+            }
+          } else {
+            // User not found or not verified, clear invalid session
+            console.warn(`Invalid session: User ${sessionPayload.userId} not found or not verified`)
+            response.cookies.delete('session-token')
           }
         }
       } catch (error) {
         // Invalid token, clear it
+        console.error('Session verification error:', error)
         response.cookies.delete('session-token')
       }
     }
 
     const isAuthenticated = !!user
-    const isPublicRoute = PUBLIC_ROUTES.some(route =>
-      pathname === route || pathname.startsWith(`${route}/`)
-    )
     const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route))
     const isProtectedRoute = PROTECTED_ROUTES.some(route =>
       pathname.startsWith(route)
     )
+    const isPublicRoute = PUBLIC_ROUTES.some(route => 
+      pathname === route || pathname.startsWith(`${route}/`)
+    )
 
-    // Redirect unauthenticated users from protected routes
+    // Redirect unauthenticated users from protected routes to signin
     if (isProtectedRoute && !isAuthenticated) {
+      console.log(`🔒 Redirecting unauthenticated user from ${pathname} to /auth/signin`)
       const redirectUrl = new URL('/auth/signin', request.url)
       redirectUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(redirectUrl)
     }
 
-    // Redirect authenticated users away from auth pages
+    // Redirect authenticated users away from auth pages to dashboard
     if (isAuthenticated && isAuthRoute) {
+      console.log(`✅ Redirecting authenticated user from ${pathname} to /dashboard`)
       const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard'
       return NextResponse.redirect(new URL(redirectTo, request.url))
     }
@@ -206,10 +218,19 @@ export async function middleware(request: NextRequest) {
 
   } catch (error) {
     console.error('Middleware error:', error)
-    // Fail securely - redirect to signin on errors
-    if (!PUBLIC_ROUTES.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
+    
+    // Fail securely - redirect to signin on errors for protected routes
+    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
+      pathname.startsWith(route)
+    )
+    
+    if (isProtectedRoute) {
+      console.error(`🔒 Error on protected route ${pathname}, redirecting to signin`)
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
+    
+    // For public routes, allow through but log error
+    console.error(`⚠️ Error on public route ${pathname}, allowing through`)
     return response
   }
 }

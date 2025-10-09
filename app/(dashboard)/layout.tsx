@@ -1,10 +1,10 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
-import { getCurrentSession } from '@/lib/auth/jwt';
-import { UserDatabase } from '@/lib/auth/database';
-import { redirect } from 'next/navigation';
-import { 
+import { getCurrentSession } from "@/lib/auth/jwt";
+import { UserDatabase } from "@/lib/auth/database";
+import { redirect } from "next/navigation";
+import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   const session = await getCurrentSession();
 
   if (!session) {
-    redirect('/auth/signin');
+    redirect("/auth/signin");
   }
 
   // Get user data from our JWT-based auth system
@@ -30,17 +30,19 @@ export default async function DashboardLayout({
     // Continue with session data as fallback
   }
 
-  const displayUser = dbUser ? {
-    id: dbUser.id,
-    email: dbUser.email,
-    full_name: dbUser.full_name || null,
-    plan_type: dbUser.plan_type || 'explorer',
-  } : {
-    id: session.userId,
-    email: session.email,
-    full_name: null,
-    plan_type: 'explorer',
-  };
+  const displayUser = dbUser
+    ? {
+        id: dbUser.id,
+        email: dbUser.email,
+        full_name: dbUser.full_name || null,
+        plan_type: dbUser.plan_type || "free",
+      }
+    : {
+        id: session.userId,
+        email: session.email,
+        full_name: null,
+        plan_type: "free",
+      };
 
   return (
     <SidebarProvider>

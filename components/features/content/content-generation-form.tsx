@@ -197,12 +197,6 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                 <CardTitle className="text-lg">AI Content Generation</CardTitle>
                 <CardDescription className="flex items-center gap-2">
                   Transform your startup ideas into compelling marketing content
-                  {planType === 'explorer' && (
-                    <Badge variant="secondary" className="text-xs">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Basic Plan
-                    </Badge>
-                  )}
                 </CardDescription>
               </div>
             </div>
@@ -218,7 +212,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
-                {planType === 'explorer' ? '3/month' : planType === 'founder' ? '50/month' : 'Unlimited'}
+                Unlimited
               </div>
             </div>
           </div>
@@ -479,7 +473,7 @@ export function ContentGenerationForm({ userIdeas = [] }: ContentGenerationFormP
       featureType="content"
       currentPlan={planType}
       usedCount={usage.content_used || 0}
-      limitCount={planType === 'explorer' ? 3 : planType === 'founder' ? 50 : -1}
+      limitCount={-1} // Pro plans have unlimited
     />
     </>
   );

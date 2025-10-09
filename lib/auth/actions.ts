@@ -192,8 +192,8 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
       full_name: fullName,
       email_verified: false,
       email_verification_token: verificationToken,
-      email_verification_expires_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hour
-      plan_type: 'explorer',
+      email_verification_expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours
+      plan_type: 'free', // Default to free plan
       subscription_status: 'inactive',
     })
 
@@ -644,14 +644,21 @@ export async function verifyEmailAction(token: string): Promise<AuthResponse> {
 
 /**
  * Get current authenticated user
+ * 
+ * Uses the DAL pattern to ensure user exists in database
  */
 export async function getCurrentUser() {
   try {
     const session = await getCurrentSession()
     if (!session) return null
 
+    // Verify user still exists in database
     const user = await UserDatabase.findById(session.userId)
-    if (!user || !user.email_verified) return null
+    if (!user || !user.email_verified) {
+      // User not found or not verified, return null
+      console.warn(`User ${session.userId} not found or not verified in database`)
+      return null
+    }
 
     return {
       id: user.id,

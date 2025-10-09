@@ -343,7 +343,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      plan_type: "explorer" | "founder" | "growth"
+      plan_type: "free" | "pro_monthly" | "pro_yearly"
       subscription_status: "trial" | "active" | "inactive" | "cancelled"
     }
     CompositeTypes: {
@@ -472,7 +472,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      plan_type: ["explorer", "founder", "growth"],
+      plan_type: ["free", "pro_monthly", "pro_yearly"],
       subscription_status: ["trial", "active", "inactive", "cancelled"],
     },
   },
