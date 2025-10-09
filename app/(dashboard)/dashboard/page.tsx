@@ -127,16 +127,16 @@ export default async function DashboardPage() {
             
             <div className="space-y-6">
               <UsageTracker
-                planType={(user?.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer'}
+                planType={(user?.plan_type as 'pro_monthly' | 'pro_yearly') || 'pro_monthly'}
                 usage={usageData?.usage ?? {
                   ideas_used: ideas.length,
                   validations_used: ideas.filter(idea => idea?.is_validated).length,
                   content_used: 0,
                 }}
                 limits={usageData?.limits ?? {
-                  ideas_per_month: user?.plan_type === 'free' ? 3 : -1,
-                  validations_per_month: user?.plan_type === 'free' ? 1 : -1,
-                  content_per_month: user?.plan_type === 'free' ? 3 : -1,
+                  ideas_per_month: -1, // Pro plans have unlimited
+                  validations_per_month: -1, // Pro plans have unlimited
+                  content_per_month: -1, // Pro plans have unlimited
                 }}
               />
             </div>

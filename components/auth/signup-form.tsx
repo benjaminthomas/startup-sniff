@@ -144,7 +144,7 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
             onClick={() => setSuccess(null)} 
             className="w-full"
           >
-            Back to form
+            Back to Signup
           </Button>
         </div>
       </div>

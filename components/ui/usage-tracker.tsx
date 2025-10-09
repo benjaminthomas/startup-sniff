@@ -3,18 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { 
   Lightbulb, 
   Target, 
   TrendingUp, 
-  Zap, 
-  Crown,
-  Sparkles,
-  ArrowUp
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import Link from 'next/link';
+import { PlanType } from '@/types/database';
 
 interface UsageData {
   type: 'ideas' | 'validations' | 'content';
@@ -31,7 +27,7 @@ interface UsageData {
 }
 
 interface UsageTrackerProps {
-  planType: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
+  planType: PlanType;
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -98,24 +94,16 @@ export function UsageTracker({ planType, usage, limits, className }: UsageTracke
     return { status: 'excellent', percentage };
   };
 
-  const getPlanIcon = (plan: string) => {
-    switch (plan) {
-      case 'founder': return Crown;
-      case 'growth': return Sparkles;
-      default: return Zap;
-    }
+  const getPlanIcon = () => {
+    return Sparkles; // Pro plans get sparkles icon
   };
 
-  const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case 'founder': return 'from-amber-500 to-orange-500';
-      case 'growth': return 'from-violet-500 to-purple-500';
-      default: return 'from-gray-500 to-gray-600';
-    }
+  const getPlanColor = () => {
+    return 'from-violet-500 to-purple-500'; // Pro plan gradient
   };
 
-  const PlanIcon = getPlanIcon(planType);
-  const planGradient = getPlanColor(planType);
+  const PlanIcon = getPlanIcon();
+  const planGradient = getPlanColor();
 
   return (
     <Card className={cn("w-full", className)}>
@@ -199,7 +187,7 @@ export function UsageTracker({ planType, usage, limits, className }: UsageTracke
                   
                   {status === 'exceeded' && (
                     <p className="text-xs text-red-600 font-medium">
-                      Upgrade to continue {item.type === 'ideas' ? 'generating ideas' : 
+                      Limit reached for {item.type === 'ideas' ? 'generating ideas' : 
                                           item.type === 'validations' ? 'validating ideas' : 
                                           'creating content'}
                     </p>
@@ -210,41 +198,15 @@ export function UsageTracker({ planType, usage, limits, className }: UsageTracke
           );
         })}
 
-        {/* Upgrade CTA for non-unlimited plans */}
-        {(planType === 'explorer' || planType === 'founder') && (
-          <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-sm text-gray-900">
-                  {planType === 'explorer' ? 'Ready for more?' : 'Need unlimited access?'}
-                </p>
-                <p className="text-xs text-gray-600">
-                  {planType === 'explorer' 
-                    ? 'Upgrade to Founder for 25 ideas, 10 validations & more'
-                    : 'Upgrade to Growth for unlimited everything + API access'
-                  }
-                </p>
-              </div>
-              <Button size="sm" asChild className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600">
-                <Link href="/dashboard/billing">
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  Upgrade
-                </Link>
-              </Button>
-            </div>
+        {/* Pro plan unlimited message */}
+        <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 border border-violet-100">
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <Sparkles className="h-4 w-4 text-violet-600" />
+            <span className="font-medium text-violet-800">
+              You have unlimited access to all features! 🚀
+            </span>
           </div>
-        )}
-
-        {planType === 'growth' && (
-          <div className="mt-4 p-3 rounded-lg bg-gradient-to-r from-green-50 to-emerald-50 border border-green-100">
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <Sparkles className="h-4 w-4 text-green-600" />
-              <span className="font-medium text-green-800">
-                You have unlimited access to all features!
-              </span>
-            </div>
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

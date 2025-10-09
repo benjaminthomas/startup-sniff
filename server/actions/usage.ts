@@ -3,9 +3,10 @@
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { UserDatabase } from '@/lib/auth/database';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { PlanType } from '@/types/database';
 
 export interface UsageData {
-  planType: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
+  planType: PlanType;
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -35,13 +36,26 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     }
 
     // Get user data from database instead of Supabase
+    console.log('🔍 Looking up user in database:', session.userId);
     const user = await UserDatabase.findById(session.userId);
+    
     if (!user) {
-      console.log('❌ User not found in database');
+      console.error('❌ User not found in database:', {
+        userId: session.userId,
+        email: session.email,
+        sessionId: session.sessionId
+      });
       return null;
     }
+    
+    console.log('✅ User found in database:', {
+      userId: user.id,
+      email: user.email,
+      planType: user.plan_type
+    });
 
-    const planType = (user.plan_type || 'explorer') as 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
+    // Ensure user has a valid plan type, default to pro_monthly if not set
+    const planType = (user.plan_type || 'pro_monthly') as PlanType;
 
     console.log('📊 Server-side usage data:', {
       userId: user.id,
@@ -49,24 +63,8 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       userEmail: user.email
     });
 
-    // Plan limits configuration
+    // Both pro plans have unlimited access
     const PLAN_LIMITS = {
-      explorer: {
-        ideas_per_month: 3,
-        validations_per_month: 1,
-        content_per_month: 3,
-      },
-      founder: {
-        ideas_per_month: 25,
-        validations_per_month: 10,
-        content_per_month: 50,
-      },
-      growth: {
-        ideas_per_month: -1, // unlimited
-        validations_per_month: -1, // unlimited
-        content_per_month: -1, // unlimited
-      },
-      // Pro plans (monthly and yearly) have same limits as growth
       pro_monthly: {
         ideas_per_month: -1, // unlimited
         validations_per_month: -1, // unlimited
@@ -140,7 +138,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     const result: UsageData = {
       planType,
       usage: usageData,
-      limits: limits || PLAN_LIMITS.explorer // Fallback to explorer limits
+      limits: limits || PLAN_LIMITS.pro_monthly // Fallback to pro_monthly limits (unlimited)
     };
 
     console.log('📦 Returning complete usage data with limits:', result);

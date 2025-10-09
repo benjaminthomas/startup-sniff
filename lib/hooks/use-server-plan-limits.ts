@@ -31,14 +31,9 @@ export function useServerPlanLimits() {
 
   const canUseFeature = (feature: string): boolean => {
     if (!data) return false;
-    const features: Record<string, string[]> = {
-      explorer: ['basic_ai_generation', 'basic_templates'],
-      founder: ['advanced_ai_generation', 'premium_templates', 'market_analysis', 'export_pdf'],
-      growth: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support'],
-      pro_monthly: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support'],
-      pro_yearly: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support']
-    };
-    return features[data.planType]?.includes(feature) ?? false;
+    // Both pro plans have all features
+    const proFeatures = ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support'];
+    return proFeatures.includes(feature);
   };
 
   const getRemainingLimit = (type: 'ideas' | 'validations' | 'content'): number => {
@@ -93,7 +88,7 @@ export function useServerPlanLimits() {
   };
 
   return {
-    planType: data?.planType || 'explorer',
+    planType: data?.planType || 'pro_monthly',
     usage: data?.usage || {
       ideas_used: 0,
       validations_used: 0,

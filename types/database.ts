@@ -1,6 +1,8 @@
 // Custom Authentication Database Types
 // Updated to support custom auth system without Supabase Auth
 
+export type PlanType = 'pro_monthly' | 'pro_yearly';
+
 export interface User {
   id: string
   email: string
@@ -15,7 +17,7 @@ export interface User {
   last_login_at: string | null
   login_attempts: number
   locked_until: string | null
-  plan_type: 'explorer' | 'founder' | 'growth' | null
+  plan_type: PlanType | null
   stripe_customer_id: string | null // Legacy field - to be deprecated
   razorpay_customer_id: string | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
@@ -38,7 +40,7 @@ export interface UserInsert {
   last_login_at?: string | null
   login_attempts?: number
   locked_until?: string | null
-  plan_type?: 'explorer' | 'founder' | 'growth' | null
+  plan_type?: PlanType | null
   stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
@@ -60,7 +62,7 @@ export interface UserUpdate {
   last_login_at?: string | null
   login_attempts?: number
   locked_until?: string | null
-  plan_type?: 'explorer' | 'founder' | 'growth' | null
+  plan_type?: PlanType | null
   stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
@@ -119,7 +121,7 @@ export interface AuthUser {
   full_name: string | null
   avatar_url: string | null
   email_verified: boolean
-  plan_type: 'explorer' | 'founder' | 'growth' | null
+  plan_type: PlanType | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at: string | null
   last_login_at: string | null
@@ -142,7 +144,6 @@ export interface AuthResponse {
 }
 
 // Plan and subscription types
-export type PlanType = 'free' | 'pro_monthly' | 'pro_yearly'
 export type SubscriptionStatus = 'active' | 'inactive' | 'canceled' | 'past_due'
 
 // Helper types for existing tables (keeping compatibility)

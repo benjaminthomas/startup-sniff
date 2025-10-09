@@ -124,9 +124,9 @@ export function ValidationButton({ ideaId, isValidated, className }: ValidationB
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureType="validations"
-        currentPlan={planType as "founder" | "explorer" | "growth"}
+        currentPlan={planType}
         usedCount={usage.validations_used || 0}
-        limitCount={planType === 'explorer' ? 1 : planType === 'founder' ? 10 : -1}
+        limitCount={-1} // Pro plans have unlimited
       />
     </>
   );

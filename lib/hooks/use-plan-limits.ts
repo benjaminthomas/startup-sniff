@@ -2,27 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/server/actions/plan-limits';
+import { PlanType } from '@/types/database';
 
-// Plan limits configuration
+// Both pro plans have unlimited access to all features
 export const PLAN_LIMITS = {
-  explorer: {
-    ideas_per_month: 3,
-    validations_per_month: 1,
-    content_per_month: 3,
-    features: ['basic_ai_generation', 'basic_templates']
-  },
-  founder: {
-    ideas_per_month: 25,
-    validations_per_month: 10,
-    content_per_month: 50,
-    features: ['advanced_ai_generation', 'premium_templates', 'market_analysis', 'export_pdf']
-  },
-  growth: {
-    ideas_per_month: -1, // unlimited
-    validations_per_month: -1, // unlimited
-    content_per_month: -1, // unlimited
-    features: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support']
-  },
   pro_monthly: {
     ideas_per_month: -1, // unlimited
     validations_per_month: -1, // unlimited
@@ -37,7 +20,6 @@ export const PLAN_LIMITS = {
   }
 } as const;
 
-export type PlanType = keyof typeof PLAN_LIMITS;
 export type FeatureType = string;
 
 interface UsageStats {
@@ -61,7 +43,7 @@ interface PlanLimitsState {
 export function usePlanLimits(): PlanLimitsState {
   console.log('🚀 HOOK CALLED: usePlanLimits function executed');
   
-  const [planType, setPlanType] = useState<PlanType>('explorer');
+  const [planType, setPlanType] = useState<PlanType>('pro_monthly');
   const [usage, setUsage] = useState<UsageStats>({
     ideas_used: 0,
     validations_used: 0,

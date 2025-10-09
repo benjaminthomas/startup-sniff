@@ -248,7 +248,7 @@ export function IdeaCard({ idea }: IdeaCardProps) {
                 <div className="text-xs text-center text-muted-foreground">
                   {isAtLimit('validations') ? (
                     <span className="text-amber-600 dark:text-amber-400">
-                      🚀 {planType === 'explorer' ? 'Free plan: 1 validation used' : 'Validation limit reached'}
+                      🚀 Validation limit reached
                     </span>
                   ) : (
                     '📊 Get market analysis, competition insights & success metrics'
@@ -278,9 +278,9 @@ export function IdeaCard({ idea }: IdeaCardProps) {
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureType="validations"
-        currentPlan={planType as 'explorer' | 'founder' | 'growth'}
+        currentPlan={planType}
         usedCount={usage.validations_used || 0}
-        limitCount={planType === 'explorer' ? 1 : planType === 'founder' ? 10 : -1}
+        limitCount={-1} // Pro plans have unlimited
       />
     </>
   );
