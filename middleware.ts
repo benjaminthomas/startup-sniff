@@ -105,16 +105,13 @@ export async function middleware(request: NextRequest) {
             email: sessionPayload.email
           }
         }
-      } catch (error) {
+      } catch {
         // Invalid token, clear it
         response.cookies.delete('session-token')
       }
     }
 
     const isAuthenticated = !!user
-    const isPublicRoute = PUBLIC_ROUTES.some(route =>
-      pathname === route || pathname.startsWith(`${route}/`)
-    )
     const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route))
     const isProtectedRoute = PROTECTED_ROUTES.some(route =>
       pathname.startsWith(route)

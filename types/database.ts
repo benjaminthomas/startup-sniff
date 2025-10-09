@@ -174,7 +174,7 @@ export interface StartupIdea {
   validation_status: 'pending' | 'validated' | 'rejected' | null
   validation_score: number | null
   validation_feedback: string | null
-  reddit_sources: any | null
+  reddit_sources: { url: string; title: string; subreddit: string }[] | null
   created_at: string
   updated_at: string
 }

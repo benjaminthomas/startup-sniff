@@ -4,11 +4,9 @@ import { redirect } from 'next/navigation';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
 import { getCurrentSession } from '@/lib/auth/jwt';
 import {
-  razorpay,
   createSubscription as createRazorpaySubscription,
   cancelSubscription as cancelRazorpaySubscription,
   updateSubscription as updateRazorpaySubscription,
-  toPaise
 } from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
 

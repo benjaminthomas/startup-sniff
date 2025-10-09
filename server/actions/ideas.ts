@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createServerSupabaseClient, createServerAdminClient } from '@/lib/auth/supabase-server';
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
-import { getTrendingPainPoints, generateIdeasFromPainPoints } from '@/lib/actions/reddit';
+import { generateIdeasFromPainPoints } from '@/lib/actions/reddit';
 import { getCurrentUserUsage } from '@/server/actions/usage';
 
 const generateIdeaSchema = z.object({
@@ -131,7 +131,7 @@ export async function generateIdea(formData: FormData) {
 
   // Filter out null and empty string values
   const filteredData = Object.fromEntries(
-    Object.entries(rawData).filter(([_, value]) => value !== null && value !== '')
+    Object.entries(rawData).filter(([, value]) => value !== null && value !== '')
   );
 
   const validationResult = generateIdeaSchema.safeParse(filteredData);

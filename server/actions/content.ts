@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
 import { getCurrentSession } from '@/lib/auth/jwt';
 import { openai } from '@/lib/openai';
-import { CONTENT_TYPES, BRAND_VOICES, VALIDATION_SCHEMAS } from '@/constants';
+import { VALIDATION_SCHEMAS } from '@/constants';
 import { incrementUsage } from '@/server/actions/plan-limits';
 
 const generateContentSchema = z.object({
@@ -61,7 +61,7 @@ export async function generateContent(formData: FormData) {
     
     if (monthlyLimit !== -1) {
       // Count existing content
-      const { data: existingContent, error: countError } = await supabase
+      const { data: existingContent } = await supabase
         .from('generated_content')
         .select('id', { count: 'exact' })
         .eq('user_id', session.userId);
@@ -255,7 +255,7 @@ IMPORTANT: Return a valid JSON object with this exact structure:
     };
     try {
       parsedContent = JSON.parse(response);
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse OpenAI response as JSON:', response);
       throw new Error('Invalid JSON response from AI');
     }
