@@ -40,6 +40,10 @@ modules/
    - ✅ Move `lib/actions/reddit` logic into `modules/reddit`.
    - ✅ Update ideas module and API to import from `@/modules/reddit`.
    - ⏳ Consider consolidating Reddit services/pain-point utilities under a shared namespace.
+7. **Contact Module**
+   - ✅ Shift Mailgun email helpers into `modules/contact`.
+   - ✅ Update contact API route and test harness to import from the module.
+   - ⏳ Evaluate extracting shared email notification utilities for reuse.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.
@@ -47,6 +51,6 @@ modules/
 - Add module-level README summarizing exports and dependencies.
 
 ## Validation Checklist
-- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`) (✅ for current scope).
+- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`, `@/modules/contact`) (✅ for current scope).
 - Middleware and server actions compile.
 - Playwright/Vitest auth suites pass.
