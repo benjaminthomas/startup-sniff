@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { X, Clock, Zap } from "lucide-react";
-import { createClient } from "@/modules/auth";
+import { createClient } from "@/modules/supabase/client";
 import { cn } from "@/lib/utils";
 
 interface TrialBannerProps {

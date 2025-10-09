@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, BarChart3, Library } from "lucide-react";
-import { getCurrentSession } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { redirect } from 'next/navigation';
 import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
 import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';

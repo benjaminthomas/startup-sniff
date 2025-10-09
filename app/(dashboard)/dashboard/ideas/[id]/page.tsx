@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
-import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { createServerAdminClient } from '@/modules/supabase';
 import { mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { getCurrentSession } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerSupabaseClient, createServerAdminClient } from '@/modules/supabase';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/modules/ai';
 import { generateIdeasFromPainPoints } from '@/modules/reddit';

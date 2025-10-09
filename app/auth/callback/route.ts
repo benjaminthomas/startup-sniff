@@ -8,7 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createMiddlewareSupabaseClient, generateFormCSRFToken } from '@/modules/auth'
+import { generateFormCSRFToken } from '@/modules/auth/utils/csrf'
+import { createMiddlewareSupabaseClient } from '@/modules/supabase'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)

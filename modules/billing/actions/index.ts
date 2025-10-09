@@ -1,7 +1,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { createServerAdminClient } from '@/modules/supabase';
 import {
   createSubscription as createRazorpaySubscription,
   cancelSubscription as cancelRazorpaySubscription,

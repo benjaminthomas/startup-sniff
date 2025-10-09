@@ -12,7 +12,7 @@ import { Eye, EyeOff, Loader2, AlertCircle, Lock } from 'lucide-react'
 import { toast } from 'sonner'
 // import { createClient } from '@/modules/auth'
 
-import { resetPasswordAction } from '@/modules/auth'
+import { resetPasswordAction } from '@/modules/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {

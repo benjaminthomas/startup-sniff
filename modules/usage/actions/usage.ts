@@ -1,6 +1,7 @@
 'use server';
 
-import { getCurrentSession, UserDatabase } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { UserDatabase } from '@/modules/auth/services/database';
 import { createServerAdminClient } from '@/modules/supabase';
 import { PlanType } from '@/types/database';
 

@@ -1,2 +1,6 @@
-export * from './client'
-export * from './server'
+export {
+  createServerSupabaseClient,
+  createServerAdminClient,
+  createMiddlewareSupabaseClient,
+  checkRateLimit,
+} from './server'

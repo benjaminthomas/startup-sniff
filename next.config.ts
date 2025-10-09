@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ['argon2'],
   // Security & Performance
   poweredByHeader: false,
   reactStrictMode: true,

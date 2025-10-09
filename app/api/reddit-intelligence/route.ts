@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentSession } from '@/modules/auth'
+import { getCurrentSession } from '@/modules/auth/services/jwt'
 import {
   getTrendingPainPoints,
   generateIdeasFromPainPoints,

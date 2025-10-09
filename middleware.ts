@@ -10,7 +10,9 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { extractAndVerifyCSRFToken, generateCSRFToken, UserDatabase, verifySessionToken } from '@/modules/auth'
+import { verifySessionToken } from '@/modules/auth/services/jwt'
+import { UserDatabase } from '@/modules/auth/services/database'
+import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/modules/auth/utils/csrf'
 
 // Define route groups
 const AUTH_ROUTES = [

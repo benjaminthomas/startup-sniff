@@ -1,2 +1,6 @@
 export * from './openai'
-export * from './services/idea-generator'
+export {
+  aiIdeaGenerator,
+  type IdeaGenerationOptions,
+  type GeneratedIdea as GeneratedIdeaFromPainPoints,
+} from './services/idea-generator'

@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { signUpAction } from '@/modules/auth'
+import { signUpAction } from '@/modules/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
