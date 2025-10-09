@@ -12,15 +12,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { extractAndVerifyCSRFToken, generateCSRFToken, UserDatabase, verifySessionToken } from '@/modules/auth'
 
-// Define protected and public routes
-const PUBLIC_ROUTES = [
-  '/',
-  '/contact',
-  '/privacy_policy',
-  '/refund_policy',
-  '/T&C',
-]
-
+// Define route groups
 const AUTH_ROUTES = [
   '/auth/signin',
   '/auth/signup',
@@ -121,12 +113,7 @@ export async function middleware(request: NextRequest) {
 
     const isAuthenticated = !!user
     const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route))
-    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
-      pathname.startsWith(route)
-    )
-    const isPublicRoute = PUBLIC_ROUTES.some(route => 
-      pathname === route || pathname.startsWith(`${route}/`)
-    )
+    const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
 
     // Redirect unauthenticated users from protected routes to signin
     if (isProtectedRoute && !isAuthenticated) {
