@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { IdeaCard } from '@/components/features/dashboard/idea-card';
-import { getUserIdeas } from '@/server/actions/ideas';
+import { getUserIdeas } from '@/modules/ideas';
 import { StartupIdea } from '@/types/global';
 import { Plus, Lightbulb } from 'lucide-react';
 

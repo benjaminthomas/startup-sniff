@@ -1,12 +1,12 @@
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sparkles, BarChart3, Library } from "lucide-react";
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { getCurrentSession } from '@/modules/auth';
 import { redirect } from 'next/navigation';
 import { ContentGenerationForm } from '@/components/features/content/content-generation-form';
 import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
 import { ContentAnalytics } from '@/components/features/content/content-analytics';
-import { getUserIdeas } from '@/server/actions/ideas';
+import { getUserIdeas } from '@/modules/ideas';
 import { getUserContent } from '@/server/actions/content';
 import { StartupIdea, GeneratedContent } from '@/types/global';
 

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { validateExistingIdea } from '@/lib/actions/validation';
-import { toggleFavorite } from '@/server/actions/ideas';
+import { toggleFavorite } from '@/modules/ideas';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import {

@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
 import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generation-form';
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
-import { getUserIdeas } from '@/server/actions/ideas';
+import { getUserIdeas } from '@/modules/ideas';
 import { StartupIdea } from '@/types/global';
 
 // Force dynamic rendering since this page uses cookies/auth

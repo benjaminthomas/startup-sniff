@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { generateIdea } from '@/server/actions/ideas';
+import { generateIdea } from '@/modules/ideas';
 import {
   Loader2,
   Sparkles,

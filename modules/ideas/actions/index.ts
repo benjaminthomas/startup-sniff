@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createServerSupabaseClient, createServerAdminClient } from '@/lib/auth/supabase-server';
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { createServerSupabaseClient, createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
 import { generateIdeasFromPainPoints } from '@/lib/actions/reddit';
 import { getCurrentUserUsage } from '@/server/actions/usage';
