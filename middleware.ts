@@ -10,9 +10,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { verifySessionToken } from '@/lib/auth/jwt'
-import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/lib/auth/csrf'
-import { UserDatabase } from '@/lib/auth/database'
+import { extractAndVerifyCSRFToken, generateCSRFToken, UserDatabase, verifySessionToken } from '@/modules/auth'
 
 // Define protected and public routes
 const PUBLIC_ROUTES = [

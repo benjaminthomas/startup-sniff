@@ -4,7 +4,7 @@
 
 import { Metadata } from 'next'
 import { Suspense } from 'react'
-import { verifyEmailAction } from '@/lib/auth/actions'
+import { verifyEmailAction } from '@/modules/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'

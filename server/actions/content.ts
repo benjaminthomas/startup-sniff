@@ -3,8 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createServerAdminClient } from '@/lib/auth/supabase-server';
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { openai } from '@/lib/openai';
 import { VALIDATION_SCHEMAS } from '@/constants';
 import { incrementUsage } from '@/server/actions/plan-limits';

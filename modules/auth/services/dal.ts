@@ -10,8 +10,8 @@
 
 import { cache } from 'react'
 import { cookies } from 'next/headers'
-import { verifySessionToken } from '@/lib/auth/jwt'
-import { UserDatabase } from '@/lib/auth/database'
+import { verifySessionToken } from './jwt'
+import { UserDatabase } from './database'
 
 export interface VerifiedSession {
   userId: string

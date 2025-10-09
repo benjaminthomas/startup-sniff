@@ -1,8 +1,6 @@
 'use server';
 
-import { getCurrentSession } from '@/lib/auth/jwt';
-import { UserDatabase } from '@/lib/auth/database';
-import { createServerAdminClient } from '@/lib/auth/supabase-server';
+import { createServerAdminClient, getCurrentSession, UserDatabase } from '@/modules/auth';
 import { PlanType } from '@/types/database';
 
 export interface UsageData {

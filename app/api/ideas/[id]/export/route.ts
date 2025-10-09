@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerAdminClient } from '@/lib/auth/supabase-server';
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
 
 export async function GET(
   request: NextRequest,

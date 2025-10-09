@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Bell, User, Settings, LogOut, Crown, Zap, Target } from "lucide-react";
-import { signOutAction } from "@/lib/auth/actions";
+import { signOutAction } from "@/modules/auth";
 import { useRouter } from "next/navigation";
 import {
   Breadcrumb,

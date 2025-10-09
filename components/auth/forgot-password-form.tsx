@@ -11,7 +11,7 @@ import { z } from 'zod'
 import { Mail, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { forgotPasswordAction } from '@/lib/auth/actions'
+import { forgotPasswordAction } from '@/modules/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {

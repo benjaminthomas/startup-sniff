@@ -10,11 +10,11 @@ import { redirect } from 'next/navigation'
 import { z } from 'zod'
 import { headers } from 'next/headers'
 
-import { hashPassword, verifyPassword, validatePasswordStrength } from './password'
-import { createSessionToken, setSessionCookie, clearSessionCookie, generateSessionId, getCurrentSession } from './jwt'
-import { UserDatabase, SessionDatabase, RateLimitDatabase } from './database'
-import { sendEmailVerification, sendPasswordResetEmail, generatePasswordResetToken, generateEmailVerificationToken, verifyEmailToken } from './email-mailgun-official'
-import { verifyCSRFToken } from './csrf'
+import { hashPassword, verifyPassword, validatePasswordStrength } from '../services/password'
+import { createSessionToken, setSessionCookie, clearSessionCookie, generateSessionId, getCurrentSession } from '../services/jwt'
+import { UserDatabase, SessionDatabase, RateLimitDatabase } from '../services/database'
+import { sendEmailVerification, sendPasswordResetEmail, generatePasswordResetToken, generateEmailVerificationToken, verifyEmailToken } from '../services/email-mailgun-official'
+import { verifyCSRFToken } from '../utils/csrf'
 import { AuthResponse } from '@/types/database'
 
 // Validation schemas

@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
-import { createServerAdminClient } from '@/lib/auth/supabase-server';
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
 import { PageHeader } from '@/components/ui/page-header';

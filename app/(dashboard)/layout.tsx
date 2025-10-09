@@ -1,8 +1,7 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
-import { getCurrentSession } from "@/lib/auth/jwt";
-import { UserDatabase } from "@/lib/auth/database";
+import { getCurrentSession, UserDatabase } from "@/modules/auth";
 import { redirect } from "next/navigation";
 import {
   SidebarProvider,

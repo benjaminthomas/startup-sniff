@@ -1,8 +1,6 @@
 import { Metadata } from "next";
 import type { StartupIdea, User as AppUser } from "@/types/global";
-import { createServerSupabaseClient } from "@/lib/auth/supabase-server";
-import { getCurrentSession } from "@/lib/auth/jwt";
-import { UserDatabase } from "@/lib/auth/database";
+import { createServerSupabaseClient, getCurrentSession, UserDatabase } from "@/modules/auth";
 import { DashboardShell } from "@/components/features/dashboard/dashboard-shell";
 import { StatsCards } from "@/components/features/dashboard/stats-cards";
 import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";

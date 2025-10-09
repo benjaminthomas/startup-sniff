@@ -1,8 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerAdminClient } from '@/lib/auth/supabase-server'
-import { getCurrentSession } from '@/lib/auth/jwt'
+import { createServerAdminClient, getCurrentSession } from '@/modules/auth'
 import OpenAI from 'openai'
 import { z } from 'zod'
 
