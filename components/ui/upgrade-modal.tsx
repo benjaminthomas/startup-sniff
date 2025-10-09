@@ -27,7 +27,7 @@ interface UpgradeModalProps {
   isVisible: boolean;
   onClose: () => void;
   featureType: 'ideas' | 'validations' | 'content';
-  currentPlan: 'explorer' | 'founder' | 'growth';
+  currentPlan: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
   usedCount: number;
   limitCount: number;
 }

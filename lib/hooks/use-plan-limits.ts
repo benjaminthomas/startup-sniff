@@ -8,7 +8,7 @@ export const PLAN_LIMITS = {
   explorer: {
     ideas_per_month: 3,
     validations_per_month: 1,
-    content_per_month: 3, // Updated from 5 to 3
+    content_per_month: 3,
     features: ['basic_ai_generation', 'basic_templates']
   },
   founder: {
@@ -18,6 +18,18 @@ export const PLAN_LIMITS = {
     features: ['advanced_ai_generation', 'premium_templates', 'market_analysis', 'export_pdf']
   },
   growth: {
+    ideas_per_month: -1, // unlimited
+    validations_per_month: -1, // unlimited
+    content_per_month: -1, // unlimited
+    features: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support']
+  },
+  pro_monthly: {
+    ideas_per_month: -1, // unlimited
+    validations_per_month: -1, // unlimited
+    content_per_month: -1, // unlimited
+    features: ['unlimited_ai_generation', 'premium_templates', 'advanced_market_analysis', 'api_access', 'priority_support']
+  },
+  pro_yearly: {
     ideas_per_month: -1, // unlimited
     validations_per_month: -1, // unlimited
     content_per_month: -1, // unlimited

@@ -4,7 +4,7 @@ import { getCurrentSession } from '@/lib/auth/jwt';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
 
 interface PlanAndUsageData {
-  planType: 'explorer' | 'founder' | 'growth';
+  planType: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -37,7 +37,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
     });
 
     // Set plan type
-    const planType = (profileResult.data?.plan_type as 'explorer' | 'founder' | 'growth') || 'explorer';
+    const planType = (profileResult.data?.plan_type as 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly') || 'explorer';
 
     // Set usage data with validation against actual data
     if (usageLimitsResult.data && !usageLimitsResult.error) {

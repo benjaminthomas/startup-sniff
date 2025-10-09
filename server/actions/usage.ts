@@ -5,7 +5,7 @@ import { UserDatabase } from '@/lib/auth/database';
 import { createServerAdminClient } from '@/lib/auth/supabase-server';
 
 export interface UsageData {
-  planType: 'explorer' | 'founder' | 'growth';
+  planType: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
   usage: {
     ideas_used: number;
     validations_used: number;
@@ -41,7 +41,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       return null;
     }
 
-    const planType = user.plan_type || 'explorer';
+    const planType = (user.plan_type || 'explorer') as 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
 
     console.log('📊 Server-side usage data:', {
       userId: user.id,
@@ -54,7 +54,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       explorer: {
         ideas_per_month: 3,
         validations_per_month: 1,
-        content_per_month: 3, // Updated from 5 to 3
+        content_per_month: 3,
       },
       founder: {
         ideas_per_month: 25,
@@ -62,6 +62,17 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
         content_per_month: 50,
       },
       growth: {
+        ideas_per_month: -1, // unlimited
+        validations_per_month: -1, // unlimited
+        content_per_month: -1, // unlimited
+      },
+      // Pro plans (monthly and yearly) have same limits as growth
+      pro_monthly: {
+        ideas_per_month: -1, // unlimited
+        validations_per_month: -1, // unlimited
+        content_per_month: -1, // unlimited
+      },
+      pro_yearly: {
         ideas_per_month: -1, // unlimited
         validations_per_month: -1, // unlimited
         content_per_month: -1, // unlimited
@@ -123,11 +134,18 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       thisMonth: validationsUsed
     });
 
-    return {
+    const limits = PLAN_LIMITS[planType];
+    
+    // Ensure we always return a complete data structure
+    const result: UsageData = {
       planType,
       usage: usageData,
-      limits: PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]
+      limits: limits || PLAN_LIMITS.explorer // Fallback to explorer limits
     };
+
+    console.log('📦 Returning complete usage data with limits:', result);
+
+    return result;
   } catch (error) {
     console.error('💥 Error in getCurrentUserUsage:', error);
     return null;

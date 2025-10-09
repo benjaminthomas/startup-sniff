@@ -31,7 +31,7 @@ interface UsageData {
 }
 
 interface UsageTrackerProps {
-  planType: 'explorer' | 'founder' | 'growth';
+  planType: 'explorer' | 'founder' | 'growth' | 'pro_monthly' | 'pro_yearly';
   usage: {
     ideas_used: number;
     validations_used: number;
