@@ -21,14 +21,6 @@ export {
   verifyEmailToken
 } from './services/email-mailgun-official'
 export {
-  logSecurityEvent,
-  detectSuspiciousActivity,
-  logAuthSuccess,
-  logAuthFailure,
-  logPasswordReset,
-  logLogout
-} from './services/security-logger'
-export {
   generateCSRFToken,
   setCSRFToken,
   getCSRFToken,
