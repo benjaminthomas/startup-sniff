@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { createServerSupabaseClient, createServerAdminClient, getCurrentSession } from '@/modules/auth';
-import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
+import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/modules/ai';
 import { generateIdeasFromPainPoints } from '@/modules/reddit';
 import { getCurrentUserUsage } from '@/modules/usage';
 

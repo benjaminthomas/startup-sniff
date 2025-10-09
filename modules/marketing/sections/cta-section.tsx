@@ -1,53 +1,91 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { redirectToAuth } from "@/lib/utils/navigation";
 
-export function CTASection() {
+interface CTASectionProps {
+  title?: string;
+  subtitle?: string;
+  primaryActionText?: string;
+  secondaryActionText?: string;
+}
+
+export function CTASection({
+  title = "Ready to validate your next startup idea?",
+  subtitle = "Get AI-powered insights, market validation, and content generation tools in one platform.",
+  primaryActionText = "Start for free",
+  secondaryActionText = "View pricing",
+}: CTASectionProps) {
+  const router = useRouter();
+
+  const handlePrimaryAction = () => {
+    redirectToAuth(router, "free", true);
+  };
+
+  const handleSecondaryAction = () => {
+    router.push("/#pricing");
+  };
+
   return (
-    <section className="bg-gradient-to-b from-secondary/30 to-accent/20 border-t border-border/30">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <section className="relative py-24 overflow-hidden bg-gradient-to-b from-primary/5 via-background to-background">
+      <div className="container relative z-10 mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto text-center"
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.5 }}
+          className="mx-auto max-w-3xl text-center"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
-            Ready to Find Your Next Big Idea?
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+            <Sparkles className="h-3 w-3" />
+            Startup-ready toolkit
+          </span>
+          <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            {title}
           </h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of entrepreneurs using AI to discover and validate
-            startup opportunities from Reddit trends
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              asChild
-              className="text-lg px-8 py-4 gradient-primary glow-purple"
-            >
-              <Link href="/auth/signup">
-                Start Free Today
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              asChild
-              className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10"
-            >
-              <Link href="#demo">Schedule Demo</Link>
-            </Button>
-          </div>
-          <p className="text-sm text-muted-foreground/80 mt-6">
-            No credit card required • 3 free ideas • Start in 2 minutes
+          <p className="mt-4 text-base text-muted-foreground sm:text-lg">
+            {subtitle}
           </p>
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="mt-12 flex flex-wrap items-center justify-center gap-3"
+        >
+          <Button size="lg" onClick={handlePrimaryAction}>
+            {primaryActionText}
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="lg" onClick={handleSecondaryAction}>
+            {secondaryActionText}
+          </Button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row"
+        >
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Star className="h-4 w-4 text-primary" />
+            Trusted by 1,200+ founders
+          </div>
+          <div className="hidden h-4 w-px bg-border sm:block" />
+          <div className="text-sm text-muted-foreground">
+            Free forever plan &bull; No credit card required
+          </div>
+        </motion.div>
       </div>
+
+      <div className="absolute inset-0 bg-primary/5 blur-3xl" />
     </section>
   );
 }

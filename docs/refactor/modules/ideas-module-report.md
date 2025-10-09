@@ -14,7 +14,7 @@
 
 ### Dependencies
 - Auth module for session helpers (`createServerSupabaseClient`, `getCurrentSession`, etc.).
-- Reddit idea helpers from `@/modules/reddit` and OpenAI helpers from `@/lib/openai`.
+- Reddit idea helpers from `@/modules/reddit` and OpenAI helpers from `@/modules/ai`.
 - Usage guard leverages `getCurrentUserUsage` from `@/modules/usage`.
 
 ### Files Updated (Consumers)

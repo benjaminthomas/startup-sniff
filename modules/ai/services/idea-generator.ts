@@ -4,7 +4,7 @@
  */
 
 import OpenAI from 'openai'
-import { painPointExtractor, type PainPoint, type StartupIdea } from './pain-point-extractor'
+import { painPointExtractor, type PainPoint, type StartupIdea } from '@/lib/services/pain-point-extractor'
 
 export interface IdeaGenerationOptions {
   focusArea?: 'saas' | 'ecommerce' | 'marketplace' | 'mobile' | 'ai' | 'any'
@@ -463,4 +463,3 @@ Respond with a JSON object containing: title, problem_statement, solution_approa
 
 // Export singleton instance
 export const aiIdeaGenerator = new AIIdeaGenerator()
-

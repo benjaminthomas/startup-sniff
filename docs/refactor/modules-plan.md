@@ -48,6 +48,10 @@ modules/
    - ✅ Move landing/policy sections into `modules/marketing`.
    - ✅ Update landing and policy pages to import from module barrel.
    - ⏳ Consider migrating marketing data/constants to align with module boundary.
+9. **AI Module**
+   - ✅ Relocate OpenAI helpers and AI idea generator into `modules/ai`.
+   - ✅ Update ideas/content/reddit modules to consume `@/modules/ai`.
+   - ⏳ Evaluate migrating additional AI utilities (validation prompts, mock generators) into this module.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.
@@ -55,6 +59,6 @@ modules/
 - Add module-level README summarizing exports and dependencies.
 
 ## Validation Checklist
-- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`, `@/modules/contact`, `@/modules/marketing`) (✅ for current scope).
+- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`, `@/modules/contact`, `@/modules/marketing`, `@/modules/ai`) (✅ for current scope).
 - Middleware and server actions compile.
 - Playwright/Vitest auth suites pass.

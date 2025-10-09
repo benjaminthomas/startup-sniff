@@ -2,7 +2,7 @@
 
 import { redditIntegrationService } from '@/lib/services/reddit-integration'
 import { painPointExtractor } from '@/lib/services/pain-point-extractor'
-import { aiIdeaGenerator } from '@/lib/services/ai-idea-generator'
+import { aiIdeaGenerator } from '@/modules/ai'
 import type { RedditTrendAnalysis, TrendsSummary } from '@/lib/services/reddit-integration'
 import type { PainPoint, StartupIdea } from '@/lib/services/pain-point-extractor'
 

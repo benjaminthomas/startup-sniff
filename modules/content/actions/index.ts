@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
-import { openai } from '@/lib/openai';
+import { openai } from '@/modules/ai';
 import { VALIDATION_SCHEMAS } from '@/constants';
 import { incrementUsage } from '@/modules/usage';
 

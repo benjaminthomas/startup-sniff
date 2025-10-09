@@ -11,7 +11,7 @@
 
 ### Dependencies
 - Auth module for session retrieval and Supabase admin client.
-- OpenAI helper (`@/lib/openai`) and VALIDATION_SCHEMAS constants.
+- OpenAI helper (`@/modules/ai`) and VALIDATION_SCHEMAS constants.
 - Usage module (`incrementUsage`) for quota tracking.
 
 ### Files Updated (Consumers)
