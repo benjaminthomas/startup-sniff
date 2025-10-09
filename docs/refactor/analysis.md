@@ -5,7 +5,8 @@
 - **Styling**: Tailwind CSS v4 (`app/globals.css`) with design tokens; shadcn/ui components under `components/ui`.
 - **State/Data**: Minimal shared React context; heavy reliance on server actions inside `server/actions/*` and API routes in `app/api/*`.
 - **Auth**: Custom JWT system implemented in `modules/auth/*` (migrated from `lib/auth`), consumed by server actions, middleware, and auth pages.
-- **Ideas**: Idea generation and validation server actions now reside in `modules/ideas/*`, replacing the prior `server/actions/ideas.ts`.
+- **Ideas**: Idea generation and validation server actions reside in `modules/ideas/*`, replacing the prior `server/actions/ideas.ts`.
+- **Usage**: Usage and plan-limit helpers consolidated under `modules/usage/*`, migrating both `usage.ts` and `plan-limits.ts` actions.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
@@ -36,7 +37,7 @@
 - `lib/reddit` persists posts and insights.
 
 ## Observations & Pain Points
-- Auth logic centralized under `modules/auth` with a new public index, and idea workflows now live in `modules/ideas`.
+- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, and quota tracking resides in `modules/usage`.
 - Domain logic mixed between `lib/actions`, `server/actions`, and `components/features`, making reuse harder.
-- Initial `modules/auth` and `modules/ideas` structures exist; remaining domains (billing, content, trends, marketing) should migrate next.
+- Initial `modules/auth`, `modules/ideas`, and `modules/usage` structures exist; remaining domains (billing, content, trends, marketing) should migrate next.
 - Database helpers intermingle Supabase admin and anon clients; extracting service layers per module will ease testing.
