@@ -13,6 +13,7 @@
 - **Marketing**: Landing/policy section components migrated to `modules/marketing/*` for reuse across marketing pages.
 - **AI**: OpenAI client plus idea-generation helpers centralized under `modules/ai/*`, replacing `lib/openai.ts` and `lib/services/ai-idea-generator.ts`.
 - **Supabase**: Shared server/admin/browser Supabase clients live in `modules/supabase/*`, replacing the prior auth-scoped helpers.
+- **Reddit Services**: Pain-point extractor and Reddit integration services moved under `modules/reddit/services/*` for co-location with Reddit actions.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings

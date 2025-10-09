@@ -1,6 +1,6 @@
 # Reddit Module
 
-Collects trend analysis, pain point extraction, and idea generation helpers that previously lived in `lib/actions/reddit.ts`.
+Collects trend analysis, pain point extraction, and idea generation helpers that previously lived in `lib/actions/reddit.ts` and `lib/services/*`.
 
 ## API
 ```ts
@@ -17,4 +17,4 @@ import {
 } from '@/modules/reddit'
 ```
 
-These wrap services from `lib/services/*` (reddit integration, pain-point extractor, AI idea generator).
+These wrap co-located services under `modules/reddit/services` plus AI helpers from `@/modules/ai`.

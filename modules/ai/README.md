@@ -15,4 +15,4 @@ import {
 } from '@/modules/ai'
 ```
 
-The idea generator reuses the pain point extractor from Supabase; additional AI services can be added here.
+The idea generator pulls pain points via `@/modules/reddit/services/pain-point-extractor`; additional AI services can be added here.

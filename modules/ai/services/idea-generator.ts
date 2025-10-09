@@ -4,7 +4,7 @@
  */
 
 import OpenAI from 'openai'
-import { painPointExtractor, type PainPoint, type StartupIdea } from '@/lib/services/pain-point-extractor'
+import { painPointExtractor, type PainPoint, type StartupIdea } from '@/modules/reddit/services/pain-point-extractor'
 
 export interface IdeaGenerationOptions {
   focusArea?: 'saas' | 'ecommerce' | 'marketplace' | 'mobile' | 'ai' | 'any'

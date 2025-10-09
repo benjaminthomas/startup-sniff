@@ -39,7 +39,7 @@ modules/
 6. **Reddit Module**
    - ✅ Move `lib/actions/reddit` logic into `modules/reddit`.
    - ✅ Update ideas module and API to import from `@/modules/reddit`.
-   - ⏳ Consider consolidating Reddit services/pain-point utilities under a shared namespace.
+   - ✅ Consolidate Reddit services (pain-point extractor, trend integration) under `modules/reddit/services`.
 7. **Contact Module**
    - ✅ Shift Mailgun email helpers into `modules/contact`.
    - ✅ Update contact API route and test harness to import from the module.

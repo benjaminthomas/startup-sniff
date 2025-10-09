@@ -13,7 +13,7 @@
 
 ### Dependencies
 - OpenAI SDK via environment variables.
-- Pain point extractor service (`@/lib/services/pain-point-extractor`) and Reddit ingestion for input data.
+- Pain point extractor service (`@/modules/reddit/services/pain-point-extractor`) and Reddit ingestion for input data.
 
 ### Files Updated (Consumers)
 - modules/ideas/actions/index.ts
