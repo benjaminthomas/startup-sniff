@@ -1,12 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Navigation } from "@/components/features/landing/navigation";
-import { HeroSection } from "@/components/features/landing/hero-section";
-import { FeaturesSection } from "@/components/features/landing/features-section";
-import { PricingSection } from "@/components/features/landing/pricing-section";
-import { CTASection } from "@/components/features/landing/cta-section";
-import { Footer } from "@/components/features/landing/footer";
+import { Navigation, HeroSection, FeaturesSection, PricingSection, CTASection, Footer } from "@/modules/marketing";
 import { redirectToAuth } from "@/lib/utils/navigation";
 
 export default function HomePage() {

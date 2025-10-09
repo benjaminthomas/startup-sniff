@@ -1,8 +1,5 @@
 import React from "react";
-import { Navigation } from "@/components/features/landing/navigation";
-import { PolicyHeader } from "@/components/features/landing/policy-header";
-import { PolicyContent } from "@/components/features/landing/policy-content";
-import { Footer } from "@/components/features/landing/footer";
+import { Navigation, PolicyHeader, PolicyContent, Footer } from "@/modules/marketing";
 import { POLICY_CONTENT } from "@/constants";
 
 export default function TermsPage() {

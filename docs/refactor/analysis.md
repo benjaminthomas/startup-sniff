@@ -10,6 +10,7 @@
 - **Billing/Content**: Subscription management and AI content generation now live under `modules/billing/*` and `modules/content/*`.
 - **Reddit**: Trend analysis, pain-point extraction, and idea helpers reside under `modules/reddit/*`, replacing the previous `lib/actions/reddit.ts`.
 - **Contact**: Mailgun-backed contact utilities exposed under `modules/contact/*`, replacing `lib/services/contact-email.ts`.
+- **Marketing**: Landing/policy section components migrated to `modules/marketing/*` for reuse across marketing pages.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
@@ -40,7 +41,7 @@
 - `lib/reddit` persists posts and insights.
 
 ## Observations & Pain Points
-- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, quota tracking resides in `modules/usage`, billing/content modules wrap Razorpay + content automation flows, Reddit ingestion utilities live in `modules/reddit`, and contact email helpers sit in `modules/contact`.
+- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, quota tracking resides in `modules/usage`, billing/content modules wrap Razorpay + content automation flows, Reddit ingestion utilities live in `modules/reddit`, contact email helpers sit in `modules/contact`, and landing components live in `modules/marketing`.
 - Domain logic mixed between `lib/actions`, `server/actions`, and `components/features`, making reuse harder.
-- Initial `modules/auth`, `modules/ideas`, `modules/usage`, `modules/billing`, `modules/content`, `modules/reddit`, and `modules/contact` structures exist; remaining domains (marketing, AI services) should migrate next.
+- Initial `modules/auth`, `modules/ideas`, `modules/usage`, `modules/billing`, `modules/content`, `modules/reddit`, `modules/contact`, and `modules/marketing` structures exist; remaining domains (AI services, dashboards) can follow.
 - Database helpers intermingle Supabase admin and anon clients; extracting service layers per module will ease testing.
