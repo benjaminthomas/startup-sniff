@@ -5,9 +5,9 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import Redis from 'ioredis'
-import { createRedditEngine, RedditTrendEngine } from '../reddit'
-import type { RedditEngineConfig } from '../reddit'
+
 import type { Database } from '@/types/supabase'
+import { createRedditEngine, RedditEngineConfig, RedditTrendEngine } from '@/lib/reddit'
 
 export interface RedditPost {
   id: string
