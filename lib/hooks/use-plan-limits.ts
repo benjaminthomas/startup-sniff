@@ -4,8 +4,14 @@ import { useState, useEffect } from 'react';
 import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/server/actions/plan-limits';
 import { PlanType } from '@/types/database';
 
-// Both pro plans have unlimited access to all features
+// Plan limits configuration
 export const PLAN_LIMITS = {
+  free: {
+    ideas_per_month: 3, // 3 AI-generated ideas per month
+    validations_per_month: 1, // 1 validation per month  
+    content_per_month: 2, // 2 content generations per month
+    features: ['basic_ai_generation', 'basic_templates', 'limited_market_analysis']
+  },
   pro_monthly: {
     ideas_per_month: -1, // unlimited
     validations_per_month: -1, // unlimited
@@ -43,7 +49,7 @@ interface PlanLimitsState {
 export function usePlanLimits(): PlanLimitsState {
   console.log('🚀 HOOK CALLED: usePlanLimits function executed');
   
-  const [planType, setPlanType] = useState<PlanType>('pro_monthly');
+  const [planType, setPlanType] = useState<PlanType>('free');
   const [usage, setUsage] = useState<UsageStats>({
     ideas_used: 0,
     validations_used: 0,

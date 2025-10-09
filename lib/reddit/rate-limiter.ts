@@ -8,7 +8,7 @@ export interface RateLimitResult {
   queued?: boolean
   queuePosition?: number
   priority?: 'high' | 'medium' | 'low'
-  planTier?: 'explorer' | 'founder' | 'growth'
+  planTier?: 'free' | 'pro_monthly' | 'pro_yearly'
   error?: string
 }
 
@@ -67,7 +67,7 @@ export class RedditRateLimiter {
         return {
           allowed: true,
           remaining: -1,
-          planTier: 'growth',
+          planTier: 'pro_yearly',
           priority
         }
       }

@@ -88,7 +88,7 @@ export function useServerPlanLimits() {
   };
 
   return {
-    planType: data?.planType || 'pro_monthly',
+    planType: data?.planType || 'free', // Default to free plan to be safe
     usage: data?.usage || {
       ideas_used: 0,
       validations_used: 0,
