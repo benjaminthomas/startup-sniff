@@ -14,11 +14,11 @@
 - Landing and policy pages now import directly from `@/modules/marketing`.
 
 ### Files Updated (Consumers)
-- app/(LandingPage)/(home)/page.tsx
-- app/(LandingPage)/contact/page.tsx
-- app/(LandingPage)/privacy_policy/page.tsx
-- app/(LandingPage)/refund_policy/page.tsx
-- app/(LandingPage)/T&C/page.tsx
+- app/(marketing)/(home)/page.tsx
+- app/(marketing)/contact/page.tsx
+- app/(marketing)/privacy_policy/page.tsx
+- app/(marketing)/refund_policy/page.tsx
+- app/(marketing)/T&C/page.tsx
 - components/features/landing/index.ts (re-export for backward compatibility)
 
 ### Validation

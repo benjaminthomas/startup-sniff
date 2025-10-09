@@ -18,7 +18,7 @@
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
-- `app/(LandingPage)`: Marketing home, pricing, policy, and contact pages.
+- `app/(marketing)`: Marketing home, pricing, policy, and contact pages.
 - `app/auth`: Sign-in/up, verify email, password reset flows with CSRF integration.
 - `app/(dashboard)/dashboard`: Authenticated dashboard with nested routes for ideas, content, trends, billing, validation, etc.
 - `app/api`: REST-like endpoints for contact, Reddit processing, exports, and webhooks.
