@@ -1,7 +1,7 @@
 // Custom Authentication Database Types
 // Updated to support custom auth system without Supabase Auth
 
-export type PlanType = 'pro_monthly' | 'pro_yearly';
+export type PlanType = 'free' | 'pro_monthly' | 'pro_yearly';
 
 export interface User {
   id: string

@@ -24,7 +24,7 @@ export interface User {
   avatar_url: string | null
   stripe_customer_id: string | null
   subscription_status: 'trial' | 'active' | 'inactive' | 'cancelled' | null
-  plan_type: 'explorer' | 'founder' | 'growth' | null
+  plan_type: 'free' | 'pro_monthly' | 'pro_yearly' | null
   trial_ends_at: string | null
   created_at: string
   updated_at: string
@@ -34,7 +34,7 @@ export interface User {
 export interface UsageLimits {
   id: string
   user_id: string
-  plan_type: 'explorer' | 'founder' | 'growth'
+  plan_type: 'free' | 'pro_monthly' | 'pro_yearly'
   monthly_limit_ideas: number
   monthly_limit_validations: number
   ideas_generated: number | null
