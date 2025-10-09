@@ -54,8 +54,8 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       planType: user.plan_type
     });
 
-    // Ensure user has a valid plan type, default to pro_monthly if not set
-    const planType = (user.plan_type || 'pro_monthly') as PlanType;
+    // Ensure user has a valid plan type, default to free if not set
+    const planType = (user.plan_type || 'free') as PlanType;
 
     console.log('📊 Server-side usage data:', {
       userId: user.id,
@@ -63,8 +63,13 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       userEmail: user.email
     });
 
-    // Both pro plans have unlimited access
+    // Plan limits configuration
     const PLAN_LIMITS = {
+      free: {
+        ideas_per_month: 3, // 3 AI-generated ideas per month
+        validations_per_month: 1, // 1 validation per month
+        content_per_month: 2, // 2 content generations per month
+      },
       pro_monthly: {
         ideas_per_month: -1, // unlimited
         validations_per_month: -1, // unlimited
@@ -138,7 +143,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     const result: UsageData = {
       planType,
       usage: usageData,
-      limits: limits || PLAN_LIMITS.pro_monthly // Fallback to pro_monthly limits (unlimited)
+      limits: limits || PLAN_LIMITS.free // Fallback to free plan limits
     };
 
     console.log('📦 Returning complete usage data with limits:', result);

@@ -46,7 +46,7 @@ export async function createSubscription(planId: string) {
         user_id: session.userId,
         razorpay_subscription_id: subscription.id,
         razorpay_plan_id: plan.priceId,
-        plan_type: plan.id as unknown as 'explorer' | 'founder' | 'growth',
+        plan_type: plan.id as unknown as 'free' | 'pro_monthly' | 'pro_yearly',
         status: subscription.status as 'trial' | 'active' | 'inactive' | 'cancelled',
       } as never);
 
@@ -156,21 +156,21 @@ export async function updateSubscription(newPlanId: string) {
       .from('subscriptions')
       .update({
         razorpay_plan_id: newPlan.priceId,
-        plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth'
+        plan_type: newPlan.id as unknown as 'free' | 'pro_monthly' | 'pro_yearly'
       } as never)
       .eq('id', subscription.id);
 
     // Update user's plan type
     await supabase
       .from('users')
-      .update({ plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth' } as never)
+      .update({ plan_type: newPlan.id as unknown as 'free' | 'pro_monthly' | 'pro_yearly' } as never)
       .eq('id', session.userId);
 
     // Update usage limits
     await supabase
       .from('usage_limits')
       .update({
-        plan_type: newPlan.id as unknown as 'explorer' | 'founder' | 'growth',
+        plan_type: newPlan.id as unknown as 'free' | 'pro_monthly' | 'pro_yearly',
         monthly_limit_ideas: newPlan.limits.ideas,
         monthly_limit_validations: newPlan.limits.validations
       } as never)

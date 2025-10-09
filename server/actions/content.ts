@@ -51,12 +51,12 @@ export async function generateContent(formData: FormData) {
       .single();
 
     const planLimits = {
-      explorer: 3,
-      founder: 50,
-      growth: -1 // Unlimited
+      free: 2, // 2 content generations per month for free users
+      pro_monthly: -1, // Unlimited
+      pro_yearly: -1 // Unlimited
     };
     
-    const userPlan = userData?.plan_type || 'explorer';
+    const userPlan = userData?.plan_type || 'free';
     const monthlyLimit = planLimits[userPlan as keyof typeof planLimits];
     
     if (monthlyLimit !== -1) {
