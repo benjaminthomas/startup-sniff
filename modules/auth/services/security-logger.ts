@@ -4,7 +4,7 @@
  * Logs all authentication-related security events for monitoring and analysis
  */
 
-import { createServerSupabaseClient } from './supabase-server'
+import { createServerSupabaseClient } from '@/modules/supabase'
 
 export interface SecurityEvent {
   event_type: 'login_success' | 'login_failure' | 'signup' | 'password_reset_request' | 

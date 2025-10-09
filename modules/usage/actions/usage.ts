@@ -1,6 +1,7 @@
 'use server';
 
-import { createServerAdminClient, getCurrentSession, UserDatabase } from '@/modules/auth';
+import { getCurrentSession, UserDatabase } from '@/modules/auth';
+import { createServerAdminClient } from '@/modules/supabase';
 import { PlanType } from '@/types/database';
 
 export interface UsageData {

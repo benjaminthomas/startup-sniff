@@ -52,6 +52,10 @@ modules/
    - ✅ Relocate OpenAI helpers and AI idea generator into `modules/ai`.
    - ✅ Update ideas/content/reddit modules to consume `@/modules/ai`.
    - ⏳ Evaluate migrating additional AI utilities (validation prompts, mock generators) into this module.
+10. **Supabase Module**
+    - ✅ Extract shared Supabase server/admin/browser clients into `modules/supabase`.
+    - ✅ Update auth, usage, ideas, content, and Reddit modules to consume the new helpers.
+    - ⏳ Move remaining direct `createClient` usages (e.g., auth database service) into this module.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.

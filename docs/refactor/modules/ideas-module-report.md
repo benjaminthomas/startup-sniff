@@ -13,7 +13,8 @@
 - `getIdeaWithRedditSources(ideaId: string)`
 
 ### Dependencies
-- Auth module for session helpers (`createServerSupabaseClient`, `getCurrentSession`, etc.).
+- Auth module for session helpers (`getCurrentSession`, CSRF utilities).
+- Supabase module for server/admin clients.
 - Reddit idea helpers from `@/modules/reddit` and OpenAI helpers from `@/modules/ai`.
 - Usage guard leverages `getCurrentUserUsage` from `@/modules/usage`.
 

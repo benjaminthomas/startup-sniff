@@ -17,7 +17,7 @@ import {
   getCurrentSession,
   setSessionCookie,
   clearSessionCookie,
-  // Supabase wrappers
+  // Supabase wrappers (re-exported from modules/supabase)
   createServerSupabaseClient,
   createServerAdminClient,
   createMiddlewareSupabaseClient,
@@ -43,4 +43,4 @@ import {
 ## Migration Notes
 - Legacy imports from `@/lib/auth/*` should now be routed through this module.
 - Auth-related React components remain in `components/auth` for now; future work may wrap or move them under `modules/auth/components`.
-- Downstream modules should avoid importing from nested paths unless adding new shared primitives—prefer the barrel exports to prevent tight coupling.
+- Downstream modules should avoid importing from nested paths unless adding new shared primitives—prefer the barrel exports to prevent tight coupling. Supabase client helpers now live in `@/modules/supabase` and are re-exported here for compatibility.

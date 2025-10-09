@@ -10,8 +10,9 @@
 - `generateContentWithAI(params)` (internal helper exported for testing)
 
 ### Dependencies
-- Auth module for session retrieval and Supabase admin client.
-- OpenAI helper (`@/modules/ai`) and VALIDATION_SCHEMAS constants.
+- Auth module for session retrieval.
+- Supabase module for admin client helpers.
+- AI module for content generation prompts.
 - Usage module (`incrementUsage`) for quota tracking.
 
 ### Files Updated (Consumers)

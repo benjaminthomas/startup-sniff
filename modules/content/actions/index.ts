@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import { createServerAdminClient, getCurrentSession } from '@/modules/auth';
+import { getCurrentSession } from '@/modules/auth';
+import { createServerAdminClient } from '@/modules/supabase';
 import { openai } from '@/modules/ai';
 import { VALIDATION_SCHEMAS } from '@/constants';
 import { incrementUsage } from '@/modules/usage';

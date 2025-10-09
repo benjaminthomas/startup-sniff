@@ -12,6 +12,7 @@
 - **Contact**: Mailgun-backed contact utilities exposed under `modules/contact/*`, replacing `lib/services/contact-email.ts`.
 - **Marketing**: Landing/policy section components migrated to `modules/marketing/*` for reuse across marketing pages.
 - **AI**: OpenAI client plus idea-generation helpers centralized under `modules/ai/*`, replacing `lib/openai.ts` and `lib/services/ai-idea-generator.ts`.
+- **Supabase**: Shared server/admin/browser Supabase clients live in `modules/supabase/*`, replacing the prior auth-scoped helpers.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
