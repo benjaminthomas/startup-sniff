@@ -56,6 +56,10 @@ modules/
     - ✅ Extract shared Supabase server/admin/browser clients into `modules/supabase`.
     - ✅ Update auth, usage, ideas, content, and Reddit modules to consume the new helpers.
     - ⏳ Move remaining direct `createClient` usages (e.g., auth database service) into this module.
+11. **Validation Module**
+    - ✅ Move AI validation actions into `modules/validation`.
+    - ✅ Update validation UI and dashboard imports to consume the module.
+    - ⏳ Consider consolidating validation-specific constants and prompts here.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.

@@ -1,13 +1,17 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { createServerAdminClient, getCurrentSession } from '@/modules/auth'
-import OpenAI from 'openai'
+import { getCurrentSession } from '@/modules/auth'
+import { createServerAdminClient } from '@/modules/supabase'
+import { openai } from '@/modules/ai'
 import { z } from 'zod'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-})
+const getOpenAIClient = () => {
+  if (!openai) {
+    throw new Error('OpenAI client not configured. Set OPENAI_API_KEY.');
+  }
+  return openai;
+};
 
 // Validation form schema (legacy - for backward compatibility)
 const validationSchema = z.object({
@@ -184,7 +188,7 @@ Provide detailed market validation analysis.`
 
     console.log('🤖 Calling OpenAI for validation analysis...')
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAIClient().chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [
         { role: 'system', content: systemPrompt },
@@ -460,7 +464,7 @@ Provide detailed market validation analysis.`
 
     console.log('🤖 Calling OpenAI for validation analysis...')
 
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAIClient().chat.completions.create({
       model: 'gpt-4-turbo',
       messages: [
         { role: 'system', content: systemPrompt },

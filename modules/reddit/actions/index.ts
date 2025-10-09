@@ -1,7 +1,7 @@
 'use server';
 
-import { redditIntegrationService } from '@/lib/services/reddit-integration'
-import { painPointExtractor } from '@/lib/services/pain-point-extractor'
+import { redditIntegrationService } from '@/modules/reddit/services/reddit-integration'
+import { painPointExtractor } from '@/modules/reddit/services/pain-point-extractor'
 import { aiIdeaGenerator } from '@/modules/ai'
 import type { RedditTrendAnalysis, TrendsSummary } from '@/lib/services/reddit-integration'
 import type { PainPoint, StartupIdea } from '@/lib/services/pain-point-extractor'

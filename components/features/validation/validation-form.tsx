@@ -24,7 +24,7 @@ import {
   Lightbulb,
   Plus,
 } from "lucide-react";
-import { validateExistingIdea } from "@/lib/actions/validation";
+import { validateExistingIdea } from "@/modules/validation";
 import { usePlanLimits } from "@/lib/hooks/use-plan-limits";
 import { getUserIdeas } from "@/modules/ideas";
 
