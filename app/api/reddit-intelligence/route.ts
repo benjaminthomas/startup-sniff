@@ -4,7 +4,7 @@ import {
   getTrendingPainPoints,
   generateIdeasFromPainPoints,
   getStartupIntelligence
-} from '@/lib/actions/reddit'
+} from '@/modules/reddit'
 
 export const dynamic = 'force-dynamic'
 

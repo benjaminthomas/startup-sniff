@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { createServerSupabaseClient, createServerAdminClient, getCurrentSession } from '@/modules/auth';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/lib/openai';
-import { generateIdeasFromPainPoints } from '@/lib/actions/reddit';
+import { generateIdeasFromPainPoints } from '@/modules/reddit';
 import { getCurrentUserUsage } from '@/modules/usage';
 
 const generateIdeaSchema = z.object({

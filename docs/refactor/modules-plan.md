@@ -36,6 +36,10 @@ modules/
    - ✅ Relocate content generation server actions into `modules/content`.
    - ✅ Update dashboard content page and generation form to import from the module.
    - ⏳ Break out AI prompt utilities into shared services for future reuse.
+6. **Reddit Module**
+   - ✅ Move `lib/actions/reddit` logic into `modules/reddit`.
+   - ✅ Update ideas module and API to import from `@/modules/reddit`.
+   - ⏳ Consider consolidating Reddit services/pain-point utilities under a shared namespace.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.
@@ -43,6 +47,6 @@ modules/
 - Add module-level README summarizing exports and dependencies.
 
 ## Validation Checklist
-- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`) (✅ for current scope).
+- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`) (✅ for current scope).
 - Middleware and server actions compile.
 - Playwright/Vitest auth suites pass.

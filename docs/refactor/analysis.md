@@ -8,6 +8,7 @@
 - **Ideas**: Idea generation and validation server actions reside in `modules/ideas/*`, replacing the prior `server/actions/ideas.ts`.
 - **Usage**: Usage and plan-limit helpers consolidated under `modules/usage/*`, migrating both `usage.ts` and `plan-limits.ts` actions.
 - **Billing/Content**: Subscription management and AI content generation now live under `modules/billing/*` and `modules/content/*`.
+- **Reddit**: Trend analysis, pain-point extraction, and idea helpers reside under `modules/reddit/*`, replacing the previous `lib/actions/reddit.ts`.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
@@ -38,7 +39,7 @@
 - `lib/reddit` persists posts and insights.
 
 ## Observations & Pain Points
-- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, quota tracking resides in `modules/usage`, and billing/content modules wrap Razorpay + content automation flows.
+- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, quota tracking resides in `modules/usage`, billing/content modules wrap Razorpay + content automation flows, and Reddit ingestion utilities live in `modules/reddit`.
 - Domain logic mixed between `lib/actions`, `server/actions`, and `components/features`, making reuse harder.
-- Initial `modules/auth`, `modules/ideas`, `modules/usage`, `modules/billing`, and `modules/content` structures exist; remaining domains (trends, marketing, AI services) should migrate next.
+- Initial `modules/auth`, `modules/ideas`, `modules/usage`, `modules/billing`, `modules/content`, and `modules/reddit` structures exist; remaining domains (marketing, AI services) should migrate next.
 - Database helpers intermingle Supabase admin and anon clients; extracting service layers per module will ease testing.

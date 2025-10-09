@@ -14,8 +14,8 @@
 
 ### Dependencies
 - Auth module for session helpers (`createServerSupabaseClient`, `getCurrentSession`, etc.).
-- Reddit idea helpers from `@/lib/actions/reddit` and OpenAI helpers from `@/lib/openai`.
-- Usage guard currently leverages `getCurrentUserUsage` (still in `server/actions/usage`); scheduled for future extraction.
+- Reddit idea helpers from `@/modules/reddit` and OpenAI helpers from `@/lib/openai`.
+- Usage guard leverages `getCurrentUserUsage` from `@/modules/usage`.
 
 ### Files Updated (Consumers)
 - components/features/dashboard/{idea-card,idea-generation-form}.tsx
