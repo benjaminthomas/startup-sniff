@@ -7,6 +7,7 @@
 - **Auth**: Custom JWT system implemented in `modules/auth/*` (migrated from `lib/auth`), consumed by server actions, middleware, and auth pages.
 - **Ideas**: Idea generation and validation server actions reside in `modules/ideas/*`, replacing the prior `server/actions/ideas.ts`.
 - **Usage**: Usage and plan-limit helpers consolidated under `modules/usage/*`, migrating both `usage.ts` and `plan-limits.ts` actions.
+- **Billing/Content**: Subscription management and AI content generation now live under `modules/billing/*` and `modules/content/*`.
 - **Database Access**: Supabase client utilities in `lib/supabase` and domain-specific data helpers in `server/actions`, `lib/actions`, and `lib/services`.
 
 ## Route & Feature Groupings
@@ -37,7 +38,7 @@
 - `lib/reddit` persists posts and insights.
 
 ## Observations & Pain Points
-- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, and quota tracking resides in `modules/usage`.
+- Auth logic centralized under `modules/auth`, idea workflows live in `modules/ideas`, quota tracking resides in `modules/usage`, and billing/content modules wrap Razorpay + content automation flows.
 - Domain logic mixed between `lib/actions`, `server/actions`, and `components/features`, making reuse harder.
-- Initial `modules/auth`, `modules/ideas`, and `modules/usage` structures exist; remaining domains (billing, content, trends, marketing) should migrate next.
+- Initial `modules/auth`, `modules/ideas`, `modules/usage`, `modules/billing`, and `modules/content` structures exist; remaining domains (trends, marketing, AI services) should migrate next.
 - Database helpers intermingle Supabase admin and anon clients; extracting service layers per module will ease testing.

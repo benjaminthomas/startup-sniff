@@ -7,7 +7,7 @@ import { ContentGenerationForm } from '@/components/features/content/content-gen
 import { GeneratedContentShowcase } from '@/components/features/content/generated-content-showcase';
 import { ContentAnalytics } from '@/components/features/content/content-analytics';
 import { getUserIdeas } from '@/modules/ideas';
-import { getUserContent } from '@/server/actions/content';
+import { getUserContent } from '@/modules/content';
 import { StartupIdea, GeneratedContent } from '@/types/global';
 
 export default async function ContentPage() {

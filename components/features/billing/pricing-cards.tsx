@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Check, Loader2, Zap } from 'lucide-react';
 import { PRICING_PLANS } from '@/constants';
-import { createSubscription } from '@/server/actions/billing';
+import { createSubscription } from '@/modules/billing';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 

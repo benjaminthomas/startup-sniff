@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Loader2, Lightbulb, Sparkles, Crown, Plus } from "lucide-react";
-import { generateContent } from '@/server/actions/content';
+import { generateContent } from '@/modules/content';
 import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { CONTENT_TEMPLATES } from '@/constants';

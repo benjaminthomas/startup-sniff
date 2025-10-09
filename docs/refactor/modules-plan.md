@@ -28,6 +28,14 @@ modules/
    - ✅ Create `modules/usage` with usage + plan-limit actions and barrel export.
    - ✅ Update hooks, dashboard pages, and content actions to reference `@/modules/usage`.
    - ⏳ Evaluate separating plan limit constants/services for reuse across UI hooks.
+4. **Billing Module**
+   - ✅ Move Razorpay subscription actions into `modules/billing`.
+   - ✅ Update billing UI components to consume `@/modules/billing`.
+   - ⏳ Consider extracting Razorpay client helpers/services for reuse/testing.
+5. **Content Module**
+   - ✅ Relocate content generation server actions into `modules/content`.
+   - ✅ Update dashboard content page and generation form to import from the module.
+   - ⏳ Break out AI prompt utilities into shared services for future reuse.
 
 ## Constraints
 - Maintain functionality throughout; update files incrementally and run lint/tests after each stage.
@@ -35,6 +43,6 @@ modules/
 - Add module-level README summarizing exports and dependencies.
 
 ## Validation Checklist
-- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`) (✅ for current scope).
+- All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`) (✅ for current scope).
 - Middleware and server actions compile.
 - Playwright/Vitest auth suites pass.
