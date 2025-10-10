@@ -28,7 +28,12 @@ function useChart() {
   const context = React.useContext(ChartContext)
 
   if (!context) {
-    throw new Error("useChart must be used within a <ChartContainer />")
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "useChart called outside of <ChartContainer />. Returning empty config."
+      )
+    }
+    return { config: {} }
   }
 
   return context
