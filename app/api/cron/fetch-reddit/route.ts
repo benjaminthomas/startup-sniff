@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { createServerAdminClient } from '@/modules/supabase';
 
-const FALLBACK_USER_AGENT = 'startup-sniff-cron/1.0 (https://startup-sniff.vercel.app)';
+const FALLBACK_USER_AGENT = 'startup-sniff-cron/1.0 (https://startupsniff.com)';
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 type RedditAPIPost = {
