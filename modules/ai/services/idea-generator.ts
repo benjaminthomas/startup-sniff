@@ -6,12 +6,57 @@
 import OpenAI from 'openai'
 import { painPointExtractor, type PainPoint, type StartupIdea } from '@/modules/reddit/services/pain-point-extractor'
 
+const FOCUS_AREA_SUBREDDITS: Record<string, string[]> = {
+  saas: ['saas', 'startups', 'entrepreneur', 'indiehackers', 'webdev', 'programming'],
+  ecommerce: ['ecommerce', 'shopify', 'amazon', 'smallbusiness', 'sidehustle'],
+  marketplace: ['marketplace', 'freelance', 'gigwork', 'sidehustle', 'startup'],
+  mobile: ['androiddev', 'iosprogramming', 'reactnative', 'mobile', 'flutterdev'],
+  ai: ['machinelearning', 'artificial', 'chatgpt', 'aidevs', 'datascience'],
+  any: []
+}
+
+const INDUSTRY_SUBREDDITS: Record<string, string[]> = {
+  healthcare: ['medicine', 'healthcare', 'medtech', 'nursing'],
+  finance: ['finance', 'fintech', 'financialindependence', 'investing'],
+  education: ['education', 'edtech', 'teachers', 'learnprogramming'],
+  technology: ['technology', 'startups', 'programming', 'webdev', 'saas'],
+  ecommerce: ['ecommerce', 'shopify', 'smallbusiness'],
+  sustainability: ['sustainability', 'climate', 'renewableenergy'],
+  entertainment: ['entertainment', 'contentcreator', 'videography', 'gaming'],
+  transportation: ['transportation', 'logistics', 'supplychain', 'deliverydrivers']
+}
+
+const PROBLEM_KEYWORDS: Record<string, string[]> = {
+  productivity: ['productivity', 'workflow', 'automation', 'efficiency'],
+  communication: ['communication', 'collaboration', 'messaging', 'feedback'],
+  health: ['health', 'wellness', 'patient', 'care', 'therapy'],
+  environment: ['climate', 'sustainability', 'carbon', 'renewable'],
+  finance: ['finance', 'budget', 'cost', 'expense', 'cashflow'],
+  'remote-work': ['remote', 'distributed', 'async', 'timezone'],
+  education: ['learning', 'education', 'student', 'course', 'curriculum'],
+  'social-impact': ['impact', 'nonprofit', 'community', 'access']
+}
+
+const AUDIENCE_KEYWORDS: Record<string, string[]> = {
+  entrepreneurs: ['founder', 'startup', 'entrepreneur', 'bootstrap'],
+  'small-business': ['small business', 'retail', 'store owner', 'local business'],
+  professionals: ['professional', 'manager', 'team lead', 'knowledge worker'],
+  students: ['student', 'school', 'university', 'college'],
+  developers: ['developer', 'engineer', 'programmer', 'coder'],
+  'remote-workers': ['remote', 'digital nomad', 'distributed team'],
+  parents: ['parents', 'family', 'children', 'childcare'],
+  seniors: ['seniors', 'elderly', 'aging', 'retirement']
+}
+
 export interface IdeaGenerationOptions {
   focusArea?: 'saas' | 'ecommerce' | 'marketplace' | 'mobile' | 'ai' | 'any'
   complexityLevel?: 'low' | 'medium' | 'high'
   budgetRange?: 'bootstrap' | 'funded' | 'enterprise'
   timeframe?: 'day' | 'week' | 'month'
   minOpportunityScore?: number
+  industry?: string
+  problemArea?: string
+  targetAudience?: string
 }
 
 export interface GeneratedIdea extends StartupIdea {
@@ -66,13 +111,20 @@ class AIIdeaGenerator {
     try {
       // Get relevant pain points
       const painPoints = await painPointExtractor.extractPainPointsFromPosts(timeframe)
-      const filteredPainPoints = painPoints.filter(point =>
+      let filteredPainPoints = painPoints.filter(point =>
         point.opportunity_score >= minOpportunityScore
       )
 
+      filteredPainPoints = this.filterPainPointsByContext(filteredPainPoints, {
+        focusArea,
+        industry: options.industry,
+        problemArea: options.problemArea,
+        targetAudience: options.targetAudience
+      })
+
       if (filteredPainPoints.length === 0) {
         console.warn('No pain points found matching criteria')
-        return []
+        filteredPainPoints = painPoints
       }
 
       // Group related pain points
@@ -104,6 +156,68 @@ class AIIdeaGenerator {
       console.error('Error generating ideas from pain points:', error)
       return []
     }
+  }
+
+  private filterPainPointsByContext(
+    painPoints: PainPoint[],
+    context: Pick<IdeaGenerationOptions, 'focusArea' | 'industry' | 'problemArea' | 'targetAudience'>
+  ): PainPoint[] {
+    let result = [...painPoints]
+
+    const focusArea = context.focusArea || 'any'
+    const focusSubreddits = new Set(
+      (FOCUS_AREA_SUBREDDITS[focusArea] || []).map(sub => sub.toLowerCase())
+    )
+
+    if (context.industry) {
+      const industryKey = context.industry.toLowerCase()
+      const industrySubs = INDUSTRY_SUBREDDITS[industryKey]
+      if (industrySubs) {
+        industrySubs.forEach(sub => focusSubreddits.add(sub.toLowerCase()))
+      }
+    }
+
+    if (focusSubreddits.size > 0) {
+      const filtered = result.filter(point =>
+        focusSubreddits.has(point.subreddit.toLowerCase())
+      )
+
+      if (filtered.length > 0) {
+        result = filtered
+      }
+    }
+
+    const keywordSet = new Set<string>()
+    if (context.problemArea) {
+      const keywords = PROBLEM_KEYWORDS[context.problemArea.toLowerCase()]
+      keywords?.forEach(keyword => keywordSet.add(keyword.toLowerCase()))
+    }
+    if (context.targetAudience) {
+      const keywords = AUDIENCE_KEYWORDS[context.targetAudience.toLowerCase()]
+      keywords?.forEach(keyword => keywordSet.add(keyword.toLowerCase()))
+    }
+
+    if (keywordSet.size > 0) {
+      const keywordsArray = Array.from(keywordSet)
+      const filtered = result.filter(point => {
+        const haystack = [
+          point.title,
+          point.content,
+          ...(point.extracted_problems || []),
+          ...(point.pain_indicators || [])
+        ]
+          .join(' ')
+          .toLowerCase()
+
+        return keywordsArray.some(keyword => haystack.includes(keyword))
+      })
+
+      if (filtered.length > 0) {
+        result = filtered
+      }
+    }
+
+    return result
   }
 
   /**

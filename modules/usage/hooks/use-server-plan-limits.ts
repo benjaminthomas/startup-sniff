@@ -82,8 +82,10 @@ export function useServerPlanLimits() {
     try {
       const usageData = await getCurrentUserUsage();
       setData(usageData);
+      return usageData;
     } catch (err) {
       console.error('Error refreshing usage:', err);
+      throw err;
     }
   };
 
