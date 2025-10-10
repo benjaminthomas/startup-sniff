@@ -1,8 +1,9 @@
 import { Metadata } from "next";
 import type { StartupIdea, User as AppUser } from "@/types/global";
+import type { PlanType } from "@/types/database";
 import { getCurrentSession } from "@/modules/auth/services/jwt";
 import { UserDatabase } from "@/modules/auth/services/database";
-import { createServerSupabaseClient } from "@/modules/supabase";
+import { createServerAdminClient } from "@/modules/supabase";
 import { DashboardShell } from "@/components/features/dashboard/dashboard-shell";
 import { StatsCards } from "@/components/features/dashboard/stats-cards";
 import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";
@@ -15,8 +16,11 @@ export const metadata: Metadata = {
   description: "Your AI-powered startup idea discovery dashboard",
 };
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
-  const supabase = await createServerSupabaseClient();
+  const supabaseAdmin = createServerAdminClient();
 
   // Try to fetch user data, but handle cases where tables don't exist yet
   let ideas: StartupIdea[] = [];
@@ -96,62 +100,85 @@ export default async function DashboardPage() {
       planType?: string;
     };
 
-    // Get ideas for current user only
-    const startupIdeas = await supabase
-      .from("startup_ideas")
-      .select("*")
-      .eq("user_id", session?.userId || "")
-      .order("created_at", { ascending: false })
-      .limit(10);
+    const userIdForIdeas = user?.id ?? session?.userId ?? "";
 
-    if (startupIdeas.data) {
-      // Patch for legacy/JSON fields
-      ideas = startupIdeas.data.map((ideaRaw: Record<string, unknown>) => {
-        return {
-          ...ideaRaw,
-          target_market:
-            typeof ideaRaw.target_market === "object" &&
-            ideaRaw.target_market !== null
-              ? ideaRaw.target_market
-              : { demographic: "", size: "", pain_level: 1 },
-          solution:
-            typeof ideaRaw.solution === "object" && ideaRaw.solution !== null
-              ? ideaRaw.solution
-              : { value_proposition: "", features: [], business_model: "" },
-          market_analysis:
-            typeof ideaRaw.market_analysis === "object" &&
-            ideaRaw.market_analysis !== null
-              ? ideaRaw.market_analysis
-              : { competition_level: "", timing: "", barriers: [] },
-          implementation:
-            typeof ideaRaw.implementation === "object" &&
-            ideaRaw.implementation !== null
-              ? ideaRaw.implementation
-              : { complexity: 1, mvp: "", time_to_market: "" },
-          success_metrics:
-            typeof ideaRaw.success_metrics === "object" &&
-            ideaRaw.success_metrics !== null
-              ? ideaRaw.success_metrics
-              : { probability_score: 0, risk_factors: [] },
-        } as StartupIdea;
-      });
+    if (userIdForIdeas) {
+      const { data: ideaRows, error: ideaError } = await supabaseAdmin
+        .from("startup_ideas")
+        .select("*")
+        .eq("user_id", userIdForIdeas)
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (ideaError) {
+        console.error("Failed to fetch startup ideas:", ideaError);
+      } else if (ideaRows) {
+        ideas = ideaRows.map((ideaRaw: Record<string, unknown>) => {
+          return {
+            ...ideaRaw,
+            target_market:
+              typeof ideaRaw.target_market === "object" &&
+              ideaRaw.target_market !== null
+                ? ideaRaw.target_market
+                : { demographic: "", size: "", pain_level: 1 },
+            solution:
+              typeof ideaRaw.solution === "object" && ideaRaw.solution !== null
+                ? ideaRaw.solution
+                : { value_proposition: "", features: [], business_model: "" },
+            market_analysis:
+              typeof ideaRaw.market_analysis === "object" &&
+              ideaRaw.market_analysis !== null
+                ? ideaRaw.market_analysis
+                : { competition_level: "", timing: "", barriers: [] },
+            implementation:
+              typeof ideaRaw.implementation === "object" &&
+              ideaRaw.implementation !== null
+                ? ideaRaw.implementation
+                : { complexity: 1, mvp: "", time_to_market: "" },
+            success_metrics:
+              typeof ideaRaw.success_metrics === "object" &&
+              ideaRaw.success_metrics !== null
+                ? ideaRaw.success_metrics
+                : { probability_score: 0, risk_factors: [] },
+          } as StartupIdea;
+        });
+      }
     }
   } catch (error) {
     console.error("Database query failed:", error);
     // Continue with default values
   }
 
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  }).format(new Date());
+  const greetingName =
+    user?.full_name?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "there";
+
   return (
     <DashboardShell>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back
-            {user?.full_name ? `, ${user.full_name.split(" ")[0]}` : ""}!
-          </h1>
-          <p className="text-muted-foreground">
-            Here&apos;s what&apos;s happening with your startup ideas today.
-          </p>
+      <div className="space-y-8">
+        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-400/10 p-6 shadow-sm shadow-primary/15">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
+                {formattedDate}
+              </p>
+              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+                Hello, {greetingName}!
+              </h1>
+              <p className="text-lg font-medium leading-snug text-transparent bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text">
+                How can I help you today?
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Here&apos;s what&apos;s happening with your startup ideas today.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="grid gap-6">
@@ -168,17 +195,14 @@ export default async function DashboardPage() {
             }
           />
 
-          <div className="grid gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-              <QuickActions />
-              <RecentIdeas ideas={ideas} />
-            </div>
-
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <div className="space-y-6">
+              <QuickActions />
               <UsageTracker
                 planType={
-                  (user?.plan_type as "pro_monthly" | "pro_yearly") ||
-                  "pro_monthly"
+                  ((user?.plan_type as PlanType | undefined) ??
+                    (usageData?.planType as PlanType | undefined) ??
+                    "free") as PlanType
                 }
                 usage={
                   usageData?.usage ?? {
@@ -189,13 +213,25 @@ export default async function DashboardPage() {
                   }
                 }
                 limits={
-                  usageData?.limits ?? {
-                    ideas_per_month: -1, // Pro plans have unlimited
-                    validations_per_month: -1, // Pro plans have unlimited
-                    content_per_month: -1, // Pro plans have unlimited
-                  }
+                  usageData?.limits ??
+                  ((user?.plan_type as PlanType | undefined) === "pro_monthly" ||
+                  (user?.plan_type as PlanType | undefined) === "pro_yearly"
+                    ? {
+                        ideas_per_month: -1,
+                        validations_per_month: -1,
+                        content_per_month: -1,
+                      }
+                    : {
+                        ideas_per_month: 3,
+                        validations_per_month: 1,
+                        content_per_month: 2,
+                      })
                 }
               />
+            </div>
+
+            <div className="space-y-6">
+              <RecentIdeas ideas={ideas} />
             </div>
           </div>
         </div>

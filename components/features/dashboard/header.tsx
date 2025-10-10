@@ -28,10 +28,10 @@ interface HeaderProps {
 
 export function Header({ breadcrumbs = [] }: HeaderProps) {
   return (
-    <div className="flex items-center justify-between w-full">
-      <div>
+    <div className="flex w-full items-center justify-between">
+      <div className="hidden sm:block">
         {breadcrumbs.length > 0 && (
-          <Breadcrumb>
+          <Breadcrumb className="text-sm text-muted-foreground">
             <BreadcrumbList>
               {breadcrumbs.map((breadcrumb, index) => (
                 <div key={breadcrumb.label} className="flex items-center">
@@ -52,11 +52,14 @@ export function Header({ breadcrumbs = [] }: HeaderProps) {
         )}
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-10 w-10 rounded-full border border-white/60 bg-white/80 text-muted-foreground shadow-sm backdrop-blur transition-all hover:bg-white hover:text-foreground"
+        >
           <Bell className="h-4 w-4" />
         </Button>
-
       </div>
     </div>
   );

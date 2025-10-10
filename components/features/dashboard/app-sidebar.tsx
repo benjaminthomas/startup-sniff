@@ -167,8 +167,11 @@ export function AppSidebar({ user }: AppSidebarProps) {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-r bg-background">
-      <SidebarHeader className="border-b border-border/50 px-4 py-3">
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-white/40 bg-white/90 shadow-[0px_12px_32px_-20px_rgba(124,58,237,0.28)] backdrop-blur"
+    >
+      <SidebarHeader className="border-b border-white/50 px-4 py-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
