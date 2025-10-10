@@ -5,6 +5,7 @@ import { painPointExtractor } from '@/modules/reddit/services/pain-point-extract
 import { aiIdeaGenerator } from '@/modules/ai'
 import type { RedditTrendAnalysis, TrendsSummary } from '@/modules/reddit/services/reddit-integration'
 import type { PainPoint, StartupIdea } from '@/modules/reddit/services/pain-point-extractor'
+import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator'
 
 interface TrendAnalysisResult {
   success: boolean;
@@ -130,7 +131,7 @@ export async function getTrendingPainPoints(limit = 20): Promise<PainPoint[]> {
  * Generate startup ideas from Reddit pain points
  */
 export async function generateIdeasFromPainPoints(
-  options: Record<string, unknown> = {}
+  options: IdeaGenerationOptions = {}
 ): Promise<{ success: boolean; ideas: StartupIdea[]; error?: string }> {
   try {
     console.log('🚀 Generating startup ideas from pain points...')
@@ -214,7 +215,7 @@ export async function getStartupIntelligence(
     includePainPoints?: boolean
     includeIdeas?: boolean
     includeTrends?: boolean
-    ideaOptions?: Record<string, unknown>
+    ideaOptions?: IdeaGenerationOptions
   } = {}
 ): Promise<{
   success: boolean
@@ -237,7 +238,7 @@ export async function getStartupIntelligence(
 
     const results = await Promise.allSettled([
       includePainPoints ? painPointExtractor.getTrendingPainPoints(50) : Promise.resolve([]),
-      includeIdeas ? aiIdeaGenerator.generateIdeasFromPainPoints(ideaOptions) : Promise.resolve([]),
+      includeIdeas ? aiIdeaGenerator.generateIdeasFromPainPoints(ideaOptions as IdeaGenerationOptions) : Promise.resolve([]),
       includeTrends ? redditIntegrationService.getTrendsSummary(false) : Promise.resolve({
         totalTopics: 0,
         activeCommunities: 0,
