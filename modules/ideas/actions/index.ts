@@ -8,6 +8,7 @@ import { createServerSupabaseClient, createServerAdminClient } from '@/modules/s
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/modules/ai';
 import { generateIdeasFromPainPoints } from '@/modules/reddit';
 import { getCurrentUserUsage } from '@/modules/usage';
+import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator';
 
 const generateIdeaSchema = z.object({
   industry: z.string().optional(),
@@ -151,12 +152,15 @@ export async function generateIdea(formData: FormData) {
     console.log('🧠 Using Reddit-powered idea generation...');
 
     // Map user selections to Reddit generation options
-    const redditOptions = {
+    const redditOptions: IdeaGenerationOptions = {
       focusArea: mapIndustryToFocusArea(validationResult.data.industry),
       complexityLevel: mapBudgetToComplexity(validationResult.data.budget),
       budgetRange: mapBudgetRange(validationResult.data.budget),
       timeframe: 'day',
-      minOpportunityScore: 50
+      minOpportunityScore: 50,
+      industry: validationResult.data.industry || undefined,
+      problemArea: validationResult.data.problemArea || undefined,
+      targetAudience: validationResult.data.targetAudience || undefined
     };
 
     console.log('🔍 Reddit generation options:', redditOptions);
