@@ -261,6 +261,7 @@ async function checkRateLimit(identifier: string, limit: number, windowMs: numbe
 }
 
 export const config = {
+  runtime: 'nodejs',
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
