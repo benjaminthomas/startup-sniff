@@ -434,8 +434,12 @@ export default async function IdeaDetailPage({
                   <p className="text-muted-foreground max-w-md mx-auto mb-4">
                     Get comprehensive demographic analysis, market size calculations, and pain point assessment through AI-powered validation.
                   </p>
-                  <div className="space-y-2">
-                    <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full" />
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>Validate this idea to unlock market sizing, demographics, and persona insights.</p>
+                    <Link href="#validation-cta" className="inline-flex items-center text-primary font-medium text-xs">
+                      Go to validation
+                      <ArrowRight className="h-3 w-3 ml-1" />
+                    </Link>
                   </div>
                 </div>
                 )}
@@ -521,7 +525,13 @@ export default async function IdeaDetailPage({
                         <p className="text-sm text-muted-foreground mb-3">
                           Get comprehensive feature breakdown and technical specifications after validation.
                         </p>
-                        <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full max-w-xs mx-auto" />
+                        <div className="space-y-2 text-sm text-muted-foreground">
+                          <p>Validate to unlock the full feature breakdown, technical specs, and go-to-market playbooks.</p>
+                          <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
+                            Run validation
+                            <ArrowRight className="h-3 w-3 ml-1" />
+                          </Link>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -733,7 +743,13 @@ export default async function IdeaDetailPage({
                   </div>
                   
                   <div className="space-y-4">
-                    <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full max-w-sm mx-auto" />
+                    <div className="text-sm text-muted-foreground text-center">
+                      <p className="mb-2">Validate this idea to unlock competitive benchmarking, TAM/SAM/SOM sizing, and risk assessment.</p>
+                      <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
+                        Start validation
+                        <ArrowRight className="h-3 w-3 ml-1" />
+                      </Link>
+                    </div>
                     <div className="text-sm text-muted-foreground">
                       <p className="flex items-center justify-center gap-2 mb-2">
                         <Sparkles className="h-4 w-4 text-blue-500" />
@@ -919,7 +935,15 @@ export default async function IdeaDetailPage({
         <div className="lg:col-span-4 space-y-6">
           
           {/* Validation Status */}
-          <Card className={cn("border-2", idea.is_validated ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/10" : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/10")}> 
+          <Card
+            id="validation-cta"
+            className={cn(
+              "border-2",
+              idea.is_validated
+                ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/10"
+                : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/10"
+            )}
+          > 
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {idea.is_validated ? (
@@ -1076,7 +1100,10 @@ export default async function IdeaDetailPage({
                     </div>
                   </div>
                   
-                  <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full max-w-xs mx-auto" />
+                  <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
+                    Validate to unlock metrics
+                    <ArrowRight className="h-3 w-3 ml-1" />
+                  </Link>
                 </div>
               )}
             </CardContent>
