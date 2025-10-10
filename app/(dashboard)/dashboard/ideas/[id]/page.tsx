@@ -980,7 +980,6 @@ export default async function IdeaDetailPage({
             <CardContent>
               {idea.is_validated || (idea.market_analysis && Object.keys(idea.market_analysis).length > 0) ? (
                 <>
-                  <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full max-w-xs mx-auto" />
                   <div className="grid grid-cols-2 gap-4">
                     {/* AI Confidence */}
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
