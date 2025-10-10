@@ -24,9 +24,9 @@ import {
   Lightbulb,
   Plus,
 } from "lucide-react";
-import { validateExistingIdea } from "@/lib/actions/validation";
-import { usePlanLimits } from "@/lib/hooks/use-plan-limits";
-import { getUserIdeas } from "@/server/actions/ideas";
+import { validateExistingIdea } from "@/modules/validation";
+import { usePlanLimits } from "@/modules/usage/hooks";
+import { getUserIdeas } from "@/modules/ideas";
 
 interface GeneratedIdea {
   id: string;

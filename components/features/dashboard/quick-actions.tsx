@@ -1,9 +1,9 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Lightbulb, TrendingUp, FileText, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export function QuickActions() {
   const actions = [
@@ -12,56 +12,86 @@ export function QuickActions() {
       description: "Create AI-powered startup ideas",
       icon: Lightbulb,
       href: "/dashboard/generate",
-      color: "bg-primary",
+      gradient: "from-[#7C3AED22] via-[#8B5CF622] to-[#22D3EE22]",
+      glow: "shadow-[0px_10px_26px_-16px_rgba(124,58,237,0.4)]",
+      iconBg: "from-primary to-sky-500",
     },
     {
       title: "Analyze Trends",
       description: "Explore Reddit trends",
       icon: TrendingUp,
       href: "/dashboard/trends",
-      color: "bg-accent",
+      gradient: "from-[#38BDF822] via-[#22D3EE22] to-[#7C3AED22]",
+      glow: "shadow-[0px_10px_26px_-16px_rgba(14,165,233,0.35)]",
+      iconBg: "from-sky-500 to-blue-500",
     },
     {
       title: "Validate Ideas",
       description: "Market research & validation",
       icon: BarChart3,
       href: "/dashboard/validation",
-      color: "bg-primary",
+      gradient: "from-[#22C55E22] via-[#34D39922] to-[#7C3AED22]",
+      glow: "shadow-[0px_10px_26px_-16px_rgba(34,197,94,0.35)]",
+      iconBg: "from-emerald-500 to-teal-500",
     },
     {
       title: "Generate Content",
       description: "Create marketing content",
       icon: FileText,
       href: "/dashboard/content",
-      color: "bg-accent",
+      gradient: "from-[#F472B622] via-[#FBCFE822] to-[#7C3AED22]",
+      glow: "shadow-[0px_10px_26px_-16px_rgba(236,72,153,0.35)]",
+      iconBg: "from-pink-500 to-fuchsia-500",
     },
   ];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Quick Actions</CardTitle>
-        <CardDescription>Jump into your most common tasks</CardDescription>
+    <Card className="border-none bg-white/90 shadow-[0px_12px_32px_-22px_rgba(124,58,237,0.28)] backdrop-blur-sm">
+      <CardHeader className="flex flex-col gap-1 pb-4">
+        <CardTitle className="text-lg font-semibold text-foreground">Quick Actions</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          Jump into your most common tasks
+        </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {actions.map((action, index) => (
-            <Button
-              key={index}
-              variant="outline"
-              className="h-auto p-4 flex flex-col items-center space-y-2 hover:bg-primary/5 hover:border-primary/20 hover:shadow-md transition-all duration-200 hover:text-foreground"
-              asChild
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {actions.map((action) => (
+            <Link
+              key={action.title}
+              href={action.href}
+              className={cn(
+                "group relative flex h-full flex-col gap-3 overflow-hidden rounded-2xl border border-white/60 bg-white/85 p-4 transition-all duration-300",
+                "hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                action.glow
+              )}
             >
-              <Link href={action.href}>
-                <div className={`w-8 h-8 rounded-lg ${action.color} flex items-center justify-center`}>
-                  <action.icon className="h-4 w-4 text-white" />
+              <div
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-br opacity-90 transition-opacity duration-300 group-hover:opacity-95",
+                  action.gradient
+                )}
+                aria-hidden="true"
+              />
+              <div className="relative z-10 flex items-center justify-between">
+                <div
+                  className={cn(
+                    "flex size-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md shadow-black/10",
+                    action.iconBg
+                  )}
+                >
+                  <action.icon className="h-5 w-5" />
                 </div>
-                <div className="text-center">
-                  <div className="font-semibold text-sm whitespace-normal">{action.title}</div>
-                  <div className="text-xs text-muted-foreground whitespace-normal leading-relaxed">{action.description}</div>
+              </div>
+              <div className="relative z-10 space-y-1">
+                <div className="text-sm font-semibold text-foreground">
+                  {action.title}
                 </div>
-              </Link>
-            </Button>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  {action.description}
+                </p>
+              </div>
+            </Link>
           ))}
         </div>
       </CardContent>

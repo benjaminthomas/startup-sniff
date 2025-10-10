@@ -382,31 +382,40 @@ REDDIT_CLIENT_SECRET=your_reddit_secret
 
 ## 🧪 Testing
 
-```bash
-# Run unit tests
-npm test
+### Playwright end-to-end coverage
 
-# Run E2E tests with Playwright
-npm run test:e2e
+Following the [official Next.js Playwright guide](https://nextjs.org/docs/app/building-your-application/testing/playwright), the project standardizes on Playwright for automated testing:
 
-# Visual regression testing
-npm run test:visual
+- `npm test` / `npm run test:e2e` – execute the Chromium project.
+- `npm run test:e2e:install` – download browser binaries (once per machine/CI).
+- `npm run test:e2e -- --list` – enumerate specs without binding a server (useful inside Codex).
+- `npm run test:e2e:ui` – launch the Playwright UI runner for focused debugging.
+- `npm run test:e2e:report` – open the latest HTML report (if generated with `--reporter=html`).
 
-# Type checking
-npm run typecheck
+Current coverage spans:
 
-# Linting
-npm run lint
+- Marketing landing + legal pages (`marketing-home`, `marketing-legal`).
+- Contact module UI + `/api/contact` validation (`contact-form`, `api-contact`).
+- Auth entry/recovery guardrails (`auth-pages`).
+- Dashboard, billing, and analytics route protection (`dashboard-access`).
 
-# Database validation
-npm run db:validate
-```
+Playwright defaults to launching `npm run dev -- --hostname 127.0.0.1 --port 4123`.  
+Override these defaults with the following environment variables when needed:
+
+| Variable | Purpose |
+| --- | --- |
+| `E2E_PORT` / `PLAYWRIGHT_PORT` | Custom port for the Next.js server |
+| `E2E_HOST` | Hostname to bind during the test run |
+| `E2E_BASE_URL` | Explicit base URL (skip auto-building from host/port) |
+| `E2E_WEB_COMMAND` | Custom command (e.g. `npm run start -- --port 4123`) |
+
+> **Note:** Sandboxed environments (including the Codex CLI) block listening sockets, so full Playwright runs may fail with `listen EPERM`. Use `--list` locally inside the CLI to confirm discovery, then execute `npm run build && PLAYWRIGHT_WEB_COMMAND="npm run start -- --port 4123" npm run test:e2e` on a host that allows binding to the chosen port.
 
 ### MCP Testing Integration
-- **Playwright MCP**: Automated UI testing with visual regression
-- **Supabase MCP**: Database schema validation and migration testing  
-- **Context7 MCP**: Documentation sync and latest patterns
-- **Shadcn MCP**: Component generation and validation
+- **Playwright MCP**: Automated UI coverage with mock-friendly helpers
+- **Supabase MCP**: Database schema validation and SQL generation  
+- **Context7 MCP**: Documentation sync against the latest Next.js testing guides
+- **Shadcn MCP**: Component conformance checks and registry lookups
 
 ## 📝 Contributing
 

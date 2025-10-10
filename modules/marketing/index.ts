@@ -1,0 +1,8 @@
+export { Navigation } from './sections/navigation'
+export { HeroSection } from './sections/hero-section'
+export { FeaturesSection } from './sections/features-section'
+export { PricingSection } from './sections/pricing-section'
+export { CTASection } from './sections/cta-section'
+export { Footer } from './sections/footer'
+export { PolicyHeader } from './sections/policy-header'
+export { PolicyContent } from './sections/policy-content'

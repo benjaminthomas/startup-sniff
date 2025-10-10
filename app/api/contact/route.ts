@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendContactFormEmail, type ContactFormData } from '@/lib/services/contact-email';
+import { sendContactFormEmail, type ContactFormData } from '@/modules/contact';
 
 // Rate limiting storage (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();

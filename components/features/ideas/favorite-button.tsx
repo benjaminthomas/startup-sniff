@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { toggleFavorite } from '@/server/actions/ideas';
+import { toggleFavorite } from '@/modules/ideas';
 import { toast } from 'sonner';
 
 interface FavoriteButtonProps {

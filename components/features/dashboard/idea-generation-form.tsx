@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { generateIdea } from '@/server/actions/ideas';
+import { generateIdea } from '@/modules/ideas';
 import {
   Loader2,
   Sparkles,
@@ -48,9 +48,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
+import { useServerPlanLimits } from '@/modules/usage/hooks';
 import { UnlockOverlay } from '@/components/ui/unlock-overlay';
 import { StartupIdea, StartupIdeaRow, IdeaGenerationFormData, mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
+import type { DynamicIdeaQuestion, DynamicQuestionType } from '@/modules/ideas/services/question-engine';
+import type { UsageData } from '@/modules/usage';
 
 const industries = [
   { id: 'technology', label: 'Technology', icon: Monitor, description: 'Software, AI, hardware' },
@@ -85,6 +87,18 @@ const audiences = [
   { id: 'seniors', label: 'Seniors', icon: UserX, description: '65+ demographic' },
 ];
 
+const budgetOptions = [
+  { id: 'low', label: 'Bootstrap', amount: '$0 - $10K', icon: Banknote, description: 'Start lean and scrappy' },
+  { id: 'medium', label: 'Funded', amount: '$10K - $100K', icon: CreditCard, description: 'Moderate investment' },
+  { id: 'high', label: 'Well-funded', amount: '$100K+', icon: Building, description: 'Strong financial backing' }
+];
+
+const timelineOptions = [
+  { id: 'short', label: 'Quick Launch', period: '0-6 months', icon: Bolt, description: 'Fast to market' },
+  { id: 'medium', label: 'Steady Build', period: '6-18 months', icon: Rocket, description: 'Balanced approach' },
+  { id: 'long', label: 'Long-term', period: '18+ months', icon: Hammer, description: 'Complex solutions' }
+];
+
 // Use the imported type
 type FormData = IdeaGenerationFormData;
 
@@ -95,7 +109,35 @@ export function IdeaGenerationForm() {
   const [generatedIdea, setGeneratedIdea] = useState<StartupIdea | null>(null);
   const [error, setError] = useState<string>('');
   const [showUnlockOverlay, setShowUnlockOverlay] = useState(false);
+  const [dynamicQuestions, setDynamicQuestions] = useState<DynamicIdeaQuestion[]>([]);
+  const [questionsLoading, setQuestionsLoading] = useState(false);
+  const [questionsError, setQuestionsError] = useState<string | null>(null);
   const router = useRouter();
+
+  const selectedIndustry = useMemo(
+    () => industries.find((industry) => industry.id === formData.industry),
+    [formData.industry]
+  );
+  const selectedProblem = useMemo(
+    () => problemAreas.find((problem) => problem.id === formData.problemArea),
+    [formData.problemArea]
+  );
+  const selectedAudience = useMemo(
+    () => audiences.find((audience) => audience.id === formData.targetAudience),
+    [formData.targetAudience]
+  );
+  const selectedBudget = useMemo(
+    () => budgetOptions.find((budget) => budget.id === formData.budget),
+    [formData.budget]
+  );
+  const selectedTimeline = useMemo(
+    () => timelineOptions.find((timeline) => timeline.id === formData.timeframe),
+    [formData.timeframe]
+  );
+
+  const hasPrimarySelections = Boolean(
+    formData.industry || formData.problemArea || formData.targetAudience
+  );
 
   // Plan limits integration using server-side hook
   const {
@@ -107,6 +149,67 @@ export function IdeaGenerationForm() {
     isAtLimit,
     refreshUsage,
   } = useServerPlanLimits();
+
+  useEffect(() => {
+    if (
+      !formData.industry &&
+      !formData.problemArea &&
+      !formData.targetAudience
+    ) {
+      setDynamicQuestions([]);
+      setQuestionsError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(async () => {
+      try {
+        setQuestionsLoading(true);
+        setQuestionsError(null);
+
+        const response = await fetch('/api/ideas/dynamic-prompts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            industry: selectedIndustry?.label ?? formData.industry,
+            problemArea: selectedProblem?.label ?? formData.problemArea,
+            targetAudience: selectedAudience?.label ?? formData.targetAudience
+          }),
+          credentials: 'include',
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error('Request failed');
+        }
+
+        const data = await response.json();
+        setDynamicQuestions(data?.questions ?? []);
+      } catch (err) {
+        if (controller.signal.aborted) return;
+        console.error('Dynamic prompt fetch failed', err);
+        setQuestionsError('Unable to personalise prompts right now.');
+      } finally {
+        if (!controller.signal.aborted) {
+          setQuestionsLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [
+    formData.industry,
+    formData.problemArea,
+    formData.targetAudience,
+    selectedIndustry?.label,
+    selectedProblem?.label,
+    selectedAudience?.label
+  ]);
 
   const steps = [
     {
@@ -162,6 +265,17 @@ export function IdeaGenerationForm() {
     return count;
   };
 
+  const calculateRemainingIdeas = (usageData?: UsageData | null): number => {
+    if (usageData?.limits) {
+      const limit = usageData.limits.ideas_per_month;
+      if (limit === -1) return -1;
+      const used = usageData.usage?.ideas_used ?? 0;
+      return Math.max(0, limit - Number(used));
+    }
+
+    return getRemainingLimit('ideas');
+  };
+
   // Check if minimum required steps are completed (first 4 steps, 5th is optional)
   const getRequiredStepsCompleted = () => {
     return !!(formData.industry && formData.problemArea && formData.targetAudience && (formData.budget || formData.timeframe));
@@ -173,6 +287,101 @@ export function IdeaGenerationForm() {
 
   const updateFormData = (key: keyof FormData, value: string | undefined) => {
     setFormData(prev => ({ ...prev, [key]: value }));
+  };
+
+  const appendToUserPrompt = (snippet: string) => {
+    setFormData((prev) => {
+      const existing = prev.userPrompt?.trim() ?? '';
+      const prefix = existing.length > 0 ? `${existing}\n• ` : '• ';
+      const candidate = `${prefix}${snippet}`.trim();
+      // Clamp to textarea max length
+      const clamped = candidate.slice(0, 500);
+      return { ...prev, userPrompt: clamped };
+    });
+  };
+
+  const getDynamicQuestion = (type: DynamicQuestionType) =>
+    dynamicQuestions.find((question) => question.type === type);
+
+  const renderInlineDynamicPrompt = (
+    type: DynamicQuestionType,
+    title: string
+  ) => {
+    const question = getDynamicQuestion(type);
+    if (!question) return null;
+
+    return (
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 mt-2 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <p className="text-sm font-semibold text-foreground">
+              {title}
+            </p>
+          </div>
+          <Badge
+            variant="outline"
+            className={cn(
+              'uppercase tracking-wide text-[10px]',
+              type === 'insight' && 'border-blue-200 text-blue-700 dark:text-blue-300',
+              type === 'constraint' && 'border-amber-200 text-amber-700 dark:text-amber-300',
+              type === 'differentiator' && 'border-emerald-200 text-emerald-700 dark:text-emerald-300'
+            )}
+          >
+            {type}
+          </Badge>
+        </div>
+        <p className="text-sm text-foreground">{question.prompt}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {question.helper}
+        </p>
+        {question.suggestions && question.suggestions.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {question.suggestions.map((suggestion) => (
+              <Button
+                key={`${question.id}-${suggestion}`}
+                variant="ghost"
+                size="sm"
+                onClick={() => appendToUserPrompt(suggestion)}
+                className="text-xs h-7 px-3 border border-primary/20 bg-background hover:bg-primary/10"
+              >
+                {suggestion}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const getStepValueLabel = (stepId: string) => {
+    switch (stepId) {
+      case 'industry':
+        return selectedIndustry?.label ?? null;
+      case 'problem':
+        return selectedProblem?.label ?? null;
+      case 'audience':
+        return selectedAudience?.label ?? null;
+      case 'resources':
+        if (selectedBudget && selectedTimeline) {
+          return `${selectedBudget.label} • ${selectedTimeline.period}`;
+        }
+        if (selectedBudget) {
+          return `${selectedBudget.label} • ${selectedBudget.amount}`;
+        }
+        if (selectedTimeline) {
+          return `${selectedTimeline.label} • ${selectedTimeline.period}`;
+        }
+        return null;
+      case 'context':
+        return formData.userPrompt
+          ? formData.userPrompt.length > 40
+            ? `${formData.userPrompt.slice(0, 37)}...`
+            : formData.userPrompt
+          : null;
+      default:
+        return null;
+    }
   };
 
   const nextStep = () => {
@@ -225,9 +434,6 @@ export function IdeaGenerationForm() {
       const result = await generateIdea(submitFormData);
       
       if (result.success && result.idea) {
-        // Refresh usage data after successful generation
-        await refreshUsage();
-
         // Convert database row to properly typed StartupIdea
         const typedIdea = result.idea ? mapDatabaseRowToStartupIdea(result.idea as unknown as StartupIdeaRow) : null;
         setGeneratedIdea(typedIdea);
@@ -236,15 +442,22 @@ export function IdeaGenerationForm() {
         setFormData({});
         setCurrentStep(0);
 
+        let remainingIdeas = calculateRemainingIdeas();
+        try {
+          const updatedUsage = await refreshUsage();
+          remainingIdeas = calculateRemainingIdeas(updatedUsage);
+        } catch (refreshError) {
+          console.error('Failed to refresh usage after idea generation:', refreshError);
+        }
+
         toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
           id: loadingToast,
           duration: 5000
         });
 
         // Show usage progress
-        const remaining = getRemainingLimit('ideas');
-        if (remaining > 0 && remaining <= 2) {
-          toast.info(`You have ${remaining} idea${remaining === 1 ? '' : 's'} left this month`, {
+        if (remainingIdeas > 0 && remainingIdeas <= 2) {
+          toast.info(`You have ${remainingIdeas} idea${remainingIdeas === 1 ? '' : 's'} left this month`, {
             duration: 4000,
           });
         }
@@ -394,6 +607,7 @@ export function IdeaGenerationForm() {
             
             const isCompleted = getStepCompletion(step.id);
             const StepIcon = step.icon;
+            const selectionLabel = getStepValueLabel(step.id);
             
             return (
               <Button
@@ -407,12 +621,16 @@ export function IdeaGenerationForm() {
                   isCompleted && !isActive && "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
                 )}
               >
-                {isCompleted && !isActive ? (
-                  <Check className="w-4 h-4 mr-1 flex-shrink-0" />
-                ) : (
-                  <StepIcon className="w-4 h-4 mr-1 flex-shrink-0" />
-                )}
-                <span className="truncate">{step.title}</span>
+                <div className="flex w-full items-center gap-2 text-left">
+                  {isCompleted && !isActive ? (
+                    <Check className="w-4 h-4 flex-shrink-0" />
+                  ) : (
+                    <StepIcon className="w-4 h-4 flex-shrink-0" />
+                  )}
+                  <span className="truncate text-sm font-medium min-w-0">
+                    {selectionLabel ?? step.title}
+                  </span>
+                </div>
               </Button>
             );
           })}
@@ -426,7 +644,7 @@ export function IdeaGenerationForm() {
             {renderStepContent()}
           </div>
         </div>
-        
+
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-6 border-t">
           <Button
@@ -566,7 +784,9 @@ export function IdeaGenerationForm() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-muted-foreground text-sm">
-                What kind of problems do you want to solve?
+                {selectedIndustry
+                  ? `Within ${selectedIndustry.label}, which challenge do you want to tackle first?`
+                  : 'What kind of problems do you want to solve?'}
               </p>
               <Badge variant="destructive" className="text-xs">Required</Badge>
             </div>
@@ -606,6 +826,10 @@ export function IdeaGenerationForm() {
                 </Button>
               ))}
             </div>
+            {renderInlineDynamicPrompt(
+              'insight',
+              'Focus this idea'
+            )}
           </div>
         );
 
@@ -614,7 +838,9 @@ export function IdeaGenerationForm() {
           <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
               <p className="text-muted-foreground text-sm">
-                Who would you like to build products for?
+                {selectedProblem && selectedIndustry
+                  ? `Who feels the ${selectedProblem.label.toLowerCase()} pain most within ${selectedIndustry.label}?`
+                  : 'Who would you like to build products for?'}
               </p>
               <Badge variant="destructive" className="text-xs">Required</Badge>
             </div>
@@ -654,6 +880,10 @@ export function IdeaGenerationForm() {
                 </Button>
               ))}
             </div>
+            {renderInlineDynamicPrompt(
+              'differentiator',
+              'Sharpen your persona'
+            )}
           </div>
         );
 
@@ -666,14 +896,12 @@ export function IdeaGenerationForm() {
                 <Badge variant="destructive" className="text-xs">Required</Badge>
               </div>
               <p className="text-muted-foreground text-sm mb-4">
-                How much are you planning to invest initially?
+                {selectedAudience
+                  ? `How much can you invest to serve ${selectedAudience.label.toLowerCase()} confidently?`
+                  : 'How much are you planning to invest initially?'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[
-                  { id: 'low', label: 'Bootstrap', amount: '$0 - $10K', icon: Banknote, description: 'Start lean and scrappy' },
-                  { id: 'medium', label: 'Funded', amount: '$10K - $100K', icon: CreditCard, description: 'Moderate investment' },
-                  { id: 'high', label: 'Well-funded', amount: '$100K+', icon: Building, description: 'Strong financial backing' }
-                ].map((budget) => (
+                {budgetOptions.map((budget) => (
                   <Button
                     key={budget.id}
                     variant={formData.budget === budget.id ? "default" : "outline"}
@@ -719,14 +947,12 @@ export function IdeaGenerationForm() {
                 <Badge variant="destructive" className="text-xs">Required</Badge>
               </div>
               <p className="text-muted-foreground text-sm mb-4">
-                When would you like to launch?
+                {selectedAudience
+                  ? `When do you want ${selectedAudience.label.toLowerCase()} to experience your solution?`
+                  : 'When would you like to launch?'}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                {[
-                  { id: 'short', label: 'Quick Launch', period: '0-6 months', icon: Bolt, description: 'Fast to market' },
-                  { id: 'medium', label: 'Steady Build', period: '6-18 months', icon: Rocket, description: 'Balanced approach' },
-                  { id: 'long', label: 'Long-term', period: '18+ months', icon: Hammer, description: 'Complex solutions' }
-                ].map((timeframe) => (
+                {timelineOptions.map((timeframe) => (
                   <Button
                     key={timeframe.id}
                     variant={formData.timeframe === timeframe.id ? "default" : "outline"}
@@ -764,6 +990,10 @@ export function IdeaGenerationForm() {
                   </Button>
                 ))}
               </div>
+              {renderInlineDynamicPrompt(
+                'constraint',
+                'Plan around constraints'
+              )}
             </div>
           </div>
         );
@@ -795,6 +1025,82 @@ export function IdeaGenerationForm() {
                 </span>
               </div>
             </div>
+
+            {hasPrimarySelections && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      AI follow-up prompts
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Refine your brief with context-aware questions.
+                    </p>
+                  </div>
+                  {questionsLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 text-primary" />
+                  )}
+                </div>
+
+                {questionsError && (
+                  <p className="text-xs text-amber-600">
+                    {questionsError} We&apos;ll fall back to our playbook meanwhile.
+                  </p>
+                )}
+
+                <div className="space-y-3">
+                  {dynamicQuestions.map((question) => (
+                    <div
+                      key={question.id}
+                      className="rounded-lg bg-background/80 border border-primary/10 p-3 space-y-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            'uppercase tracking-wide text-xs',
+                            question.type === 'insight' && 'border-blue-200 text-blue-700 dark:text-blue-300',
+                            question.type === 'constraint' && 'border-amber-200 text-amber-700 dark:text-amber-300',
+                            question.type === 'differentiator' && 'border-emerald-200 text-emerald-700 dark:text-emerald-300'
+                          )}
+                        >
+                          {question.type}
+                        </Badge>
+                        <p className="text-sm font-medium text-foreground flex-1">
+                          {question.prompt}
+                        </p>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {question.helper}
+                      </p>
+                      {question.suggestions && question.suggestions.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {question.suggestions.map((suggestion) => (
+                            <Button
+                              key={suggestion}
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => appendToUserPrompt(suggestion)}
+                              className="text-xs px-3 py-1"
+                            >
+                              {suggestion}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {!questionsLoading && dynamicQuestions.length === 0 && !questionsError && (
+                    <p className="text-xs text-muted-foreground">
+                      Lock in your selections to see tailored prompts.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
             
             <div className="bg-muted/50 p-4 rounded-lg">
               <div className="flex items-center gap-2 mb-2">

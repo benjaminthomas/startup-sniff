@@ -3,7 +3,7 @@
  * Use this to verify Mailgun integration is working
  */
 
-import { sendContactFormEmail, verifyContactEmailConfiguration, type ContactFormData } from '@/lib/services/contact-email';
+import { sendContactFormEmail, verifyContactEmailConfiguration, type ContactFormData } from '@/modules/contact';
 
 /**
  * Test contact form email sending

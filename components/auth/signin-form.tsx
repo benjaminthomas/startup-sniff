@@ -19,7 +19,7 @@ import { z } from 'zod'
 import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { signInAction } from '@/lib/auth/actions'
+import { signInAction } from '@/modules/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'

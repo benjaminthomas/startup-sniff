@@ -43,6 +43,8 @@
 }
 
 :root {
+  --font-inter: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --font-geist-mono: 'Geist Mono', 'SFMono-Regular', Menlo, monospace;
   --radius: 10px;
 
   /* Prodify-Inspired Light Purple Theme v1.0.0 */

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ValidationButton } from '../validation/validation-button';
-import { toggleFavorite } from '@/server/actions/ideas';
+import { toggleFavorite } from '@/modules/ideas';
 import {
   Heart,
   FileText,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/lib/auth/jwt';
+import { getCurrentSession } from '@/modules/auth/services/jwt';
 
 // Reddit OAuth API configuration
 const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';

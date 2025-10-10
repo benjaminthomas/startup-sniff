@@ -1,10 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { createHash } from 'crypto';
+import { createServerAdminClient } from '@/modules/supabase';
+
+type RedditAPIPost = {
+  id: string;
+  title: string;
+  selftext?: string;
+  url?: string;
+  author?: string;
+  score?: number;
+  num_comments?: number;
+  created_utc?: number;
+};
 
 // This endpoint should be called by a cron job (e.g., Vercel Cron)
 // Add CRON_SECRET to your environment variables for security
 
 const REDDIT_API_BASE = 'https://www.reddit.com';
-const SUBREDDITS = ['entrepreneur', 'startups', 'SaaS', 'smallbusiness', 'webdev', 'freelance', 'business', 'sidehustle'];
+const SUBREDDITS = [
+  'entrepreneur',
+  'startups',
+  'SaaS',
+  'smallbusiness',
+  'webdev',
+  'freelance',
+  'business',
+  'sidehustle',
+  'medicine',
+  'healthcare',
+  'teachers',
+  'education',
+  'shopify',
+  'ecommerce',
+  'sustainability',
+  'logistics',
+  'climate',
+  'machinelearning',
+  'ai'
+];
 
 export async function GET(request: NextRequest) {
   // Verify cron secret to prevent unauthorized access
@@ -37,8 +70,10 @@ export async function GET(request: NextRequest) {
             return null;
           }
 
-          const data = await response.json();
-          return { subreddit, posts: data.data.children.map((child: { data: unknown }) => child.data) };
+          const data = (await response.json()) as {
+            data: { children: Array<{ data: RedditAPIPost }> };
+          };
+          return { subreddit, posts: data.data.children.map((child) => child.data) };
         } catch (error) {
           console.error(`Error fetching r/${subreddit}:`, error);
           return null;
@@ -46,11 +81,54 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    const validResults = results.filter(result => result !== null);
+    const validResults = results.filter(result => result !== null) as Array<{ subreddit: string; posts: RedditAPIPost[] }>;
     console.log(`✅ Cron job: Successfully fetched ${validResults.length} subreddits`);
 
-    // Store in a database or KV store (for now, just return success)
-    // TODO: Implement storage (e.g., Vercel KV, Redis, or database)
+    if (validResults.length > 0) {
+      const supabase = createServerAdminClient();
+      const now = new Date().toISOString();
+
+      const rows = validResults.flatMap(({ subreddit, posts }) =>
+        posts.map((post) => {
+          const createdUtc =
+            typeof post.created_utc === 'number'
+              ? new Date(post.created_utc * 1000).toISOString()
+              : new Date().toISOString();
+
+          const content = post.selftext ?? '';
+
+          return {
+            reddit_id: post.id as string,
+            subreddit,
+            title: post.title,
+            content,
+            url: post.url ?? `https://reddit.com/r/${subreddit}/comments/${post.id}`,
+            author: post.author ?? 'unknown',
+            score: post.score ?? 0,
+            comments: post.num_comments ?? 0,
+            created_utc: createdUtc,
+            processed_at: now,
+            updated_at: now,
+            sentiment: 0,
+            intent_flags: [] as string[],
+            analysis_data: null,
+            hash: createHash('sha256').update(`${post.id}-${subreddit}`).digest('hex')
+          };
+        })
+      );
+
+      if (rows.length > 0) {
+        const { error } = await supabase
+          .from('reddit_posts')
+          .upsert(rows, { onConflict: 'reddit_id' });
+
+        if (error) {
+          console.error('❌ Failed to store Reddit posts:', error);
+        } else {
+          console.log(`🗄️  Stored ${rows.length} Reddit posts`);
+        }
+      }
+    }
 
     return NextResponse.json({
       success: true,

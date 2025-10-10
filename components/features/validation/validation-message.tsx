@@ -1,6 +1,6 @@
 'use client';
 
-import { useServerPlanLimits } from '@/lib/hooks/use-server-plan-limits';
+import { useServerPlanLimits } from '@/modules/usage/hooks';
 import { Sparkles, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

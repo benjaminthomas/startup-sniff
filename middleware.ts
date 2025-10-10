@@ -10,19 +10,11 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { verifySessionToken } from '@/lib/auth/jwt'
-import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/lib/auth/csrf'
-import { UserDatabase } from '@/lib/auth/database'
+import { verifySessionToken } from '@/modules/auth/services/jwt'
+import { UserDatabase } from '@/modules/auth/services/database'
+import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/modules/auth/utils/csrf'
 
-// Define protected and public routes
-const PUBLIC_ROUTES = [
-  '/',
-  '/contact',
-  '/privacy_policy',
-  '/refund_policy',
-  '/T&C',
-]
-
+// Define route groups
 const AUTH_ROUTES = [
   '/auth/signin',
   '/auth/signup',
@@ -123,12 +115,7 @@ export async function middleware(request: NextRequest) {
 
     const isAuthenticated = !!user
     const isAuthRoute = AUTH_ROUTES.some(route => pathname.startsWith(route))
-    const isProtectedRoute = PROTECTED_ROUTES.some(route =>
-      pathname.startsWith(route)
-    )
-    const isPublicRoute = PUBLIC_ROUTES.some(route => 
-      pathname === route || pathname.startsWith(`${route}/`)
-    )
+    const isProtectedRoute = PROTECTED_ROUTES.some(route => pathname.startsWith(route))
 
     // Redirect unauthenticated users from protected routes to signin
     if (isProtectedRoute && !isAuthenticated) {
@@ -274,6 +261,7 @@ async function checkRateLimit(identifier: string, limit: number, windowMs: numbe
 }
 
 export const config = {
+  runtime: 'nodejs',
   matcher: [
     /*
      * Match all request paths except for the ones starting with:

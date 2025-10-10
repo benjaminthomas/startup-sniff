@@ -15,7 +15,7 @@ import {
   Activity,
   ChevronRight
 } from "lucide-react";
-// import { getRedditTrendsSummary } from "@/lib/actions/reddit";
+// import { getRedditTrendsSummary } from "@/modules/reddit";
 
 interface RedditTrendAnalysis {
   subreddit: string;

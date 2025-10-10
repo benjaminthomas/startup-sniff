@@ -1,8 +1,8 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
-import { getCurrentSession } from "@/lib/auth/jwt";
-import { UserDatabase } from "@/lib/auth/database";
+import { getCurrentSession } from "@/modules/auth/services/jwt";
+import { UserDatabase } from "@/modules/auth/services/database";
 import { redirect } from "next/navigation";
 import {
   SidebarProvider,
@@ -46,17 +46,25 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border bg-background px-4">
-          <SidebarTrigger className="-ml-1" />
+      <AppSidebar user={displayUser} />
+      <SidebarInset className="relative overflow-hidden bg-[radial-gradient(100%_120%_at_50%_0%,rgba(124,58,237,0.18),rgba(124,58,237,0.04)_45%,transparent_80%)]">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[linear-gradient(0deg,rgba(255,255,255,0.25)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.25)_1px,transparent_1px)] bg-[size:120px_120px]"
+        />
+        <header className="sticky top-4 z-30 mx-3 mt-4 flex h-16 shrink-0 items-center gap-2 rounded-2xl border border-white/60 bg-white/85 px-4 shadow-[0px_8px_24px_-16px_rgba(124,58,237,0.25)] backdrop-blur-sm sm:mx-6 sm:px-6">
+          <SidebarTrigger className="-ml-1 size-8 rounded-full bg-white/80 text-foreground shadow-sm hover:bg-white" />
           <div className="flex-1">
             <DynamicHeader user={displayUser} />
           </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 bg-background">
-          <TrialBanner />
-          {children}
+        <div className="relative z-10 flex flex-1 overflow-y-auto px-3 pb-8 pt-4 sm:px-6 sm:pt-6">
+          <div className="mx-auto flex flex-col gap-6">
+            <TrialBanner className="border-none bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-400/10 shadow-[0px_8px_24px_-18px_rgba(124,58,237,0.28)] backdrop-blur-sm" />
+            <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0px_18px_45px_-28px_rgba(124,58,237,0.3)] backdrop-blur-sm sm:p-8">
+              {children}
+            </div>
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>
