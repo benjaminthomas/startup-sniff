@@ -128,7 +128,6 @@ export async function GET(request: NextRequest) {
           console.log(`🗄️  Stored ${rows.length} Reddit posts`);
         }
       }
-      
     }
 
     return NextResponse.json({
