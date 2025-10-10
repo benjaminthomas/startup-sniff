@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ValidationButton } from '@/components/features/validation/validation-button';
-import { ValidationMessage } from '@/components/features/validation/validation-message';
 import { ValidationStatusAlert } from '@/components/features/validation/validation-status-alert';
 import { RedditSources } from '@/components/features/ideas/reddit-sources';
 import { FavoriteButton } from '@/components/features/ideas/favorite-button';
@@ -43,6 +42,8 @@ function dedupeStrings(values: Array<string | null | undefined>) {
     if (!value) return;
     const cleaned = value.trim();
     if (!cleaned) return;
+    if (!/[a-zA-Z]/.test(cleaned)) return;
+    if (!cleaned.includes(' ') && cleaned.length < 12) return;
     const key = cleaned.replace(/\s+/g, ' ').toLowerCase();
     if (seen.has(key)) return;
     seen.add(key);
@@ -139,7 +140,7 @@ export default async function IdeaDetailPage({
     ? (sourceData.specific_pain_points as string[])
     : [];
 
-  const painPoints = dedupeStrings([...rawPainPointSources, ...rawSpecificPainPoints]);
+  const painPoints = dedupeStrings([...rawSpecificPainPoints, ...rawPainPointSources]);
   if (painPoints.length === 0 && idea.problem_statement) {
     painPoints.push(idea.problem_statement);
   }
@@ -153,6 +154,12 @@ export default async function IdeaDetailPage({
     (solutionData.unique_value_proposition as string | undefined) ??
     (sourceData.value_proposition as string | undefined) ??
     solutionSummary;
+
+  const distinctValueProposition =
+    valueProposition !== solutionSummary ? valueProposition : undefined;
+
+  const primaryPainPoint = painPoints[0] || idea.problem_statement;
+  const heroSummary = valueProposition || solutionSummary;
 
   const personas = Array.isArray(sourceData.target_personas)
     ? (sourceData.target_personas as Array<{ name: string; role: string; painPoints?: string[] }>)
@@ -209,13 +216,13 @@ export default async function IdeaDetailPage({
                 </div>
               </div>
               <p className="text-lg text-muted-foreground max-w-3xl leading-relaxed">
-                {valueProposition}
+                {heroSummary}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="p-4 rounded-xl bg-muted/30 border">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Primary Pain Point</h4>
-                  <p className="text-sm leading-relaxed">{painPoints[0]}</p>
+                  <p className="text-sm leading-relaxed">{primaryPainPoint}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-muted/20 border">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Who We Serve</h4>
@@ -429,7 +436,6 @@ export default async function IdeaDetailPage({
                   </p>
                   <div className="space-y-2">
                     <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full" />
-                    <ValidationMessage className="text-center" />
                   </div>
                 </div>
                 )}
@@ -538,15 +544,17 @@ export default async function IdeaDetailPage({
                 </div>
               ) : (
                 <div className="space-y-6">
-                  <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <Star className="h-4 w-4 text-violet-600" />
-                      Value Proposition
-                    </h4>
-                    <p className="text-muted-foreground leading-relaxed">
-                      {valueProposition}
-                    </p>
-                  </div>
+                  {distinctValueProposition && (
+                    <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <Star className="h-4 w-4 text-violet-600" />
+                        Value Proposition
+                      </h4>
+                      <p className="text-muted-foreground leading-relaxed">
+                        {distinctValueProposition}
+                      </p>
+                    </div>
+                  )}
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
@@ -750,7 +758,6 @@ export default async function IdeaDetailPage({
                         </span>
                       </div>
                     </div>
-                    <ValidationMessage className="text-center" />
                   </div>
                 </div>
               )}
@@ -902,7 +909,6 @@ export default async function IdeaDetailPage({
                       <span>Implementation roadmap includes:</span>
                     </p>
                   </div>
-                  <ValidationMessage className="text-center" />
                 </div>
               )}
             </CardContent>
@@ -956,7 +962,6 @@ export default async function IdeaDetailPage({
                         <p className="text-green-600">• Competition analysis</p>
                         <p className="text-purple-600">• Success probability</p>
                       </div>
-                      <ValidationMessage className="mt-2" />
                     </div>
                   </div>
                 </div>
@@ -999,8 +1004,9 @@ export default async function IdeaDetailPage({
                     {/* Validation Status */}
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
                       <Shield className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <div className="text-sm font-bold text-green-600 capitalize">
-                        Validated
+                      <div className={cn("text-sm font-bold capitalize", idea.is_validated ? "text-green-600" : "text-amber-600")}
+                      >
+                        {idea.is_validated ? 'Validated' : 'Pending'}
                       </div>
                       <div className="text-xs text-muted-foreground">Status</div>
                     </div>
@@ -1009,7 +1015,7 @@ export default async function IdeaDetailPage({
                     <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
                       <CheckCircle className="h-6 w-6 text-purple-600 mx-auto mb-2" />
                       <div className="text-sm font-bold text-purple-600">
-                        Ready
+                        {idea.is_validated ? 'Ready' : 'In planning'}
                       </div>
                       <div className="text-xs text-muted-foreground">Implementation</div>
                     </div>
@@ -1025,13 +1031,15 @@ export default async function IdeaDetailPage({
                       <Progress value={confidenceScore} className="h-2" />
                     </div>
 
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>Validation Complete</span>
-                        <span>100%</span>
+                    {idea.is_validated && (
+                      <div>
+                        <div className="flex justify-between text-xs mb-1">
+                          <span>Validation Complete</span>
+                          <span>100%</span>
+                        </div>
+                        <Progress value={100} className="h-2" />
                       </div>
-                      <Progress value={100} className="h-2" />
-                    </div>
+                    )}
                   </div>
                 </>
               ) : (
