@@ -36,6 +36,21 @@ import {
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+function dedupeStrings(values: Array<string | null | undefined>) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  values.forEach((value) => {
+    if (!value) return;
+    const cleaned = value.trim();
+    if (!cleaned) return;
+    const key = cleaned.replace(/\s+/g, ' ').toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    result.push(cleaned);
+  });
+  return result;
+}
+
 // Helper functions for confidence level styling
 function getConfidenceLevel(score: number) {
   if (score >= 80) return 'excellent';
@@ -114,6 +129,37 @@ export default async function IdeaDetailPage({
   // Create properly typed idea object using the helper function
   const idea = mapDatabaseRowToStartupIdea(ideaRaw);
 
+  const sourceData = (idea.source_data as Record<string, unknown>) || {};
+  const solutionData = (idea.solution as unknown as Record<string, unknown>) || {};
+
+  const rawPainPointSources = Array.isArray(sourceData.pain_point_sources)
+    ? (sourceData.pain_point_sources as string[])
+    : [];
+  const rawSpecificPainPoints = Array.isArray(sourceData.specific_pain_points)
+    ? (sourceData.specific_pain_points as string[])
+    : [];
+
+  const painPoints = dedupeStrings([...rawPainPointSources, ...rawSpecificPainPoints]);
+  if (painPoints.length === 0 && idea.problem_statement) {
+    painPoints.push(idea.problem_statement);
+  }
+
+  const solutionSummary =
+    (solutionData.description as string | undefined) ??
+    (sourceData.solution_summary as string | undefined) ??
+    idea.problem_statement;
+
+  const valueProposition =
+    (solutionData.unique_value_proposition as string | undefined) ??
+    (sourceData.value_proposition as string | undefined) ??
+    solutionSummary;
+
+  const personas = Array.isArray(sourceData.target_personas)
+    ? (sourceData.target_personas as Array<{ name: string; role: string; painPoints?: string[] }>)
+    : [];
+
+  const primaryPersona = personas[0];
+
   // Reddit sources functionality disabled until posts table schema is updated
   const redditSources: Record<string, unknown>[] = [];
 
@@ -163,8 +209,26 @@ export default async function IdeaDetailPage({
                 </div>
               </div>
               <p className="text-lg text-muted-foreground max-w-3xl leading-relaxed">
-                {idea.problem_statement}
+                {valueProposition}
               </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="p-4 rounded-xl bg-muted/30 border">
+                  <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Primary Pain Point</h4>
+                  <p className="text-sm leading-relaxed">{painPoints[0]}</p>
+                </div>
+                <div className="p-4 rounded-xl bg-muted/20 border">
+                  <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Who We Serve</h4>
+                  <p className="text-sm leading-relaxed">
+                    {primaryPersona?.role ||
+                      (typeof idea.target_market === 'string'
+                        ? idea.target_market
+                        : Array.isArray(sourceData.target_market_description)
+                        ? (sourceData.target_market_description as string[])[0]
+                        : 'Growth-focused teams looking for an edge')}
+                  </p>
+                </div>
+              </div>
             </div>
             
             {/* AI Confidence Score - Large Display */}
@@ -212,16 +276,14 @@ export default async function IdeaDetailPage({
 
             <div>
               <h4 className="font-semibold mb-2 text-sm text-muted-foreground">What is it?</h4>
-              <p className="text-sm leading-relaxed">{idea.problem_statement}</p>
+              <p className="text-sm leading-relaxed">{solutionSummary}</p>
             </div>
 
-            {(idea.source_data as Record<string, unknown>)?.specific_pain_points &&
-             Array.isArray((idea.source_data as Record<string, unknown>).specific_pain_points) &&
-             ((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).length > 0 && (
+            {painPoints.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Pain Points Being Solved</h4>
                 <div className="space-y-2">
-                  {((idea.source_data as Record<string, unknown>).specific_pain_points as string[]).map((point, idx) => (
+                  {painPoints.map((point, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
                       <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{point}</span>
@@ -231,13 +293,11 @@ export default async function IdeaDetailPage({
               </div>
             )}
 
-            {(idea.source_data as Record<string, unknown>)?.target_personas &&
-             Array.isArray((idea.source_data as Record<string, unknown>).target_personas) &&
-             ((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).length > 0 && (
+            {personas.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Target User Personas</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {((idea.source_data as Record<string, unknown>).target_personas as Array<{ name: string; role: string; painPoints: string[] }>).map((persona, idx) => (
+                  {personas.map((persona, idx) => (
                     <div key={idx} className="p-4 rounded-lg border bg-muted/30">
                       <h5 className="font-medium mb-1">{persona.name}</h5>
                       <p className="text-xs text-muted-foreground mb-3">{persona.role}</p>
@@ -245,7 +305,7 @@ export default async function IdeaDetailPage({
                         <div className="space-y-1">
                           <p className="text-xs font-medium">Their challenges:</p>
                           <ul className="text-xs text-muted-foreground space-y-0.5">
-                            {persona.painPoints.map((point, i) => (
+                            {dedupeStrings(persona.painPoints).map((point, i) => (
                               <li key={i}>• {point}</li>
                             ))}
                           </ul>
@@ -484,7 +544,7 @@ export default async function IdeaDetailPage({
                       Value Proposition
                     </h4>
                     <p className="text-muted-foreground leading-relaxed">
-                      {idea.problem_statement}
+                      {valueProposition}
                     </p>
                   </div>
                   
