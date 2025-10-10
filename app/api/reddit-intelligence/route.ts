@@ -5,6 +5,7 @@ import {
   generateIdeasFromPainPoints,
   getStartupIntelligence
 } from '@/modules/reddit'
+import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,9 +42,9 @@ export async function GET(request: NextRequest) {
         })
 
       case 'generate-ideas':
-        const focusArea = searchParams.get('focus') || 'any'
-        const complexity = searchParams.get('complexity') || 'medium'
-        const budget = searchParams.get('budget') || 'bootstrap'
+        const focusArea = (searchParams.get('focus') || 'any') as IdeaGenerationOptions['focusArea']
+        const complexity = (searchParams.get('complexity') || 'medium') as IdeaGenerationOptions['complexityLevel']
+        const budget = (searchParams.get('budget') || 'bootstrap') as IdeaGenerationOptions['budgetRange']
 
         const ideaResult = await generateIdeasFromPainPoints({
           focusArea,
@@ -154,19 +155,24 @@ export async function POST(request: NextRequest) {
       minOpportunityScore = 40
     } = body
 
+    const typedFocusArea = focusArea as IdeaGenerationOptions['focusArea']
+    const typedComplexity = complexityLevel as IdeaGenerationOptions['complexityLevel']
+    const typedBudget = budgetRange as IdeaGenerationOptions['budgetRange']
+    const typedTimeframe = timeframe as IdeaGenerationOptions['timeframe']
+
     console.log('🚀 Generating ideas with custom parameters:', {
-      focusArea,
-      complexityLevel,
-      budgetRange,
-      timeframe,
+      focusArea: typedFocusArea,
+      complexityLevel: typedComplexity,
+      budgetRange: typedBudget,
+      timeframe: typedTimeframe,
       minOpportunityScore
     })
 
     const result = await generateIdeasFromPainPoints({
-      focusArea,
-      complexityLevel,
-      budgetRange,
-      timeframe,
+      focusArea: typedFocusArea,
+      complexityLevel: typedComplexity,
+      budgetRange: typedBudget,
+      timeframe: typedTimeframe,
       minOpportunityScore
     })
 
@@ -176,10 +182,10 @@ export async function POST(request: NextRequest) {
       count: result.ideas.length,
       error: result.error,
       parameters: {
-        focusArea,
-        complexityLevel,
-        budgetRange,
-        timeframe,
+        focusArea: typedFocusArea,
+        complexityLevel: typedComplexity,
+        budgetRange: typedBudget,
+        timeframe: typedTimeframe,
         minOpportunityScore
       },
       message: result.success
