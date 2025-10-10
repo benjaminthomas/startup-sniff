@@ -44,5 +44,5 @@
 ### Validation
 - [x] No cross-module imports (auth internals use relative folders)
 - [x] Barrel exports provide the public API via `@/modules/auth`
-- [ ] Automated tests pending (run Vitest/Playwright)
+- [x] Playwright coverage in place for entry forms and recovery guardrails
 - [x] Manual review required for auth flows after deployment

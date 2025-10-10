@@ -28,6 +28,6 @@
 
 ### Validation
 - [x] All usage-related imports now point to `@/modules/usage`.
-- [ ] Automated tests pending (run vitest/playwright covering usage behaviors).
+- [ ] Automated tests pending (expand Playwright coverage for usage behaviors).
 - [x] TypeScript linting passes (aside from existing middleware warning).
 - [ ] Manual QA recommended for usage counters after idea/content generation.

@@ -69,4 +69,4 @@ modules/
 ## Validation Checklist
 - All imports reference the new modules for migrated features (`@/modules/auth`, `@/modules/ideas`, `@/modules/usage`, `@/modules/billing`, `@/modules/content`, `@/modules/reddit`, `@/modules/contact`, `@/modules/marketing`, `@/modules/ai`) (✅ for current scope).
 - Middleware and server actions compile.
-- Playwright/Vitest auth suites pass.
+- Playwright suites covering marketing, auth, contact, and route guards pass.
