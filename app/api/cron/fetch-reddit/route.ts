@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { createServerAdminClient } from '@/modules/supabase';
 
+const FALLBACK_USER_AGENT = 'startup-sniff-cron/1.0 (https://startup-sniff.vercel.app)';
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
 type RedditAPIPost = {
   id: string;
   title: string;
@@ -16,7 +19,7 @@ type RedditAPIPost = {
 // This endpoint should be called by a cron job (e.g., Vercel Cron)
 // Add CRON_SECRET to your environment variables for security
 
-const REDDIT_API_BASE = 'https://www.reddit.com';
+const REDDIT_API_BASE = 'https://oauth.reddit.com';
 const SUBREDDITS = [
   'entrepreneur',
   'startups',
@@ -39,6 +42,50 @@ const SUBREDDITS = [
   'ai'
 ];
 
+async function getRedditAccessToken() {
+  const clientId = process.env.REDDIT_CLIENT_ID;
+  const clientSecret = process.env.REDDIT_CLIENT_SECRET;
+  const userAgent = process.env.REDDIT_USER_AGENT || FALLBACK_USER_AGENT;
+
+  if (!clientId || !clientSecret) {
+    return null;
+  }
+
+  if (cachedToken && cachedToken.expiresAt > Date.now()) {
+    return cachedToken.token;
+  }
+
+  try {
+    const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+    const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${basic}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'User-Agent': userAgent,
+      },
+      body: new URLSearchParams({ grant_type: 'client_credentials' }),
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('❌ Failed to obtain Reddit token:', response.status, text);
+      return null;
+    }
+
+    const data = (await response.json()) as { access_token: string; expires_in: number };
+    cachedToken = {
+      token: data.access_token,
+      expiresAt: Date.now() + (data.expires_in - 60) * 1000,
+    };
+
+    return cachedToken.token;
+  } catch (error) {
+    console.error('❌ Error fetching Reddit token:', error);
+    return null;
+  }
+}
+
 export async function GET(request: NextRequest) {
   // Verify cron secret to prevent unauthorized access
   const authHeader = request.headers.get('authorization');
@@ -49,6 +96,13 @@ export async function GET(request: NextRequest) {
   try {
     console.log('🔄 Cron job: Fetching Reddit trends data...');
 
+    const userAgent = process.env.REDDIT_USER_AGENT || FALLBACK_USER_AGENT;
+    const accessToken = await getRedditAccessToken();
+    const apiBase = accessToken ? REDDIT_API_BASE : 'https://www.reddit.com';
+    if (!accessToken) {
+      console.warn('⚠️  Reddit access token unavailable – falling back to public endpoints (may be rate limited).');
+    }
+
     // Fetch data from multiple subreddits
     const results = await Promise.all(
       SUBREDDITS.map(async (subreddit) => {
@@ -56,9 +110,10 @@ export async function GET(request: NextRequest) {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-          const response = await fetch(`${REDDIT_API_BASE}/r/${subreddit}/hot.json?limit=25`, {
+          const response = await fetch(`${apiBase}/r/${subreddit}/hot.json?limit=25&raw_json=1`, {
             headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+              'User-Agent': userAgent,
+              ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             },
             signal: controller.signal,
           });
