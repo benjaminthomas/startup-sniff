@@ -270,6 +270,9 @@ export async function generateIdea(formData: FormData) {
 
     console.log('✅ Idea saved successfully');
 
+    // Note: Usage counter is automatically reconciled by getUserPlanAndUsage()
+    // No need to manually increment as it counts actual records in startup_ideas table
+
     // Revalidate the dashboard page
     revalidatePath('/dashboard');
     revalidatePath('/dashboard/ideas');

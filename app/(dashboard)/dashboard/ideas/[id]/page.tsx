@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerAdminClient } from '@/modules/supabase';
-import { mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
+import { mapDatabaseRowToStartupIdea, type ValidationData } from '@/types/startup-ideas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,6 +50,88 @@ function dedupeStrings(values: Array<string | null | undefined>) {
     result.push(cleaned);
   });
   return result;
+}
+
+function cleanNarrative(value?: string | null) {
+  if (!value) return undefined;
+  const cleaned = value.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return undefined;
+  if (!/[a-zA-Z]/.test(cleaned)) return undefined;
+  return cleaned;
+}
+
+function normalizeNarrative(value?: string | null) {
+  const cleaned = cleanNarrative(value);
+  return cleaned ? cleaned.toLowerCase() : null;
+}
+
+function pickDistinctText(
+  candidates: Array<string | null | undefined>,
+  used: string[]
+) {
+  const seen = new Set(
+    used
+      .map((entry) => normalizeNarrative(entry))
+      .filter((entry): entry is string => !!entry)
+  );
+
+  for (const candidate of candidates) {
+    const cleaned = cleanNarrative(candidate);
+    if (!cleaned) continue;
+    const normalized = normalizeNarrative(cleaned);
+    if (!normalized || seen.has(normalized)) continue;
+    return cleaned;
+  }
+
+  return undefined;
+}
+
+function extractSentences(value?: string | null) {
+  const cleaned = cleanNarrative(value);
+  if (!cleaned) return [];
+
+  const sentences = cleaned
+    .split(/(?<=[.?!])\s+/)
+    .map((sentence) => cleanNarrative(sentence))
+    .filter((sentence): sentence is string => !!sentence);
+
+  return sentences.length > 0 ? sentences : cleaned ? [cleaned] : [];
+}
+
+function extractFirstSentence(value?: string | null) {
+  const sentences = extractSentences(value);
+  return sentences[0];
+}
+
+function pickNarrative(
+  candidates: Array<string | null | undefined>,
+  used: string[],
+  fallback?: string
+) {
+  const picked = pickDistinctText(candidates, used);
+  if (picked) {
+    used.push(picked);
+    return picked;
+  }
+
+  const cleanedFallback = cleanNarrative(fallback);
+  if (cleanedFallback) {
+    const normalizedFallback = normalizeNarrative(cleanedFallback);
+    const seen = new Set(
+      used
+        .map((entry) => normalizeNarrative(entry))
+        .filter((entry): entry is string => !!entry)
+    );
+
+    if (!normalizedFallback || seen.has(normalizedFallback)) {
+      return undefined;
+    }
+
+    used.push(cleanedFallback);
+    return cleanedFallback;
+  }
+
+  return undefined;
 }
 
 // Helper functions for confidence level styling
@@ -132,6 +214,16 @@ export default async function IdeaDetailPage({
 
   const sourceData = (idea.source_data as Record<string, unknown>) || {};
   const solutionData = (idea.solution as unknown as Record<string, unknown>) || {};
+  const marketAnalysisData = (idea.market_analysis as unknown as Record<string, unknown>) || {};
+  const targetMarketData =
+    typeof idea.target_market === 'object' && idea.target_market
+      ? (idea.target_market as unknown as Record<string, unknown>)
+      : null;
+  const successMetricsData =
+    typeof idea.success_metrics === 'object' && idea.success_metrics
+      ? (idea.success_metrics as unknown as Record<string, unknown>)
+      : null;
+  const validationData = idea.validation_data ?? null;
 
   const rawPainPointSources = Array.isArray(sourceData.pain_point_sources)
     ? (sourceData.pain_point_sources as string[])
@@ -139,33 +231,237 @@ export default async function IdeaDetailPage({
   const rawSpecificPainPoints = Array.isArray(sourceData.specific_pain_points)
     ? (sourceData.specific_pain_points as string[])
     : [];
-
-  const painPoints = dedupeStrings([...rawSpecificPainPoints, ...rawPainPointSources]);
-  if (painPoints.length === 0 && idea.problem_statement) {
-    painPoints.push(idea.problem_statement);
-  }
-
-  const solutionSummary =
-    (solutionData.description as string | undefined) ??
-    (sourceData.solution_summary as string | undefined) ??
-    idea.problem_statement;
-
-  const valueProposition =
-    (solutionData.unique_value_proposition as string | undefined) ??
-    (sourceData.value_proposition as string | undefined) ??
-    solutionSummary;
-
-  const distinctValueProposition =
-    valueProposition !== solutionSummary ? valueProposition : undefined;
-
-  const primaryPainPoint = painPoints[0] || idea.problem_statement;
-  const heroSummary = valueProposition || solutionSummary;
-
-  const personas = Array.isArray(sourceData.target_personas)
-    ? (sourceData.target_personas as Array<{ name: string; role: string; painPoints?: string[] }>)
+  const validatedPersonaPainPoints = Array.isArray(targetMarketData?.user_personas)
+    ? (
+        targetMarketData?.user_personas as Array<{
+          pain_points?: string[];
+        }>
+      ).flatMap((persona) => persona.pain_points ?? [])
+    : [];
+  const validatedRiskFactors = Array.isArray(successMetricsData?.risk_factors)
+    ? (successMetricsData?.risk_factors as string[])
     : [];
 
-  const primaryPersona = personas[0];
+  const painPoints = dedupeStrings([
+    ...rawSpecificPainPoints,
+    ...rawPainPointSources,
+    ...validatedPersonaPainPoints,
+    ...validatedRiskFactors,
+    idea.problem_statement,
+  ]);
+
+  const solutionDescription =
+    typeof solutionData.description === 'string' ? solutionData.description : undefined;
+  const uniqueValueProposition =
+    typeof solutionData.unique_value_proposition === 'string'
+      ? solutionData.unique_value_proposition
+      : undefined;
+  const originalSolutionDescription =
+    typeof sourceData.solution_summary === 'string'
+      ? (sourceData.solution_summary as string)
+      : undefined;
+  const validatedValueProposition = uniqueValueProposition || solutionDescription;
+
+  const validationFeedbackRaw = (() => {
+    if (!validationData) return undefined;
+    if (typeof validationData.feedback === 'string') return validationData.feedback;
+    if (Array.isArray(validationData.feedback)) {
+      return validationData.feedback.join(' ');
+    }
+    return undefined;
+  })();
+
+  // Extract validation insights with proper typing
+  const validationDataTyped = validationData as ValidationData | null;
+  const validationStrengths = Array.isArray(validationDataTyped?.strengths)
+    ? dedupeStrings(validationDataTyped.strengths)
+    : [];
+  const validationRecommendations = Array.isArray(validationDataTyped?.recommendations)
+    ? dedupeStrings(validationDataTyped.recommendations)
+    : [];
+  const validationFeedbackSentences = validationFeedbackRaw
+    ? dedupeStrings(extractSentences(validationFeedbackRaw))
+    : [];
+
+  const sourcePersonas = Array.isArray(sourceData.target_personas)
+    ? (sourceData.target_personas as Array<{ name: string; role: string; painPoints?: string[] }>)
+    : [];
+  const validatedPersonas = Array.isArray(targetMarketData?.user_personas)
+    ? (
+        targetMarketData?.user_personas as Array<{
+          name: string;
+          description?: string;
+          pain_points?: string[];
+        }>
+      ).map((persona) => ({
+        name: persona.name,
+        role: persona.description ?? 'Target persona',
+        painPoints: persona.pain_points ?? [],
+      }))
+    : [];
+
+  const personas = [...sourcePersonas, ...validatedPersonas].filter((persona, index, arr) => {
+    const key = `${persona.name}|${persona.role}`.toLowerCase();
+    return arr.findIndex((p) => `${p.name}|${p.role}`.toLowerCase() === key) === index;
+  });
+  const personaPainPoints = personas.flatMap((persona) => persona.painPoints ?? []);
+
+  // ============================================================================
+  // NARRATIVE EXTRACTION STRATEGY
+  // ============================================================================
+  // This section carefully extracts distinct narratives for different sections:
+  // 1. Hero Summary - WHAT: main value proposition (what the product is)
+  // 2. Primary Pain Point - the core problem being solved
+  // 3. Solution Narrative - HOW: how the product works/solves the problem
+  // 4. Why Now - WHY: market timing/urgency
+  // 5. Secondary Pain Points - additional problems (must be distinct)
+  // 6. Persona Challenges - persona-specific issues (must be distinct)
+  // ============================================================================
+  
+  const narrativePool: string[] = [];
+  
+  // 1. Extract hero summary (main value proposition)
+  const heroSummary =
+    pickNarrative(
+      [
+        extractFirstSentence(validationFeedbackRaw),
+        uniqueValueProposition,
+        solutionDescription,
+        originalSolutionDescription,
+      ],
+      narrativePool,
+      'We uncovered a promising opportunity grounded in real customer sentiment.'
+    ) ?? 'We uncovered a promising opportunity grounded in real customer sentiment.';
+
+  const normalizedHeroSummary = normalizeNarrative(heroSummary);
+  
+  // 2. Extract primary pain point (should be different from hero summary)
+  const primaryPainPoint =
+    pickNarrative(
+      [
+        idea.problem_statement,
+        rawSpecificPainPoints[0],
+        personaPainPoints[0],
+        rawPainPointSources[0],
+      ],
+      narrativePool,
+      'We identified a recurring operator challenge that currently goes unsolved.'
+    ) ?? 'We identified a recurring operator challenge that currently goes unsolved.';
+
+  const normalizedPrimaryPain = normalizeNarrative(primaryPainPoint);
+  
+  // 3. Filter validation data to exclude already used narratives
+  const validationStrengthsUnique = validationStrengths.filter((item) => {
+    const normalized = normalizeNarrative(item);
+    return (
+      normalized &&
+      normalized !== normalizedPrimaryPain &&
+      normalized !== normalizedHeroSummary
+    );
+  });
+  const validationRecommendationsUnique = validationRecommendations.filter((item) => {
+    const normalized = normalizeNarrative(item);
+    return (
+      normalized &&
+      normalized !== normalizedPrimaryPain &&
+      normalized !== normalizedHeroSummary
+    );
+  });
+
+  // 4. Extract solution narrative (what is it? / how does it work?)
+  // For "How", we want the actual solution description, not just any narrative
+  // Priority: specific solution details over generic narratives
+  const solutionNarrative = (() => {
+    // If we have a solution description that's different from hero, use it
+    const normalizedSolution = normalizeNarrative(solutionDescription);
+    if (normalizedSolution && normalizedSolution !== normalizedHeroSummary) {
+      narrativePool.push(solutionDescription!);
+      return solutionDescription!;
+    }
+    
+    // Try original solution description
+    const normalizedOriginal = normalizeNarrative(originalSolutionDescription);
+    if (normalizedOriginal && normalizedOriginal !== normalizedHeroSummary) {
+      narrativePool.push(originalSolutionDescription!);
+      return originalSolutionDescription!;
+    }
+    
+    // If solution description was used in hero, try to extract a different sentence
+    if (solutionDescription) {
+      const sentences = extractSentences(solutionDescription);
+      for (const sentence of sentences) {
+        const normalized = normalizeNarrative(sentence);
+        if (normalized && normalized !== normalizedHeroSummary) {
+          narrativePool.push(sentence);
+          return sentence;
+        }
+      }
+    }
+    
+    // Fall back to validation insights
+    return pickNarrative(
+      [
+        validationRecommendationsUnique[0],
+        validationStrengthsUnique[0],
+      ],
+      narrativePool,
+      'An AI-powered platform that streamlines operations and automates key workflows to solve the core challenges.'
+    ) ?? 'An AI-powered platform that streamlines operations and automates key workflows to solve the core challenges.';
+  })();
+
+  const marketOpportunityCandidates = Array.isArray(marketAnalysisData?.opportunities)
+    ? (marketAnalysisData.opportunities as string[])
+    : [];
+  const additionalValidationNarrative = validationFeedbackSentences.find((sentence) => {
+    const normalized = normalizeNarrative(sentence);
+    return (
+      normalized &&
+      normalized !== normalizedHeroSummary &&
+      normalized !== normalizedPrimaryPain
+    );
+  });
+  
+  // 5. Extract "why now" narrative (market timing)
+  const whyNowNarrative =
+    pickNarrative(
+      [
+        marketOpportunityCandidates[0],
+        additionalValidationNarrative,
+        validationStrengthsUnique[1],
+      ],
+      narrativePool,
+      'Market momentum and buyer urgency make this the right moment to launch.'
+    ) ?? 'Market momentum and buyer urgency make this the right moment to launch.';
+
+  // 6. Build secondary pain points list (exclude primary pain and already used narratives)
+  const usedNarratives = new Set([
+    normalizeNarrative(heroSummary),
+    normalizeNarrative(primaryPainPoint),
+    normalizeNarrative(solutionNarrative),
+    normalizeNarrative(whyNowNarrative),
+  ].filter((n): n is string => !!n));
+
+  const secondaryPainPoints = painPoints
+    .filter((point) => {
+      const normalized = normalizeNarrative(point);
+      return normalized && !usedNarratives.has(normalized);
+    })
+    .slice(0, 5);
+
+  // 7. Process personas to have unique challenges (not already mentioned)
+  const personasWithUniqueChallenges = personas.map((persona) => {
+    const uniqueChallenges = dedupeStrings(persona.painPoints ?? []).filter(
+      (point) => {
+        const normalized = normalizeNarrative(point);
+        return normalized && !usedNarratives.has(normalized);
+      }
+    );
+    return {
+      ...persona,
+      painPoints: uniqueChallenges,
+    };
+  });
+  const primaryPersona = personasWithUniqueChallenges[0] ?? undefined;
 
   // Reddit sources functionality disabled until posts table schema is updated
   const redditSources: Record<string, unknown>[] = [];
@@ -281,16 +577,23 @@ export default async function IdeaDetailPage({
               </div>
             )}
 
-            <div>
-              <h4 className="font-semibold mb-2 text-sm text-muted-foreground">What is it?</h4>
-              <p className="text-sm leading-relaxed">{solutionSummary}</p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">How does it work?</h4>
+                <p className="text-sm leading-relaxed">{solutionNarrative}</p>
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Why now?</h4>
+                <p className="text-sm leading-relaxed">{whyNowNarrative}</p>
+              </div>
             </div>
 
-            {painPoints.length > 0 && (
+            {secondaryPainPoints.length > 0 ? (
               <div>
-                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Pain Points Being Solved</h4>
+                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Additional Pain Points</h4>
+                <p className="text-xs text-muted-foreground mb-2">Beyond the primary challenge highlighted above, users also struggle with:</p>
                 <div className="space-y-2">
-                  {painPoints.map((point, idx) => (
+                  {secondaryPainPoints.map((point, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
                       <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
                       <span className="text-sm">{point}</span>
@@ -298,25 +601,36 @@ export default async function IdeaDetailPage({
                   ))}
                 </div>
               </div>
+            ) : (
+              <div>
+                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Additional Pain Points</h4>
+                <div className="p-4 rounded-lg border bg-muted/20 text-sm text-muted-foreground">
+                  The core challenge is captured in the primary pain point above. This focused problem definition helps with targeted validation and solution design.
+                </div>
+              </div>
             )}
 
-            {personas.length > 0 && (
+            {personasWithUniqueChallenges.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Target User Personas</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {personas.map((persona, idx) => (
+                  {personasWithUniqueChallenges.slice(0, 3).map((persona, idx) => (
                     <div key={idx} className="p-4 rounded-lg border bg-muted/30">
                       <h5 className="font-medium mb-1">{persona.name}</h5>
                       <p className="text-xs text-muted-foreground mb-3">{persona.role}</p>
-                      {persona.painPoints && persona.painPoints.length > 0 && (
+                      {persona.painPoints && persona.painPoints.length > 0 ? (
                         <div className="space-y-1">
-                          <p className="text-xs font-medium">Their challenges:</p>
+                          <p className="text-xs font-medium">Specific challenges:</p>
                           <ul className="text-xs text-muted-foreground space-y-0.5">
-                            {dedupeStrings(persona.painPoints).map((point, i) => (
+                            {persona.painPoints.slice(0, 4).map((point, i) => (
                               <li key={i}>• {point}</li>
                             ))}
                           </ul>
                         </div>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          This persona is primarily impacted by the main pain point described above.
+                        </p>
                       )}
                     </div>
                   ))}
@@ -436,10 +750,7 @@ export default async function IdeaDetailPage({
                   </p>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <p>Validate this idea to unlock market sizing, demographics, and persona insights.</p>
-                    <Link href="#validation-cta" className="inline-flex items-center text-primary font-medium text-xs">
-                      Go to validation
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Link>
+                    
                   </div>
                 </div>
                 )}
@@ -527,10 +838,7 @@ export default async function IdeaDetailPage({
                         </p>
                         <div className="space-y-2 text-sm text-muted-foreground">
                           <p>Validate to unlock the full feature breakdown, technical specs, and go-to-market playbooks.</p>
-                          <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
-                            Run validation
-                            <ArrowRight className="h-3 w-3 ml-1" />
-                          </Link>
+                          
                         </div>
                       </div>
                     )}
@@ -554,14 +862,14 @@ export default async function IdeaDetailPage({
                 </div>
               ) : (
                 <div className="space-y-6">
-                  {distinctValueProposition && (
+                  {validatedValueProposition && (
                     <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
                       <h4 className="font-semibold mb-3 flex items-center gap-2">
                         <Star className="h-4 w-4 text-violet-600" />
                         Value Proposition
                       </h4>
                       <p className="text-muted-foreground leading-relaxed">
-                        {distinctValueProposition}
+                        {validatedValueProposition}
                       </p>
                     </div>
                   )}
@@ -745,10 +1053,7 @@ export default async function IdeaDetailPage({
                   <div className="space-y-4">
                     <div className="text-sm text-muted-foreground text-center">
                       <p className="mb-2">Validate this idea to unlock competitive benchmarking, TAM/SAM/SOM sizing, and risk assessment.</p>
-                      <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
-                        Start validation
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </Link>
+                     
                     </div>
                     <div className="text-sm text-muted-foreground">
                       <p className="flex items-center justify-center gap-2 mb-2">
