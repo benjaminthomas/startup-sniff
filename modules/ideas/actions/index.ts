@@ -7,7 +7,7 @@ import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerSupabaseClient, createServerAdminClient } from '@/modules/supabase';
 import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } from '@/modules/ai';
 import { generateIdeasFromPainPoints } from '@/modules/reddit';
-import { getCurrentUserUsage } from '@/modules/usage';
+import { getCurrentUserUsage, getUserPlanAndUsage } from '@/modules/usage';
 import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator';
 
 const generateIdeaSchema = z.object({
@@ -269,6 +269,11 @@ export async function generateIdea(formData: FormData) {
     }
 
     console.log('✅ Idea saved successfully');
+
+    // Trigger usage reconciliation to update ideas_generated counter
+    // This counts actual records in startup_ideas table and syncs to usage_limits
+    await getUserPlanAndUsage();
+    console.log('✅ Usage counters reconciled');
 
     // Revalidate the dashboard page
     revalidatePath('/dashboard');

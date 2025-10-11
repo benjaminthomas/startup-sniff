@@ -63,8 +63,10 @@ export interface ValidationData {
   feasibility_score?: number
   revenue_potential?: number
   overall_score?: number
-  feedback?: string[]
+  feedback?: string | string[]
   recommendations?: string[]
+  strengths?: string[]
+  weaknesses?: string[]
 }
 
 export interface SourceData {

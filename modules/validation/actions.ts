@@ -282,11 +282,30 @@ Provide detailed market validation analysis.`
     }
 
     // Update the existing idea with validation data
+    // IMPORTANT: Merge solution data instead of replacing to preserve original description
+    const existingSolution = typeof idea.solution === 'object' && idea.solution ? idea.solution as Record<string, unknown> : {};
+    const mergedSolution = {
+      // Preserve original description if it exists
+      description: (existingSolution.description as string) || validationData.solution.value_proposition,
+      unique_value_proposition: validationData.solution.value_proposition,
+      // Preserve or update key features
+      key_features: validationData.solution.key_features.length > 0
+        ? validationData.solution.key_features
+        : (existingSolution.key_features as string[] || []),
+      // Preserve or update differentiators
+      competitive_advantages: validationData.solution.differentiators.length > 0
+        ? validationData.solution.differentiators
+        : (existingSolution.competitive_advantages as string[] || []),
+      // Update revenue model
+      revenue_model: validationData.solution.revenue_streams,
+      business_model: validationData.solution.business_model,
+    };
+
     const { data: updatedIdea, error: updateError } = await supabase
       .from('startup_ideas')
       .update({
         target_market: validationData.target_market,
-        solution: validationData.solution,
+        solution: mergedSolution as never,
         market_analysis: validationData.market_analysis,
         implementation: validationData.implementation,
         success_metrics: validationData.success_metrics,
@@ -298,7 +317,8 @@ Provide detailed market validation analysis.`
           original_data: {
             title: idea.title,
             description: idea.problem_statement,
-            target_market: idea.target_market
+            target_market: idea.target_market,
+            solution: idea.solution
           }
         },
         updated_at: new Date().toISOString()
