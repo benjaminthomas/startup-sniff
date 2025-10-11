@@ -74,7 +74,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
         });
 
         // Update usage_limits with correct data
-        await supabase
+        const updateResult = await supabase
           .from('usage_limits')
           .update({
             ideas_generated: actualIdeasCount,
@@ -83,7 +83,15 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           })
           .eq('user_id', session.userId);
 
-        console.log('✅ Usage counters fixed in database');
+        console.log('✅ Usage counters update result:', {
+          error: updateResult.error,
+          status: updateResult.status,
+          statusText: updateResult.statusText,
+          newValues: {
+            ideas_generated: actualIdeasCount,
+            validations_completed: actualValidatedCount
+          }
+        });
       }
 
       return {
@@ -96,7 +104,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
         }
       };
     } else {
-      console.log('⚠️ No usage_limits record, counting from all tables');
+      console.log('⚠️ No usage_limits record, counting from all tables and creating record');
 
       // Get actual counts from all tables
       const [ideasResult, validatedIdeasResult, contentResult] = await Promise.all([
@@ -115,12 +123,46 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           .eq('user_id', session.userId)
       ]);
 
+      const actualIdeasCount = ideasResult.count || 0;
+      const actualValidatedCount = validatedIdeasResult.count || 0;
+      const actualContentCount = contentResult.count || 0;
+
+      // Get plan limits based on plan type
+      const planLimits = planType === 'free' 
+        ? { ideas: 3, validations: 1 }
+        : { ideas: -1, validations: -1 }; // Unlimited for pro plans
+
+      // Create usage_limits record with actual counts
+      const insertResult = await supabase
+        .from('usage_limits')
+        .insert({
+          user_id: session.userId,
+          plan_type: planType,
+          monthly_limit_ideas: planLimits.ideas,
+          monthly_limit_validations: planLimits.validations,
+          ideas_generated: actualIdeasCount,
+          validations_completed: actualValidatedCount,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      console.log('✅ Created usage_limits record:', {
+        error: insertResult.error,
+        data: insertResult.data,
+        values: {
+          ideas_generated: actualIdeasCount,
+          validations_completed: actualValidatedCount
+        }
+      });
+
       return {
         planType,
         usage: {
-          ideas_used: ideasResult.count || 0,
-          validations_used: validatedIdeasResult.count || 0,
-          content_used: contentResult.count || 0,
+          ideas_used: actualIdeasCount,
+          validations_used: actualValidatedCount,
+          content_used: actualContentCount,
           last_reset: new Date().toISOString()
         }
       };

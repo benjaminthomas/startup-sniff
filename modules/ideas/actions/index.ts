@@ -272,8 +272,12 @@ export async function generateIdea(formData: FormData) {
 
     // Trigger usage reconciliation to update ideas_generated counter
     // This counts actual records in startup_ideas table and syncs to usage_limits
-    await getUserPlanAndUsage();
-    console.log('✅ Usage counters reconciled');
+    const reconciliationResult = await getUserPlanAndUsage();
+    console.log('✅ Usage counters reconciled:', {
+      ideas_used: reconciliationResult?.usage.ideas_used,
+      validations_used: reconciliationResult?.usage.validations_used,
+      planType: reconciliationResult?.planType
+    });
 
     // Revalidate the dashboard page
     revalidatePath('/dashboard');
