@@ -1,8 +1,8 @@
 'use client'
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { useTransition } from "react"
+import { usePathname, useRouter } from "next/navigation"
+import { useTransition, type SVGProps, type ComponentType } from "react"
 import { FeatureIcons } from "@/lib/icons"
 import { cn } from "@/lib/utils"
 import {
@@ -14,6 +14,7 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -39,11 +40,21 @@ interface SidebarUser {
   plan_type?: string
 }
 
+type SidebarNavigationItem = {
+  title: string
+  href: string
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  requiresPaid?: boolean
+}
+
 interface AppSidebarProps {
   user: SidebarUser
 }
 
-const navigationSections = [
+const navigationSections: {
+  label: string
+  items: SidebarNavigationItem[]
+}[] = [
   {
     label: "Overview",
     items: [
@@ -73,6 +84,17 @@ const navigationSections = [
     label: "Market Intelligence",
     items: [
       {
+        title: "Opportunities",
+        href: "/dashboard/opportunities",
+        icon: FeatureIcons.Search,
+      },
+      {
+        title: "My Conversations",
+        href: "/dashboard/conversations",
+        icon: FeatureIcons.RedditTrends,
+        requiresPaid: true,
+      },
+      {
         title: "Trend Insights",
         href: "/dashboard/trends",
         icon: FeatureIcons.TrendAnalysis,
@@ -101,6 +123,16 @@ const navigationSections = [
         title: "Billing & Usage",
         href: "/dashboard/billing",
         icon: FeatureIcons.Billing,
+      },
+      {
+        title: "Epic 1 Metrics",
+        href: "/dashboard/metrics",
+        icon: FeatureIcons.DataAnalysis,
+      },
+      {
+        title: "Epic 2 Metrics",
+        href: "/dashboard/epic2",
+        icon: FeatureIcons.MarketResearch,
       },
     ],
   },
@@ -152,6 +184,7 @@ function getPlanBadge(planType: NormalizedPlan) {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { state } = useSidebar()
   const collapsed = state === "collapsed"
   const [isSigningOut, startTransition] = useTransition()
@@ -256,28 +289,62 @@ export function AppSidebar({ user }: AppSidebarProps) {
                     item.href === "/dashboard"
                       ? pathname === item.href
                       : pathname.startsWith(item.href)
+                  const isLocked = item.requiresPaid && planType === "free"
+                  const upgradeUrl = item.requiresPaid
+                    ? `/dashboard/billing?upgrade=true&reason=${encodeURIComponent(`Upgrade to access ${item.title}`)}`
+                    : undefined
+                  const tooltip =
+                    collapsed && isLocked
+                      ? `${item.title} · Upgrade required`
+                      : collapsed
+                        ? item.title
+                        : undefined
 
                   return (
-                    <SidebarMenuItem key={item.href}>
+                    <SidebarMenuItem key={item.href} className="relative">
                       <SidebarMenuButton
-                        asChild
-                        isActive={isActive}
-                        tooltip={item.title}
+                        asChild={!isLocked}
+                        isActive={isActive && !isLocked}
+                        tooltip={tooltip}
+                        onClick={
+                          isLocked && upgradeUrl
+                            ? () => {
+                                router.push(upgradeUrl)
+                              }
+                            : undefined
+                        }
                         className={cn(
-                          isActive
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                          isLocked
+                            ? "border border-primary/50 bg-primary/5 text-primary hover:bg-primary/10"
+                            : isActive
+                              ? "bg-primary text-primary-foreground shadow-sm"
+                              : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         )}
                       >
-                        <Link href={item.href} className="group flex items-center gap-3">
-                          <item.icon
-                            className={cn(
-                              "h-4 w-4 transition-colors text-inherit"
+                        {isLocked ? (
+                          <div className="flex w-full items-center gap-3">
+                            <item.icon className="h-4 w-4" />
+                            {!collapsed && (
+                              <div className="flex flex-1 items-center justify-between">
+                                <span className="truncate">{item.title}</span>
+                                <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                                  Upgrade
+                                </span>
+                              </div>
                             )}
-                          />
-                          {!collapsed && <span className="truncate">{item.title}</span>}
-                        </Link>
+                          </div>
+                        ) : (
+                          <Link href={item.href} className="group flex w-full items-center gap-3">
+                            <item.icon className="h-4 w-4 transition-colors text-inherit" />
+                            {!collapsed && <span className="truncate">{item.title}</span>}
+                          </Link>
+                        )}
                       </SidebarMenuButton>
+                      {isLocked && (
+                        <SidebarMenuBadge className="bg-primary text-primary-foreground">
+                          Upgrade
+                        </SidebarMenuBadge>
+                      )}
                     </SidebarMenuItem>
                   )
                 })}

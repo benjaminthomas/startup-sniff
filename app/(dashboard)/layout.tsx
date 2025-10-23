@@ -1,6 +1,7 @@
 import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
 import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
+import { SessionTracker } from "@/components/analytics/session-tracker";
 import { getCurrentSession } from "@/modules/auth/services/jwt";
 import { UserDatabase } from "@/modules/auth/services/database";
 import { redirect } from "next/navigation";
@@ -46,6 +47,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarProvider>
+      <SessionTracker />
       <AppSidebar user={displayUser} />
       <SidebarInset className="relative overflow-hidden bg-[radial-gradient(100%_120%_at_50%_0%,rgba(124,58,237,0.18),rgba(124,58,237,0.04)_45%,transparent_80%)]">
         <div

@@ -31,13 +31,13 @@ interface CurrentPlanProps {
     current_period_end: string;
     cancel_at_period_end: boolean;
   } | null;
-  hasStripeCustomerId: boolean;
+  hasRazorpayCustomerId: boolean;
 }
 
 export function CurrentPlan({
   currentPlan,
   subscription,
-  hasStripeCustomerId,
+  hasRazorpayCustomerId,
 }: CurrentPlanProps) {
   const [isPending, startTransition] = useTransition();
 
@@ -48,7 +48,7 @@ export function CurrentPlan({
       if (result?.error) {
         toast.error(result.error);
       }
-      // Success case will redirect to Stripe Customer Portal
+      // Success case will redirect to billing page
     });
   };
 
@@ -63,7 +63,7 @@ export function CurrentPlan({
             </CardTitle>
             <CardDescription>Your current subscription details</CardDescription>
           </div>
-          {hasStripeCustomerId && (
+          {hasRazorpayCustomerId && (
             <Button
               variant="outline"
               onClick={handleManageBilling}

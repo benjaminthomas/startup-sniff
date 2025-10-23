@@ -18,7 +18,6 @@ export interface User {
   login_attempts: number
   locked_until: string | null
   plan_type: PlanType | null
-  stripe_customer_id: string | null // Legacy field - to be deprecated
   razorpay_customer_id: string | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at: string | null
@@ -41,7 +40,6 @@ export interface UserInsert {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: PlanType | null
-  stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
@@ -63,7 +61,6 @@ export interface UserUpdate {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: PlanType | null
-  stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null

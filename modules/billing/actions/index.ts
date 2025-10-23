@@ -26,6 +26,13 @@ export async function createSubscription(planId: string) {
       return { error: 'Invalid plan selected' };
     }
 
+    const missingServerKeys = !process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET;
+    if (missingServerKeys) {
+      return {
+        error: 'Razorpay API keys are not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to your environment.'
+      };
+    }
+
     // Create Razorpay subscription
     const subscription = await createRazorpaySubscription({
       plan_id: plan.priceId, // Using priceId as Razorpay plan_id
@@ -58,7 +65,24 @@ export async function createSubscription(planId: string) {
     };
   } catch (error) {
     console.error('Error creating subscription:', error);
-    return { error: 'Failed to create subscription' };
+    let errorMessage = 'Failed to create subscription';
+
+    if (typeof error === 'object' && error !== null && 'error' in error) {
+      const razorpayError = (error as { error?: { description?: string; reason?: string } }).error;
+      if (razorpayError?.description) {
+        errorMessage = `Razorpay error: ${razorpayError.description}`;
+      } else if (razorpayError?.reason) {
+        errorMessage = `Razorpay error: ${razorpayError.reason}`;
+      }
+    } else if (error instanceof Error && error.message) {
+      errorMessage = error.message;
+    }
+
+    if (errorMessage.includes('Plan') || errorMessage.includes('plan')) {
+      errorMessage += ' — confirm that the Razorpay plan IDs for each paid tier are set to your test-mode plans.';
+    }
+
+    return { error: errorMessage };
   }
 }
 

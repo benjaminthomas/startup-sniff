@@ -41,6 +41,7 @@
     "@types/cron": "^2.0.1",
     "@types/ioredis": "^4.28.10",
     "@types/nodemailer": "^7.0.1",
+    "@upstash/redis": "^1.35.5",
     "@vercel/analytics": "^1.5.0",
     "argon2": "^0.44.0",
     "autoprefixer": "^10.4.21",

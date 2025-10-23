@@ -1,6 +1,8 @@
 import { RedditRateLimiter } from './rate-limiter'
-import { RedditPostValidator } from './data-validator'
-import type { RedditPost, RedditPostInsert } from '@/types/supabase'
+import { RedditPostValidator, type RedditApiPost } from './data-validator'
+import { RedisCache } from '../services/redis-cache'
+import { getAllSubredditNames } from './subreddit-config'
+import type { RedditPostInsert } from '@/types/supabase'
 
 // Reddit API configuration interface
 export interface RedditApiConfig {
@@ -14,7 +16,7 @@ export interface RedditApiConfig {
 // Reddit API response types
 export interface RedditApiResponse<T> {
   success: boolean
-  data: T
+  data: T | null
   error?: string
   rateLimit?: {
     remaining: number
@@ -28,7 +30,7 @@ export interface RedditListingResponse {
   data: {
     children: Array<{
       kind: string
-      data: RedditPost
+      data: RedditApiPost
     }>
     after?: string
     before?: string
@@ -42,6 +44,24 @@ export interface RedditOAuthToken {
   expires_in: number
   scope: string
   refresh_token?: string
+}
+
+// Reddit user profile response
+export interface RedditUserProfile {
+  name: string
+  id: string
+  created: number // Unix timestamp
+  comment_karma: number
+  link_karma: number
+  total_karma: number
+  is_suspended: boolean
+  is_employee: boolean
+  has_verified_email: boolean
+}
+
+export interface RedditUserResponse {
+  kind: string
+  data: RedditUserProfile
 }
 
 // Fetch options for subreddit posts
@@ -65,15 +85,17 @@ export class RedditApiClient {
   private rateLimiter: RedditRateLimiter
   private logger: Logger
   private validator: RedditPostValidator
+  private cache: RedisCache
   private accessToken: string | null = null
   private tokenExpiry: Date | null = null
   private baseUrl: string
 
   constructor(
-    config: RedditApiConfig, 
+    config: RedditApiConfig,
     rateLimiter: RedditRateLimiter,
     logger: Logger,
-    validator?: RedditPostValidator
+    validator?: RedditPostValidator,
+    cache?: RedisCache
   ) {
     this.config = config
     this.rateLimiter = rateLimiter
@@ -81,12 +103,10 @@ export class RedditApiClient {
     this.validator = validator || new RedditPostValidator({
       maxTitleLength: 300,
       maxContentLength: 40000,
-      allowedSubreddits: [
-        'startups', 'entrepreneur', 'SaaS', 'digitalnomad', 
-        'sidehustle', 'freelance', 'webdev', 'marketing', 'indiehackers'
-      ],
+      allowedSubreddits: getAllSubredditNames(),
       requireMinScore: false
     })
+    this.cache = cache || new RedisCache({ prefix: 'reddit' })
     this.baseUrl = config.baseUrl || 'https://oauth.reddit.com'
   }
 
@@ -160,19 +180,19 @@ export class RedditApiClient {
       if (!(await this.ensureAuthenticated())) {
         return {
           success: false,
-          data: null as T,
+          data: null,
           error: 'Authentication failed'
         }
       }
 
       // Check rate limits
       const rateLimitResult = await this.rateLimiter.checkLimit('reddit-api', 60, 'medium')
-      
+
       if (!rateLimitResult.allowed) {
         this.logger.warn(`Reddit API rate limit exceeded. Next reset: ${new Date(rateLimitResult.resetTime || Date.now() + 60000)}`)
         return {
           success: false,
-          data: null as T,
+          data: null,
           error: `Rate limit exceeded. Try again in ${Math.ceil((rateLimitResult.resetTime?.getTime() || Date.now() + 60000 - Date.now()) / 1000)} seconds`
         }
       }
@@ -223,7 +243,7 @@ export class RedditApiClient {
       this.logger.error('Reddit API request failed:', error)
       return {
         success: false,
-        data: null as T,
+        data: null,
         error: error instanceof Error ? error.message : 'Unknown error'
       }
     }
@@ -302,10 +322,24 @@ export class RedditApiClient {
   }
 
   /**
-   * Fetch posts from a subreddit
+   * Generate cache key for subreddit posts
+   */
+  private getCacheKey(subreddit: string, options: FetchOptions): string {
+    const {
+      limit = 25,
+      timeRange = '24h',
+      sortBy = 'hot',
+      after = '',
+      before = ''
+    } = options
+    return `posts:${subreddit}:${sortBy}:${timeRange}:${limit}:${after}:${before}`
+  }
+
+  /**
+   * Fetch posts from a subreddit (with 4-hour cache)
    */
   async fetchSubredditPosts(
-    subreddit: string, 
+    subreddit: string,
     options: FetchOptions = {}
   ): Promise<RedditApiResponse<RedditPostInsert[]>> {
     // Validate subreddit name
@@ -316,6 +350,25 @@ export class RedditApiClient {
         error: `Invalid subreddit name: ${subreddit}`
       }
     }
+
+    // Check cache first
+    const cacheKey = this.getCacheKey(subreddit, options)
+    const cached = await this.cache.get<RedditPostInsert[]>(cacheKey)
+
+    if (cached !== null) {
+      this.logger.info(`Cache hit for r/${subreddit} (${cached.length} posts)`)
+      return {
+        success: true,
+        data: cached,
+        rateLimit: {
+          remaining: 999, // Not from API, so don't affect rate limit
+          resetTime: new Date(),
+          used: 0
+        }
+      }
+    }
+
+    this.logger.debug(`Cache miss for r/${subreddit}, fetching from API`)
 
     const {
       limit = 25,
@@ -345,11 +398,11 @@ export class RedditApiClient {
       
       const response = await this.makeRequest<RedditListingResponse>(endpoint)
       
-      if (!response.success) {
+      if (!response.success || !response.data) {
         return {
           success: false,
           data: [],
-          error: response.error
+          error: response.error || 'No data returned from Reddit API'
         }
       }
 
@@ -405,6 +458,9 @@ export class RedditApiClient {
 
       this.logger.info(`Successfully fetched and processed ${processedPosts.length} posts from r/${subreddit}`)
 
+      // Cache the results for 4 hours (14400 seconds)
+      await this.cache.set(cacheKey, processedPosts, { ttlSeconds: 14400 })
+
       return {
         success: true,
         data: processedPosts,
@@ -436,11 +492,11 @@ export class RedditApiClient {
     for (const subreddit of subreddits) {
       try {
         const result = await this.fetchSubredditPosts(subreddit, options)
-        
-        if (result.success) {
+
+        if (result.success && result.data) {
           allPosts.push(...result.data)
         } else {
-          errors.push(`${subreddit}: ${result.error}`)
+          errors.push(`${subreddit}: ${result.error || 'No data returned'}`)
         }
 
         // Small delay between requests to be respectful
@@ -502,6 +558,60 @@ export class RedditApiClient {
   }
 
   /**
+   * Fetch Reddit user profile (for Epic 2: Human Discovery)
+   */
+  async getUserProfile(username: string): Promise<RedditApiResponse<RedditUserProfile>> {
+    try {
+      this.logger.debug(`Fetching profile for user: ${username}`)
+
+      // Reddit usernames cannot contain spaces or special characters
+      if (!username || !/^[a-zA-Z0-9_-]{1,20}$/.test(username)) {
+        return {
+          success: false,
+          data: null,
+          error: `Invalid Reddit username: ${username}`
+        }
+      }
+
+      const endpoint = `/user/${username}/about.json`
+      const response = await this.makeRequest<RedditUserResponse>(endpoint)
+
+      if (!response.success || !response.data) {
+        return {
+          success: false,
+          data: null,
+          error: response.error || 'Failed to fetch user profile'
+        }
+      }
+
+      // Check if user is suspended
+      if (response.data.data.is_suspended) {
+        return {
+          success: false,
+          data: null,
+          error: `User ${username} is suspended`
+        }
+      }
+
+      const userProfile = response.data.data
+      this.logger.debug(`Successfully fetched profile for u/${username}`)
+
+      return {
+        success: true,
+        data: userProfile,
+        rateLimit: response.rateLimit
+      }
+    } catch (error) {
+      this.logger.error(`Failed to fetch user profile for u/${username}:`, error)
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error fetching user profile'
+      }
+    }
+  }
+
+  /**
    * Get client health status
    */
   async getHealthStatus(): Promise<{
@@ -511,12 +621,231 @@ export class RedditApiClient {
     lastError: string | null
   }> {
     const rateLimitStatus = await this.rateLimiter.checkLimit('reddit-api', 60, 'medium')
-    
+
     return {
       authenticated: this.isTokenValid(),
       tokenExpiry: this.tokenExpiry,
       rateLimitRemaining: rateLimitStatus.remaining || 0,
       lastError: null // Could track last error here
+    }
+  }
+
+  /**
+   * Epic 2, Story 2.2: Reddit OAuth Integration
+   * Generate OAuth authorization URL for user to connect their Reddit account
+   */
+  static getAuthorizationUrl(params: {
+    clientId: string
+    redirectUri: string
+    state: string // CSRF token
+    scope?: string[]
+  }): string {
+    const scopes = params.scope || ['identity', 'privatemessages', 'read', 'submit']
+    const authUrl = new URL('https://www.reddit.com/api/v1/authorize')
+
+    authUrl.searchParams.set('client_id', params.clientId)
+    authUrl.searchParams.set('response_type', 'code')
+    authUrl.searchParams.set('state', params.state)
+    authUrl.searchParams.set('redirect_uri', params.redirectUri)
+    authUrl.searchParams.set('duration', 'permanent') // Request refresh token
+    authUrl.searchParams.set('scope', scopes.join(' '))
+
+    return authUrl.toString()
+  }
+
+  /**
+   * Exchange authorization code for access and refresh tokens
+   */
+  static async exchangeCodeForTokens(params: {
+    code: string
+    clientId: string
+    clientSecret: string
+    redirectUri: string
+  }): Promise<RedditApiResponse<RedditOAuthToken>> {
+    try {
+      const auth = Buffer.from(`${params.clientId}:${params.clientSecret}`).toString('base64')
+
+      const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'StartupSniff/1.0'
+        },
+        body: new URLSearchParams({
+          grant_type: 'authorization_code',
+          code: params.code,
+          redirect_uri: params.redirectUri
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        return {
+          success: false,
+          data: null,
+          error: `OAuth token exchange failed: ${response.status} ${errorText}`
+        }
+      }
+
+      const tokenData: RedditOAuthToken = await response.json()
+
+      return {
+        success: true,
+        data: tokenData
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error during token exchange'
+      }
+    }
+  }
+
+  /**
+   * Refresh user's access token using refresh token
+   */
+  static async refreshUserAccessToken(params: {
+    refreshToken: string
+    clientId: string
+    clientSecret: string
+  }): Promise<RedditApiResponse<RedditOAuthToken>> {
+    try {
+      const auth = Buffer.from(`${params.clientId}:${params.clientSecret}`).toString('base64')
+
+      const response = await fetch('https://www.reddit.com/api/v1/access_token', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${auth}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'StartupSniff/1.0'
+        },
+        body: new URLSearchParams({
+          grant_type: 'refresh_token',
+          refresh_token: params.refreshToken
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        return {
+          success: false,
+          data: null,
+          error: `Token refresh failed: ${response.status} ${errorText}`
+        }
+      }
+
+      const tokenData: RedditOAuthToken = await response.json()
+
+      return {
+        success: true,
+        data: tokenData
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error during token refresh'
+      }
+    }
+  }
+
+  /**
+   * Send a direct message via Reddit API using user's OAuth token
+   */
+  static async sendDirectMessage(params: {
+    accessToken: string
+    to: string // Reddit username
+    subject: string
+    text: string
+  }): Promise<RedditApiResponse<{ success: boolean }>> {
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/compose', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${params.accessToken}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'User-Agent': 'StartupSniff/1.0'
+        },
+        body: new URLSearchParams({
+          api_type: 'json',
+          to: params.to,
+          subject: params.subject,
+          text: params.text
+        })
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        return {
+          success: false,
+          data: { success: false },
+          error: `Failed to send message: ${response.status} ${errorText}`
+        }
+      }
+
+      const data = await response.json()
+
+      // Check for Reddit API errors
+      if (data.json?.errors && data.json.errors.length > 0) {
+        return {
+          success: false,
+          data: { success: false },
+          error: `Reddit API error: ${data.json.errors[0][1]}`
+        }
+      }
+
+      return {
+        success: true,
+        data: { success: true }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: { success: false },
+        error: error instanceof Error ? error.message : 'Unknown error sending message'
+      }
+    }
+  }
+
+  /**
+   * Get authenticated user's identity using their access token
+   */
+  static async getUserIdentity(accessToken: string): Promise<RedditApiResponse<{ name: string; id: string }>> {
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'User-Agent': 'StartupSniff/1.0'
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        return {
+          success: false,
+          data: null,
+          error: `Failed to get user identity: ${response.status} ${errorText}`
+        }
+      }
+
+      const data = await response.json()
+
+      return {
+        success: true,
+        data: {
+          name: data.name,
+          id: data.id
+        }
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: null,
+        error: error instanceof Error ? error.message : 'Unknown error fetching user identity'
+      }
     }
   }
 }
