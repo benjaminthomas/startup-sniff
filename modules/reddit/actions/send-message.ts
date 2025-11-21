@@ -4,6 +4,7 @@ import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase/server'
 import { RedditApiClient } from '@/lib/reddit/api-client'
 import { getRateLimiter } from '@/lib/services/rate-limiter'
+import { sendMessageConfirmation } from '@/modules/notifications/services/email-notifications'
 
 /**
  * Epic 2, Story 2.4 & 2.5: Rate Limiting + Message Sending
@@ -178,6 +179,36 @@ export async function sendRedditMessageAction(
     const updatedQuota = await rateLimiter.increment(session.userId)
 
     console.log(`[send-message] Successfully sent message ${messageId}. Quota remaining: ${updatedQuota.remaining}`)
+
+    // 11. Send confirmation email (non-blocking)
+    try {
+      // Get user email and name
+      const { data: userInfo } = await supabase
+        .from('users')
+        .select('email, full_name')
+        .eq('id', session.userId)
+        .single()
+
+      // Get opportunity title from post
+      const { data: post } = await supabase
+        .from('reddit_posts')
+        .select('title')
+        .eq('reddit_id', message.pain_point_id)
+        .single()
+
+      if (userInfo?.email && post?.title) {
+        await sendMessageConfirmation({
+          email: userInfo.email,
+          name: userInfo.full_name || undefined,
+          recipientCount: 1,
+          opportunityTitle: post.title,
+          opportunityId: message.pain_point_id
+        })
+      }
+    } catch (emailError) {
+      console.error('[send-message] Failed to send confirmation email:', emailError)
+      // Don't fail the send operation if email fails
+    }
 
     return {
       success: true,

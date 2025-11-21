@@ -61,8 +61,8 @@ export function OpportunitiesContent({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {/* Score Filter */}
           <div>
             <label htmlFor="minScore" className="block text-sm font-medium text-gray-700 mb-1">
@@ -255,7 +255,7 @@ function OpportunityCard({ opportunity }: { opportunity: RedditPost }) {
     <Link
       href={`/dashboard/opportunities/${opportunity.reddit_id}`}
       onClick={handleClick}
-      className="block bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all"
+      className="block bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-5 md:p-6 hover:shadow-md hover:border-blue-300 transition-all"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">

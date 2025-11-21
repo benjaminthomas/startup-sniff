@@ -68,7 +68,7 @@ export function MessageList({ messages }: MessageListProps) {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Statuses</option>
               <option value="sent">Sent</option>
@@ -83,7 +83,7 @@ export function MessageList({ messages }: MessageListProps) {
             <select
               value={filterOutcome}
               onChange={(e) => setFilterOutcome(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2.5 md:py-1.5 min-h-[44px] md:min-h-0 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Outcomes</option>
               <option value="no_outcome">Awaiting Response</option>

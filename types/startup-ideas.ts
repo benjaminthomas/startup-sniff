@@ -1,4 +1,4 @@
-import { Database } from '@/lib/database.types'
+import { Database } from '@/types/supabase'
 
 // Extract the startup_ideas table type from the database
 export type StartupIdeaRow = Database['public']['Tables']['startup_ideas']['Row']

@@ -38,7 +38,7 @@ export function ConversationMetrics({ metrics }: ConversationMetricsProps) {
       {/* Primary Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Messages Sent */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Messages Sent</span>
             <span className="text-2xl">📤</span>
@@ -52,7 +52,7 @@ export function ConversationMetrics({ metrics }: ConversationMetricsProps) {
         </div>
 
         {/* Replies Received */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Replies Received</span>
             <span className="text-2xl">💬</span>
@@ -64,7 +64,7 @@ export function ConversationMetrics({ metrics }: ConversationMetricsProps) {
         </div>
 
         {/* Calls Scheduled */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Calls Scheduled</span>
             <span className="text-2xl">📞</span>
@@ -78,7 +78,7 @@ export function ConversationMetrics({ metrics }: ConversationMetricsProps) {
         </div>
 
         {/* Customers Acquired */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-gray-600">Customers</span>
             <span className="text-2xl">🎉</span>
@@ -94,7 +94,7 @@ export function ConversationMetrics({ metrics }: ConversationMetricsProps) {
 
       {/* Conversion Funnel Visualization */}
       {metrics.totalSent > 0 && (
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-6">
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border border-blue-200 p-4 md:p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Conversion Funnel</h3>
           <div className="space-y-3">
             {conversionFunnel.map((stage) => {

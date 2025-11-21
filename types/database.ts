@@ -21,6 +21,13 @@ export interface User {
   razorpay_customer_id: string | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at: string | null
+  email_preferences: Record<string, boolean> | null
+  email_unsubscribed: boolean
+  last_onboarding_email: string | null
+  onboarding_day1_sent_at: string | null
+  onboarding_day3_sent_at: string | null
+  onboarding_day7_sent_at: string | null
+  last_weekly_summary_sent_at: string | null
   created_at: string
   updated_at: string
 }
@@ -43,6 +50,13 @@ export interface UserInsert {
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
+  email_preferences?: Record<string, boolean> | null
+  email_unsubscribed?: boolean
+  last_onboarding_email?: string | null
+  onboarding_day1_sent_at?: string | null
+  onboarding_day3_sent_at?: string | null
+  onboarding_day7_sent_at?: string | null
+  last_weekly_summary_sent_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -64,6 +78,13 @@ export interface UserUpdate {
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
+  email_preferences?: Record<string, boolean> | null
+  email_unsubscribed?: boolean
+  last_onboarding_email?: string | null
+  onboarding_day1_sent_at?: string | null
+  onboarding_day3_sent_at?: string | null
+  onboarding_day7_sent_at?: string | null
+  last_weekly_summary_sent_at?: string | null
   updated_at?: string
 }
 

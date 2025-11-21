@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string | null
+          event_name: string
+          event_properties: Json | null
+          id: string
+          ip_address: string | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_name: string
+          event_properties?: Json | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_name?: string
+          event_properties?: Json | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auth_rate_limits: {
         Row: {
           attempts: number | null
@@ -44,6 +94,57 @@ export type Database = {
           identifier?: string
           updated_at?: string | null
           window_start?: string | null
+        }
+        Relationships: []
+      }
+      daily_metrics: {
+        Row: {
+          avg_opportunities_per_session: number | null
+          avg_session_duration_seconds: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          id: string
+          metric_date: string
+          new_users: number | null
+          returning_users: number | null
+          seven_day_return_rate: number | null
+          total_opportunities_viewed: number | null
+          total_page_views: number | null
+          total_sessions: number | null
+          total_users: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_opportunities_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date: string
+          new_users?: number | null
+          returning_users?: number | null
+          seven_day_return_rate?: number | null
+          total_opportunities_viewed?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_opportunities_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          new_users?: number | null
+          returning_users?: number | null
+          seven_day_return_rate?: number | null
+          total_opportunities_viewed?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_users?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -503,6 +604,53 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          feedback_type: string
+          id: string
+          page_url: string | null
+          rating: number | null
+          sentiment: string | null
+          status: string | null
+          tags: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type: string
+          id?: string
+          page_url?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          status?: string | null
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type?: string
+          id?: string
+          page_url?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          status?: string | null
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_sessions: {
         Row: {
           created_at: string | null
@@ -544,19 +692,94 @@ export type Database = {
           },
         ]
       }
+      user_sessions_analytics: {
+        Row: {
+          browser: string | null
+          created_at: string | null
+          device_type: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          exit_page: string | null
+          filters_applied: number | null
+          id: string
+          landing_page: string | null
+          opportunities_clicked: number | null
+          opportunities_viewed: number | null
+          page_views: number | null
+          searches_performed: number | null
+          session_id: string
+          started_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          exit_page?: string | null
+          filters_applied?: number | null
+          id?: string
+          landing_page?: string | null
+          opportunities_clicked?: number | null
+          opportunities_viewed?: number | null
+          page_views?: number | null
+          searches_performed?: number | null
+          session_id: string
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          exit_page?: string | null
+          filters_applied?: number | null
+          id?: string
+          landing_page?: string | null
+          opportunities_clicked?: number | null
+          opportunities_viewed?: number | null
+          page_views?: number | null
+          searches_performed?: number | null
+          session_id?: string
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
           created_at: string
           email: string
+          email_preferences: Json | null
+          email_unsubscribed: boolean | null
           email_verification_expires_at: string | null
           email_verification_token: string | null
           email_verified: boolean | null
           full_name: string | null
           id: string
           last_login_at: string | null
+          last_onboarding_email: string | null
+          last_weekly_summary_sent_at: string | null
           locked_until: string | null
           login_attempts: number | null
+          onboarding_day1_sent_at: string | null
+          onboarding_day3_sent_at: string | null
+          onboarding_day7_sent_at: string | null
           password_hash: string | null
           password_reset_expires_at: string | null
           password_reset_token: string | null
@@ -578,14 +801,21 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          email_preferences?: Json | null
+          email_unsubscribed?: boolean | null
           email_verification_expires_at?: string | null
           email_verification_token?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id: string
           last_login_at?: string | null
+          last_onboarding_email?: string | null
+          last_weekly_summary_sent_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          onboarding_day1_sent_at?: string | null
+          onboarding_day3_sent_at?: string | null
+          onboarding_day7_sent_at?: string | null
           password_hash?: string | null
           password_reset_expires_at?: string | null
           password_reset_token?: string | null
@@ -607,14 +837,21 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          email_preferences?: Json | null
+          email_unsubscribed?: boolean | null
           email_verification_expires_at?: string | null
           email_verification_token?: string | null
           email_verified?: boolean | null
           full_name?: string | null
           id?: string
           last_login_at?: string | null
+          last_onboarding_email?: string | null
+          last_weekly_summary_sent_at?: string | null
           locked_until?: string | null
           login_attempts?: number | null
+          onboarding_day1_sent_at?: string | null
+          onboarding_day3_sent_at?: string | null
+          onboarding_day7_sent_at?: string | null
           password_hash?: string | null
           password_reset_expires_at?: string | null
           password_reset_token?: string | null
@@ -634,11 +871,279 @@ export type Database = {
         }
         Relationships: []
       }
+      validation_thresholds: {
+        Row: {
+          created_at: string | null
+          green_threshold: number
+          higher_is_better: boolean | null
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          red_threshold: number
+          updated_at: string | null
+          yellow_threshold: number
+        }
+        Insert: {
+          created_at?: string | null
+          green_threshold: number
+          higher_is_better?: boolean | null
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          red_threshold: number
+          updated_at?: string | null
+          yellow_threshold: number
+        }
+        Update: {
+          created_at?: string | null
+          green_threshold?: number
+          higher_is_better?: boolean | null
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          red_threshold?: number
+          updated_at?: string | null
+          yellow_threshold?: number
+        }
+        Relationships: []
+      }
+      epic2_daily_metrics: {
+        Row: {
+          id: string
+          metric_date: string
+          total_users: number | null
+          free_users: number | null
+          paid_users: number | null
+          trial_users: number | null
+          signups_today: number | null
+          upgrades_today: number | null
+          churns_today: number | null
+          free_to_paid_conversion_rate: number | null
+          messages_sent_today: number | null
+          unique_senders_today: number | null
+          avg_messages_per_sender: number | null
+          message_send_rate: number | null
+          templates_generated_today: number | null
+          templates_edited_today: number | null
+          template_edit_rate: number | null
+          responses_received_today: number | null
+          template_response_rate: number | null
+          mrr: number | null
+          daily_revenue: number | null
+          avg_revenue_per_user: number | null
+          avg_session_duration_seconds: number | null
+          opportunities_viewed_today: number | null
+          contacts_discovered_today: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_date: string
+          total_users?: number | null
+          free_users?: number | null
+          paid_users?: number | null
+          trial_users?: number | null
+          signups_today?: number | null
+          upgrades_today?: number | null
+          churns_today?: number | null
+          free_to_paid_conversion_rate?: number | null
+          messages_sent_today?: number | null
+          unique_senders_today?: number | null
+          avg_messages_per_sender?: number | null
+          message_send_rate?: number | null
+          templates_generated_today?: number | null
+          templates_edited_today?: number | null
+          template_edit_rate?: number | null
+          responses_received_today?: number | null
+          template_response_rate?: number | null
+          mrr?: number | null
+          daily_revenue?: number | null
+          avg_revenue_per_user?: number | null
+          avg_session_duration_seconds?: number | null
+          opportunities_viewed_today?: number | null
+          contacts_discovered_today?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_date?: string
+          total_users?: number | null
+          free_users?: number | null
+          paid_users?: number | null
+          trial_users?: number | null
+          signups_today?: number | null
+          upgrades_today?: number | null
+          churns_today?: number | null
+          free_to_paid_conversion_rate?: number | null
+          messages_sent_today?: number | null
+          unique_senders_today?: number | null
+          avg_messages_per_sender?: number | null
+          message_send_rate?: number | null
+          templates_generated_today?: number | null
+          templates_edited_today?: number | null
+          template_edit_rate?: number | null
+          responses_received_today?: number | null
+          template_response_rate?: number | null
+          mrr?: number | null
+          daily_revenue?: number | null
+          avg_revenue_per_user?: number | null
+          avg_session_duration_seconds?: number | null
+          opportunities_viewed_today?: number | null
+          contacts_discovered_today?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      epic2_cohorts: {
+        Row: {
+          id: string
+          cohort_month: string
+          cohort_size: number | null
+          month_0_retained: number | null
+          month_1_retained: number | null
+          month_2_retained: number | null
+          month_3_retained: number | null
+          month_6_retained: number | null
+          month_0_revenue: number | null
+          month_1_revenue: number | null
+          month_2_revenue: number | null
+          month_3_revenue: number | null
+          month_6_revenue: number | null
+          total_upgrades: number | null
+          avg_days_to_upgrade: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          cohort_month: string
+          cohort_size?: number | null
+          month_0_retained?: number | null
+          month_1_retained?: number | null
+          month_2_retained?: number | null
+          month_3_retained?: number | null
+          month_6_retained?: number | null
+          month_0_revenue?: number | null
+          month_1_revenue?: number | null
+          month_2_revenue?: number | null
+          month_3_revenue?: number | null
+          month_6_revenue?: number | null
+          total_upgrades?: number | null
+          avg_days_to_upgrade?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          cohort_month?: string
+          cohort_size?: number | null
+          month_0_retained?: number | null
+          month_1_retained?: number | null
+          month_2_retained?: number | null
+          month_3_retained?: number | null
+          month_6_retained?: number | null
+          month_0_revenue?: number | null
+          month_1_revenue?: number | null
+          month_2_revenue?: number | null
+          month_3_revenue?: number | null
+          month_6_revenue?: number | null
+          total_upgrades?: number | null
+          avg_days_to_upgrade?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      epic2_conversion_events: {
+        Row: {
+          id: string
+          user_id: string
+          session_id: string | null
+          event_type: string
+          event_metadata: Json | null
+          occurred_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_id?: string | null
+          event_type: string
+          event_metadata?: Json | null
+          occurred_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_id?: string | null
+          event_type?: string
+          event_metadata?: Json | null
+          occurred_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epic2_conversion_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epic2_validation_thresholds: {
+        Row: {
+          id: string
+          metric_name: string
+          green_threshold: number
+          yellow_threshold: number
+          red_threshold: number
+          metric_unit: string | null
+          higher_is_better: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          green_threshold: number
+          yellow_threshold: number
+          red_threshold: number
+          metric_unit?: string | null
+          higher_is_better?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          green_threshold?: number
+          yellow_threshold?: number
+          red_threshold?: number
+          metric_unit?: string | null
+          higher_is_better?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      calculate_daily_metrics: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
+      calculate_epic2_daily_metrics: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
       cleanup_expired_auth_data: { Args: never; Returns: undefined }
     }
     Enums: {

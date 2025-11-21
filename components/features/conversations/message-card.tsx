@@ -116,7 +116,7 @@ export function MessageCard({ message }: MessageCardProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
       {/* Header: Contact & Status */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
@@ -183,28 +183,28 @@ export function MessageCard({ message }: MessageCardProps) {
               <button
                 onClick={() => handleOutcomeUpdate('replied')}
                 disabled={isUpdating || localOutcome === 'replied'}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2.5 md:py-2 min-h-[44px] md:min-h-0 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 💬 Replied
               </button>
               <button
                 onClick={() => handleOutcomeUpdate('call_scheduled')}
                 disabled={isUpdating || localOutcome === 'call_scheduled'}
-                className="px-3 py-1.5 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2.5 md:py-2 min-h-[44px] md:min-h-0 bg-purple-600 text-white text-sm rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 📞 Call Scheduled
               </button>
               <button
                 onClick={() => handleOutcomeUpdate('customer_acquired')}
                 disabled={isUpdating || localOutcome === 'customer_acquired'}
-                className="px-3 py-1.5 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2.5 md:py-2 min-h-[44px] md:min-h-0 bg-yellow-600 text-white text-sm rounded-lg hover:bg-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 🎉 Customer!
               </button>
               <button
                 onClick={() => handleOutcomeUpdate('dead_end')}
                 disabled={isUpdating || localOutcome === 'dead_end'}
-                className="px-3 py-1.5 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2.5 md:py-2 min-h-[44px] md:min-h-0 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Dead End
               </button>
@@ -212,7 +212,7 @@ export function MessageCard({ message }: MessageCardProps) {
                 <button
                   onClick={() => handleOutcomeUpdate(null)}
                   disabled={isUpdating}
-                  className="px-3 py-1.5 bg-white text-gray-700 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2.5 md:py-2 min-h-[44px] md:min-h-0 bg-white text-gray-700 text-sm rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Clear
                 </button>
