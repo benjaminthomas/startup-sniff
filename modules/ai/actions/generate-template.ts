@@ -2,7 +2,8 @@
 
 import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase/server'
-import { generateMessageTemplate, type TemplateVariant } from '../services/template-generator'
+import { generateMessageTemplate } from '../services/template-generator'
+import type { TemplateVariant } from '@/lib/constants/template-variants'
 
 /**
  * Epic 2, Story 2.3: AI Message Templates

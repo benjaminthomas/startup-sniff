@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { generateTemplateAction } from '@/modules/ai/actions/generate-template'
 import { sendRedditMessageAction, getMessageQuotaAction } from '@/modules/reddit/actions/send-message'
-import type { TemplateVariant } from '@/modules/ai/services/template-generator'
+import type { TemplateVariant } from '@/lib/constants/template-variants'
 import {
   Dialog,
   DialogContent,

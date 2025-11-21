@@ -1,16 +1,20 @@
 import OpenAI from 'openai'
 import type { RedditContact } from '@/types/supabase'
+import {
+  type TemplateVariant,
+  TEMPLATE_VARIANT_CONFIGS,
+  getRandomTemplateVariant,
+} from '@/lib/constants/template-variants'
 
 /**
- * Epic 2, Story 2.3: AI Message Templates
+ * Epic 2, Story 2.3 & 2.10: AI Message Templates with A/B Testing
  *
  * Generates personalized message templates using GPT-4 based on:
  * - Contact's Reddit post excerpt
  * - Pain point details
  * - Template variant (professional, casual, concise, value_first)
+ * - Random variant assignment for A/B testing
  */
-
-export type TemplateVariant = 'professional' | 'casual' | 'concise' | 'value_first'
 
 interface GenerateTemplateParams {
   contact: RedditContact
@@ -31,20 +35,11 @@ const openai = new OpenAI({
 })
 
 /**
- * Template prompt instructions for each variant
+ * Get variant-specific system prompt from configuration
  */
-const VARIANT_INSTRUCTIONS = {
-  professional: `Write in a professional, respectful tone. Use formal language and structure.
-Include a clear introduction, value proposition, and call-to-action. Keep it business-focused.`,
-
-  casual: `Write in a friendly, conversational tone. Use casual language like you're talking to a friend.
-Be warm and relatable. Add a touch of personality but stay professional.`,
-
-  concise: `Write a very brief message (100-150 words max). Get straight to the point.
-No fluff - just the essential value proposition and a clear next step.`,
-
-  value_first: `Lead with immediate, concrete value. Offer something useful upfront (insight, resource, solution).
-Don't ask for anything initially. Build trust by giving first.`
+function getVariantSystemPrompt(variant: TemplateVariant): string {
+  const config = TEMPLATE_VARIANT_CONFIGS[variant]
+  return config.systemPrompt
 }
 
 /**
@@ -56,23 +51,22 @@ export async function generateMessageTemplate(
   try {
     const { contact, painPointTitle, painPointContent, variant } = params
 
-    // Construct the system prompt
+    // Get variant-specific system prompt
+    const variantPrompt = getVariantSystemPrompt(variant)
+
     const systemPrompt = `You are an expert at writing personalized, empathetic outreach messages for founders reaching out to potential customers on Reddit.
 
 Your goal: Write a message that feels PERSONAL, not salesy. Show genuine understanding of their problem. Offer value, not a pitch.
 
-Key principles:
+${variantPrompt}
+
+Additional guidelines:
 - Reference their specific Reddit post to show you read it
 - Demonstrate empathy for their pain point
-- Offer value or insight first, don't immediately ask for anything
 - Keep it conversational and human (not corporate)
-- End with a soft call-to-action (optional: ask a question, offer to chat, share a resource)
-- Length: 150-250 words
 - DO NOT include subject line
 - DO NOT include salutation like "Dear" or "Hi [Name]" - the message should start directly
-- DO NOT sign off with your name - just end with the message
-
-${VARIANT_INSTRUCTIONS[variant]}`
+- DO NOT sign off with your name - just end with the message`
 
     // Construct the user prompt with context
     const userPrompt = `Context:
@@ -121,7 +115,23 @@ Write a personalized Reddit DM for this user. Reference their specific post exce
 }
 
 /**
- * Generate multiple template variants for A/B testing
+ * Generate a template with randomly assigned variant for A/B testing
+ * Returns both the template and the variant used
+ */
+export async function generateTemplateWithRandomVariant(
+  params: Omit<GenerateTemplateParams, 'variant'>
+): Promise<GenerateTemplateResult & { variant: TemplateVariant }> {
+  const variant = getRandomTemplateVariant()
+  const result = await generateMessageTemplate({ ...params, variant })
+
+  return {
+    ...result,
+    variant,
+  }
+}
+
+/**
+ * Generate multiple template variants for comparison/testing
  */
 export async function generateMultipleTemplates(
   params: Omit<GenerateTemplateParams, 'variant'>
