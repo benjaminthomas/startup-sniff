@@ -14,6 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string | null
+          event_name: string
+          event_properties: Json | null
+          id: string
+          ip_address: string | null
+          page_url: string | null
+          referrer: string | null
+          session_id: string
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_name: string
+          event_properties?: Json | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          event_name?: string
+          event_properties?: Json | null
+          id?: string
+          ip_address?: string | null
+          page_url?: string | null
+          referrer?: string | null
+          session_id?: string
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auth_rate_limits: {
+        Row: {
+          attempts: number | null
+          blocked_until: string | null
+          created_at: string | null
+          endpoint: string
+          id: string
+          identifier: string
+          updated_at: string | null
+          window_start: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          identifier: string
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          blocked_until?: string | null
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          identifier?: string
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
+      daily_metrics: {
+        Row: {
+          avg_opportunities_per_session: number | null
+          avg_session_duration_seconds: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          id: string
+          metric_date: string
+          new_users: number | null
+          returning_users: number | null
+          seven_day_return_rate: number | null
+          total_opportunities_viewed: number | null
+          total_page_views: number | null
+          total_sessions: number | null
+          total_users: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          avg_opportunities_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date: string
+          new_users?: number | null
+          returning_users?: number | null
+          seven_day_return_rate?: number | null
+          total_opportunities_viewed?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          avg_opportunities_per_session?: number | null
+          avg_session_duration_seconds?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          id?: string
+          metric_date?: string
+          new_users?: number | null
+          returning_users?: number | null
+          seven_day_return_rate?: number | null
+          total_opportunities_viewed?: number | null
+          total_page_views?: number | null
+          total_sessions?: number | null
+          total_users?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       generated_content: {
         Row: {
           brand_voice: string | null
@@ -68,6 +202,135 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          contact_id: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          message_text: string
+          outcome: string | null
+          pain_point_id: string
+          reddit_username: string
+          replied_at: string | null
+          send_status: string
+          sent_at: string | null
+          template_variant: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          contact_id: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_text: string
+          outcome?: string | null
+          pain_point_id: string
+          reddit_username: string
+          replied_at?: string | null
+          send_status?: string
+          sent_at?: string | null
+          template_variant: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          contact_id?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          message_text?: string
+          outcome?: string | null
+          pain_point_id?: string
+          reddit_username?: string
+          replied_at?: string | null
+          send_status?: string
+          sent_at?: string | null
+          template_variant?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "reddit_contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_pain_point_id_fkey"
+            columns: ["pain_point_id"]
+            isOneToOne: false
+            referencedRelation: "reddit_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reddit_contacts: {
+        Row: {
+          account_age_days: number
+          created_at: string | null
+          discovered_at: string
+          engagement_score: number
+          id: string
+          karma: number
+          pain_point_id: string
+          post_excerpt: string | null
+          post_id: string
+          posting_frequency: number | null
+          reddit_user_id: string
+          reddit_username: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_age_days?: number
+          created_at?: string | null
+          discovered_at?: string
+          engagement_score?: number
+          id?: string
+          karma?: number
+          pain_point_id: string
+          post_excerpt?: string | null
+          post_id: string
+          posting_frequency?: number | null
+          reddit_user_id: string
+          reddit_username: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_age_days?: number
+          created_at?: string | null
+          discovered_at?: string
+          engagement_score?: number
+          id?: string
+          karma?: number
+          pain_point_id?: string
+          post_excerpt?: string | null
+          post_id?: string
+          posting_frequency?: number | null
+          reddit_user_id?: string
+          reddit_username?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reddit_contacts_pain_point_id_fkey"
+            columns: ["pain_point_id"]
+            isOneToOne: false
+            referencedRelation: "reddit_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reddit_posts: {
         Row: {
           analysis_data: Json | null
@@ -79,14 +342,21 @@ export type Database = {
           hash: string
           id: string
           intent_flags: string[] | null
+          is_emerging: boolean | null
           processed_at: string | null
           reddit_id: string
           score: number | null
+          search_vector: unknown
           sentiment: number | null
           subreddit: string
           title: string
+          trend_direction: string | null
+          trend_percentage: number | null
           updated_at: string | null
           url: string | null
+          viability_explanation: string | null
+          viability_score: number | null
+          weekly_frequency: number | null
         }
         Insert: {
           analysis_data?: Json | null
@@ -98,14 +368,21 @@ export type Database = {
           hash: string
           id?: string
           intent_flags?: string[] | null
+          is_emerging?: boolean | null
           processed_at?: string | null
           reddit_id: string
           score?: number | null
+          search_vector?: unknown
           sentiment?: number | null
           subreddit: string
           title: string
+          trend_direction?: string | null
+          trend_percentage?: number | null
           updated_at?: string | null
           url?: string | null
+          viability_explanation?: string | null
+          viability_score?: number | null
+          weekly_frequency?: number | null
         }
         Update: {
           analysis_data?: Json | null
@@ -117,14 +394,21 @@ export type Database = {
           hash?: string
           id?: string
           intent_flags?: string[] | null
+          is_emerging?: boolean | null
           processed_at?: string | null
           reddit_id?: string
           score?: number | null
+          search_vector?: unknown
           sentiment?: number | null
           subreddit?: string
           title?: string
+          trend_direction?: string | null
+          trend_percentage?: number | null
           updated_at?: string | null
           url?: string | null
+          viability_explanation?: string | null
+          viability_score?: number | null
+          weekly_frequency?: number | null
         }
         Relationships: []
       }
@@ -199,8 +483,14 @@ export type Database = {
           created_at: string
           current_period_end: string | null
           current_period_start: string | null
+          discount_applied: number | null
           id: string
-          plan_type: Database["public"]["Enums"]["plan_type"]
+          offer_id: string | null
+          offer_name: string | null
+          plan_type: Database["public"]["Enums"]["plan_type"] | null
+          razorpay_customer_id: string | null
+          razorpay_plan_id: string | null
+          razorpay_subscription_id: string | null
           status: Database["public"]["Enums"]["subscription_status"] | null
           stripe_price_id: string
           stripe_subscription_id: string | null
@@ -212,8 +502,14 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          discount_applied?: number | null
           id?: string
-          plan_type: Database["public"]["Enums"]["plan_type"]
+          offer_id?: string | null
+          offer_name?: string | null
+          plan_type?: Database["public"]["Enums"]["plan_type"] | null
+          razorpay_customer_id?: string | null
+          razorpay_plan_id?: string | null
+          razorpay_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_price_id: string
           stripe_subscription_id?: string | null
@@ -225,8 +521,14 @@ export type Database = {
           created_at?: string
           current_period_end?: string | null
           current_period_start?: string | null
+          discount_applied?: number | null
           id?: string
-          plan_type?: Database["public"]["Enums"]["plan_type"]
+          offer_id?: string | null
+          offer_name?: string | null
+          plan_type?: Database["public"]["Enums"]["plan_type"] | null
+          razorpay_customer_id?: string | null
+          razorpay_plan_id?: string | null
+          razorpay_subscription_id?: string | null
           status?: Database["public"]["Enums"]["subscription_status"] | null
           stripe_price_id?: string
           stripe_subscription_id?: string | null
@@ -245,9 +547,13 @@ export type Database = {
       }
       usage_limits: {
         Row: {
+          content_generated: number | null
           created_at: string
           id: string
           ideas_generated: number | null
+          message_reset_date: string | null
+          messages_sent_today: number | null
+          monthly_limit_content: number | null
           monthly_limit_ideas: number
           monthly_limit_validations: number
           plan_type: Database["public"]["Enums"]["plan_type"]
@@ -257,9 +563,13 @@ export type Database = {
           validations_completed: number | null
         }
         Insert: {
+          content_generated?: number | null
           created_at?: string
           id?: string
           ideas_generated?: number | null
+          message_reset_date?: string | null
+          messages_sent_today?: number | null
+          monthly_limit_content?: number | null
           monthly_limit_ideas: number
           monthly_limit_validations: number
           plan_type: Database["public"]["Enums"]["plan_type"]
@@ -269,9 +579,13 @@ export type Database = {
           validations_completed?: number | null
         }
         Update: {
+          content_generated?: number | null
           created_at?: string
           id?: string
           ideas_generated?: number | null
+          message_reset_date?: string | null
+          messages_sent_today?: number | null
+          monthly_limit_content?: number | null
           monthly_limit_ideas?: number
           monthly_limit_validations?: number
           plan_type?: Database["public"]["Enums"]["plan_type"]
@@ -290,14 +604,192 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          feedback_type: string
+          id: string
+          page_url: string | null
+          rating: number | null
+          sentiment: string | null
+          status: string | null
+          tags: string[] | null
+          user_id: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type: string
+          id?: string
+          page_url?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          status?: string | null
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          feedback_type?: string
+          id?: string
+          page_url?: string | null
+          rating?: number | null
+          sentiment?: string | null
+          status?: string | null
+          tags?: string[] | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          session_token: string
+          updated_at: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          session_token: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          session_token?: string
+          updated_at?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_sessions_analytics: {
+        Row: {
+          browser: string | null
+          created_at: string | null
+          device_type: string | null
+          duration_seconds: number | null
+          ended_at: string | null
+          exit_page: string | null
+          filters_applied: number | null
+          id: string
+          landing_page: string | null
+          opportunities_clicked: number | null
+          opportunities_viewed: number | null
+          page_views: number | null
+          searches_performed: number | null
+          session_id: string
+          started_at: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          exit_page?: string | null
+          filters_applied?: number | null
+          id?: string
+          landing_page?: string | null
+          opportunities_clicked?: number | null
+          opportunities_viewed?: number | null
+          page_views?: number | null
+          searches_performed?: number | null
+          session_id: string
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          exit_page?: string | null
+          filters_applied?: number | null
+          id?: string
+          landing_page?: string | null
+          opportunities_clicked?: number | null
+          opportunities_viewed?: number | null
+          page_views?: number | null
+          searches_performed?: number | null
+          session_id?: string
+          started_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null
           created_at: string
           email: string
+          email_preferences: Json | null
+          email_unsubscribed: boolean | null
+          email_verification_expires_at: string | null
+          email_verification_token: string | null
+          email_verified: boolean | null
           full_name: string | null
           id: string
-          plan_type: Database["public"]["Enums"]["plan_type"] | null
+          last_login_at: string | null
+          last_onboarding_email: string | null
+          last_weekly_summary_sent_at: string | null
+          locked_until: string | null
+          login_attempts: number | null
+          onboarding_day1_sent_at: string | null
+          onboarding_day3_sent_at: string | null
+          onboarding_day7_sent_at: string | null
+          password_hash: string | null
+          password_reset_expires_at: string | null
+          password_reset_token: string | null
+          plan_type: Database["public"]["Enums"]["plan_type"]
+          razorpay_customer_id: string | null
+          reddit_access_token: string | null
+          reddit_connected_at: string | null
+          reddit_refresh_token: string | null
+          reddit_token_expires_at: string | null
+          reddit_username: string | null
           stripe_customer_id: string | null
           subscription_status:
             | Database["public"]["Enums"]["subscription_status"]
@@ -309,9 +801,31 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email: string
+          email_preferences?: Json | null
+          email_unsubscribed?: boolean | null
+          email_verification_expires_at?: string | null
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           id: string
-          plan_type?: Database["public"]["Enums"]["plan_type"] | null
+          last_login_at?: string | null
+          last_onboarding_email?: string | null
+          last_weekly_summary_sent_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
+          onboarding_day1_sent_at?: string | null
+          onboarding_day3_sent_at?: string | null
+          onboarding_day7_sent_at?: string | null
+          password_hash?: string | null
+          password_reset_expires_at?: string | null
+          password_reset_token?: string | null
+          plan_type?: Database["public"]["Enums"]["plan_type"]
+          razorpay_customer_id?: string | null
+          reddit_access_token?: string | null
+          reddit_connected_at?: string | null
+          reddit_refresh_token?: string | null
+          reddit_token_expires_at?: string | null
+          reddit_username?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
@@ -323,9 +837,31 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           email?: string
+          email_preferences?: Json | null
+          email_unsubscribed?: boolean | null
+          email_verification_expires_at?: string | null
+          email_verification_token?: string | null
+          email_verified?: boolean | null
           full_name?: string | null
           id?: string
-          plan_type?: Database["public"]["Enums"]["plan_type"] | null
+          last_login_at?: string | null
+          last_onboarding_email?: string | null
+          last_weekly_summary_sent_at?: string | null
+          locked_until?: string | null
+          login_attempts?: number | null
+          onboarding_day1_sent_at?: string | null
+          onboarding_day3_sent_at?: string | null
+          onboarding_day7_sent_at?: string | null
+          password_hash?: string | null
+          password_reset_expires_at?: string | null
+          password_reset_token?: string | null
+          plan_type?: Database["public"]["Enums"]["plan_type"]
+          razorpay_customer_id?: string | null
+          reddit_access_token?: string | null
+          reddit_connected_at?: string | null
+          reddit_refresh_token?: string | null
+          reddit_token_expires_at?: string | null
+          reddit_username?: string | null
           stripe_customer_id?: string | null
           subscription_status?:
             | Database["public"]["Enums"]["subscription_status"]
@@ -335,12 +871,280 @@ export type Database = {
         }
         Relationships: []
       }
+      validation_thresholds: {
+        Row: {
+          created_at: string | null
+          green_threshold: number
+          higher_is_better: boolean | null
+          id: string
+          metric_name: string
+          metric_unit: string | null
+          red_threshold: number
+          updated_at: string | null
+          yellow_threshold: number
+        }
+        Insert: {
+          created_at?: string | null
+          green_threshold: number
+          higher_is_better?: boolean | null
+          id?: string
+          metric_name: string
+          metric_unit?: string | null
+          red_threshold: number
+          updated_at?: string | null
+          yellow_threshold: number
+        }
+        Update: {
+          created_at?: string | null
+          green_threshold?: number
+          higher_is_better?: boolean | null
+          id?: string
+          metric_name?: string
+          metric_unit?: string | null
+          red_threshold?: number
+          updated_at?: string | null
+          yellow_threshold?: number
+        }
+        Relationships: []
+      }
+      epic2_daily_metrics: {
+        Row: {
+          id: string
+          metric_date: string
+          total_users: number | null
+          free_users: number | null
+          paid_users: number | null
+          trial_users: number | null
+          signups_today: number | null
+          upgrades_today: number | null
+          churns_today: number | null
+          free_to_paid_conversion_rate: number | null
+          messages_sent_today: number | null
+          unique_senders_today: number | null
+          avg_messages_per_sender: number | null
+          message_send_rate: number | null
+          templates_generated_today: number | null
+          templates_edited_today: number | null
+          template_edit_rate: number | null
+          responses_received_today: number | null
+          template_response_rate: number | null
+          mrr: number | null
+          daily_revenue: number | null
+          avg_revenue_per_user: number | null
+          avg_session_duration_seconds: number | null
+          opportunities_viewed_today: number | null
+          contacts_discovered_today: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_date: string
+          total_users?: number | null
+          free_users?: number | null
+          paid_users?: number | null
+          trial_users?: number | null
+          signups_today?: number | null
+          upgrades_today?: number | null
+          churns_today?: number | null
+          free_to_paid_conversion_rate?: number | null
+          messages_sent_today?: number | null
+          unique_senders_today?: number | null
+          avg_messages_per_sender?: number | null
+          message_send_rate?: number | null
+          templates_generated_today?: number | null
+          templates_edited_today?: number | null
+          template_edit_rate?: number | null
+          responses_received_today?: number | null
+          template_response_rate?: number | null
+          mrr?: number | null
+          daily_revenue?: number | null
+          avg_revenue_per_user?: number | null
+          avg_session_duration_seconds?: number | null
+          opportunities_viewed_today?: number | null
+          contacts_discovered_today?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_date?: string
+          total_users?: number | null
+          free_users?: number | null
+          paid_users?: number | null
+          trial_users?: number | null
+          signups_today?: number | null
+          upgrades_today?: number | null
+          churns_today?: number | null
+          free_to_paid_conversion_rate?: number | null
+          messages_sent_today?: number | null
+          unique_senders_today?: number | null
+          avg_messages_per_sender?: number | null
+          message_send_rate?: number | null
+          templates_generated_today?: number | null
+          templates_edited_today?: number | null
+          template_edit_rate?: number | null
+          responses_received_today?: number | null
+          template_response_rate?: number | null
+          mrr?: number | null
+          daily_revenue?: number | null
+          avg_revenue_per_user?: number | null
+          avg_session_duration_seconds?: number | null
+          opportunities_viewed_today?: number | null
+          contacts_discovered_today?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      epic2_cohorts: {
+        Row: {
+          id: string
+          cohort_month: string
+          cohort_size: number | null
+          month_0_retained: number | null
+          month_1_retained: number | null
+          month_2_retained: number | null
+          month_3_retained: number | null
+          month_6_retained: number | null
+          month_0_revenue: number | null
+          month_1_revenue: number | null
+          month_2_revenue: number | null
+          month_3_revenue: number | null
+          month_6_revenue: number | null
+          total_upgrades: number | null
+          avg_days_to_upgrade: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          cohort_month: string
+          cohort_size?: number | null
+          month_0_retained?: number | null
+          month_1_retained?: number | null
+          month_2_retained?: number | null
+          month_3_retained?: number | null
+          month_6_retained?: number | null
+          month_0_revenue?: number | null
+          month_1_revenue?: number | null
+          month_2_revenue?: number | null
+          month_3_revenue?: number | null
+          month_6_revenue?: number | null
+          total_upgrades?: number | null
+          avg_days_to_upgrade?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          cohort_month?: string
+          cohort_size?: number | null
+          month_0_retained?: number | null
+          month_1_retained?: number | null
+          month_2_retained?: number | null
+          month_3_retained?: number | null
+          month_6_retained?: number | null
+          month_0_revenue?: number | null
+          month_1_revenue?: number | null
+          month_2_revenue?: number | null
+          month_3_revenue?: number | null
+          month_6_revenue?: number | null
+          total_upgrades?: number | null
+          avg_days_to_upgrade?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      epic2_conversion_events: {
+        Row: {
+          id: string
+          user_id: string
+          session_id: string | null
+          event_type: string
+          event_metadata: Json | null
+          occurred_at: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          session_id?: string | null
+          event_type: string
+          event_metadata?: Json | null
+          occurred_at?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          session_id?: string | null
+          event_type?: string
+          event_metadata?: Json | null
+          occurred_at?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "epic2_conversion_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      epic2_validation_thresholds: {
+        Row: {
+          id: string
+          metric_name: string
+          green_threshold: number
+          yellow_threshold: number
+          red_threshold: number
+          metric_unit: string | null
+          higher_is_better: boolean | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          metric_name: string
+          green_threshold: number
+          yellow_threshold: number
+          red_threshold: number
+          metric_unit?: string | null
+          higher_is_better?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          metric_name?: string
+          green_threshold?: number
+          yellow_threshold?: number
+          red_threshold?: number
+          metric_unit?: string | null
+          higher_is_better?: boolean | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_daily_metrics: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
+      calculate_epic2_daily_metrics: {
+        Args: { target_date: string }
+        Returns: undefined
+      }
+      cleanup_expired_auth_data: { Args: never; Returns: undefined }
     }
     Enums: {
       plan_type: "free" | "pro_monthly" | "pro_yearly"
@@ -497,6 +1301,11 @@ export type UserUpdate = Database['public']['Tables']['users']['Update']
 export type UsageLimits = Database['public']['Tables']['usage_limits']['Row']
 export type UsageLimitsInsert = Database['public']['Tables']['usage_limits']['Insert']
 export type UsageLimitsUpdate = Database['public']['Tables']['usage_limits']['Update']
+
+// Helper types for reddit contacts (Epic 2: Human Discovery)
+export type RedditContact = Database['public']['Tables']['reddit_contacts']['Row']
+export type RedditContactInsert = Database['public']['Tables']['reddit_contacts']['Insert']
+export type RedditContactUpdate = Database['public']['Tables']['reddit_contacts']['Update']
 
 // Plan and subscription types
 export type PlanType = Database['public']['Enums']['plan_type']

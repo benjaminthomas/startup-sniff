@@ -18,10 +18,16 @@ export interface User {
   login_attempts: number
   locked_until: string | null
   plan_type: PlanType | null
-  stripe_customer_id: string | null // Legacy field - to be deprecated
   razorpay_customer_id: string | null
   subscription_status: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at: string | null
+  email_preferences: Record<string, boolean> | null
+  email_unsubscribed: boolean
+  last_onboarding_email: string | null
+  onboarding_day1_sent_at: string | null
+  onboarding_day3_sent_at: string | null
+  onboarding_day7_sent_at: string | null
+  last_weekly_summary_sent_at: string | null
   created_at: string
   updated_at: string
 }
@@ -41,10 +47,16 @@ export interface UserInsert {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: PlanType | null
-  stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
+  email_preferences?: Record<string, boolean> | null
+  email_unsubscribed?: boolean
+  last_onboarding_email?: string | null
+  onboarding_day1_sent_at?: string | null
+  onboarding_day3_sent_at?: string | null
+  onboarding_day7_sent_at?: string | null
+  last_weekly_summary_sent_at?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -63,10 +75,16 @@ export interface UserUpdate {
   login_attempts?: number
   locked_until?: string | null
   plan_type?: PlanType | null
-  stripe_customer_id?: string | null // Legacy field - to be deprecated
   razorpay_customer_id?: string | null
   subscription_status?: 'active' | 'inactive' | 'canceled' | 'past_due' | null
   trial_ends_at?: string | null
+  email_preferences?: Record<string, boolean> | null
+  email_unsubscribed?: boolean
+  last_onboarding_email?: string | null
+  onboarding_day1_sent_at?: string | null
+  onboarding_day3_sent_at?: string | null
+  onboarding_day7_sent_at?: string | null
+  last_weekly_summary_sent_at?: string | null
   updated_at?: string
 }
 

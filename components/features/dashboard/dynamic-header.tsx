@@ -47,13 +47,52 @@ const breadcrumbConfig: Record<string, BreadcrumbItem[]> = {
     { label: 'Dashboard', href: '/dashboard' },
     { label: 'Billing' }
   ],
+  '/dashboard/opportunities': [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'Opportunities' }
+  ],
+  '/dashboard/conversations': [
+    { label: 'Dashboard', href: '/dashboard' },
+    { label: 'My Conversations' }
+  ],
 };
+
+// Generate breadcrumbs based on pathname
+function getBreadcrumbs(pathname: string): BreadcrumbItem[] {
+  // Check static config first
+  if (breadcrumbConfig[pathname]) {
+    return breadcrumbConfig[pathname];
+  }
+
+  // Handle dynamic opportunity routes
+  const opportunityDetailMatch = pathname.match(/^\/dashboard\/opportunities\/([^/]+)$/);
+  if (opportunityDetailMatch) {
+    return [
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Opportunities', href: '/dashboard/opportunities' },
+      { label: 'Opportunity Detail' }
+    ];
+  }
+
+  // Handle opportunity contacts route
+  const opportunityContactsMatch = pathname.match(/^\/dashboard\/opportunities\/([^/]+)\/contacts$/);
+  if (opportunityContactsMatch) {
+    const opportunityId = opportunityContactsMatch[1];
+    return [
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Opportunities', href: '/dashboard/opportunities' },
+      { label: 'Opportunity', href: `/dashboard/opportunities/${opportunityId}` },
+      { label: 'Contacts' }
+    ];
+  }
+
+  // Fallback to dashboard
+  return breadcrumbConfig['/dashboard'];
+}
 
 export function DynamicHeader({ user }: DynamicHeaderProps) {
   const pathname = usePathname();
-  
-  // Get breadcrumbs for current route, fallback to dashboard
-  const breadcrumbs = breadcrumbConfig[pathname] || breadcrumbConfig['/dashboard'];
-  
+  const breadcrumbs = getBreadcrumbs(pathname);
+
   return <Header user={user} breadcrumbs={breadcrumbs} />;
 }

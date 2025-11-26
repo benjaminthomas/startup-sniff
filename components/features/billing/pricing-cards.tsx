@@ -40,6 +40,14 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
   const handleSubscribe = (planId: string) => {
     setSelectedPlan(planId);
     startTransition(async () => {
+      const publicKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
+
+      if (!publicKey) {
+        toast.error('Payment gateway is not configured. Add NEXT_PUBLIC_RAZORPAY_KEY_ID to your environment.');
+        setSelectedPlan(null);
+        return;
+      }
+
       const result = await createSubscription(planId);
 
       if (result?.error) {
@@ -56,7 +64,7 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
 
       // Initialize Razorpay Checkout
       const options = {
-        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+        key: publicKey,
         subscription_id: result.subscriptionId,
         name: 'Startup Sniff',
         description: `Subscribe to ${PRICING_PLANS.find(p => p.id === planId)?.name} plan`,

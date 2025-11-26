@@ -99,4 +99,22 @@ const nextConfig: NextConfig = {
   },
 };
 
+// Export config directly (Sentry integration disabled until NEXT_PUBLIC_SENTRY_DSN is configured)
 export default nextConfig;
+
+// To enable Sentry, uncomment the following:
+// import { withSentryConfig } from "@sentry/nextjs";
+//
+// const sentryOptions = {
+//   silent: true,
+//   org: process.env.SENTRY_ORG,
+//   project: process.env.SENTRY_PROJECT,
+//   disableLogger: true,
+//   widenClientFileUpload: true,
+//   hideSourceMaps: true,
+//   telemetry: false,
+// };
+//
+// export default process.env.NEXT_PUBLIC_SENTRY_DSN
+//   ? withSentryConfig(nextConfig, sentryOptions)
+//   : nextConfig;

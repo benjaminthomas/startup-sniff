@@ -16,6 +16,7 @@ import { UserDatabase, SessionDatabase, RateLimitDatabase } from '../services/da
 import { sendEmailVerification, sendPasswordResetEmail, generatePasswordResetToken, generateEmailVerificationToken, verifyEmailToken } from '../services/email-mailgun-official'
 import { verifyCSRFToken } from '../utils/csrf'
 import { AuthResponse } from '@/types/database'
+import { sendWelcomeEmail } from '@/modules/notifications/services/email-notifications'
 
 // Validation schemas
 const signUpSchema = z.object({
@@ -222,6 +223,17 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
         email_verification_token: null,
         email_verification_expires_at: null,
       })
+
+      // Send welcome email in development after auto-verification
+      try {
+        await sendWelcomeEmail({
+          email: user.email,
+          name: fullName,
+        })
+      } catch (error) {
+        console.error('Failed to send welcome email:', error)
+        // Don't fail signup if email fails
+      }
     }
 
     return {
@@ -625,8 +637,16 @@ export async function verifyEmailAction(token: string): Promise<AuthResponse> {
       email_verification_expires_at: null,
     })
 
-    // TODO: Add welcome email functionality later
-    // await sendWelcomeEmail(user.email, user.full_name || undefined)
+    // Send welcome email
+    try {
+      await sendWelcomeEmail({
+        email: user.email,
+        name: user.full_name || undefined,
+      })
+    } catch (error) {
+      console.error('Failed to send welcome email:', error)
+      // Don't fail verification if email fails
+    }
 
     return {
       success: true,

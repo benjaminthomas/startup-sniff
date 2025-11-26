@@ -297,7 +297,7 @@ export class SubredditFetcher {
       const responseTime = Date.now() - requestStart
       metrics.avgResponseTime = responseTime
 
-      if (!response.success) {
+      if (!response.success || !response.data) {
         metrics.failedRequests++
 
         // Retry logic
@@ -319,7 +319,7 @@ export class SubredditFetcher {
           posts: [],
           subreddit: config.name,
           fetchedAt: new Date(),
-          errors: [response.error || 'Unknown API error'],
+          errors: [response.error || 'No data returned'],
           metrics
         }
       }

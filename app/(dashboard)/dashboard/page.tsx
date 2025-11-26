@@ -56,7 +56,7 @@ export default async function DashboardPage() {
           plan_type:
             (dbUser.plan_type as "free" | "pro_monthly" | "pro_yearly") ||
             "free",
-          stripe_customer_id: dbUser.stripe_customer_id || undefined,
+          razorpay_customer_id: dbUser.razorpay_customer_id || undefined,
           subscription_status:
             (dbUser.subscription_status as
               | "active"
@@ -76,7 +76,7 @@ export default async function DashboardPage() {
           avatar_url: undefined,
           subscription_status: undefined,
           plan_type: "free",
-          stripe_customer_id: undefined,
+          razorpay_customer_id: undefined,
           trial_ends_at: undefined,
           created_at: "",
           updated_at: "",

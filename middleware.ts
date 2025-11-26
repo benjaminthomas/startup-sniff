@@ -65,7 +65,16 @@ export async function middleware(request: NextRequest) {
     }
 
     // CSRF Protection for all state-changing operations
-    if (request.method !== 'GET' && !pathname.startsWith('/api/webhooks')) {
+    // Skip CSRF for:
+    // - Webhooks (have their own signature verification)
+    // - Cron jobs (have their own secret authentication)
+    // - When explicitly disabled in development
+    const skipCSRF = pathname.startsWith('/api/webhooks') ||
+                     pathname.startsWith('/api/reddit/fetch') ||
+                     pathname.startsWith('/api/reddit/score') ||
+                     (process.env.DISABLE_CSRF === 'true' && pathname.startsWith('/api/'))
+
+    if (request.method !== 'GET' && !skipCSRF) {
       // Server Actions have built-in protection but we add additional validation
       const isServerAction = !!request.headers.get('next-action')
 

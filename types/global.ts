@@ -8,7 +8,7 @@ export interface User {
   avatar_url?: string;
   subscription_status?: SubscriptionStatus;
   plan_type?: PlanType;
-  stripe_customer_id?: string;
+  razorpay_customer_id?: string;
   trial_ends_at?: string;
   created_at: string;
   updated_at: string;
@@ -106,8 +106,6 @@ export interface GeneratedContent {
 export interface Subscription {
   id: string;
   user_id: string;
-  stripe_subscription_id?: string; // Legacy field - to be deprecated
-  stripe_price_id?: string; // Legacy field - to be deprecated
   razorpay_subscription_id?: string;
   razorpay_plan_id?: string;
   status?: SubscriptionStatus;

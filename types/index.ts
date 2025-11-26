@@ -22,7 +22,7 @@ export interface User {
   email: string
   full_name: string | null
   avatar_url: string | null
-  stripe_customer_id: string | null
+  razorpay_customer_id: string | null
   subscription_status: 'trial' | 'active' | 'inactive' | 'cancelled' | null
   plan_type: 'free' | 'pro_monthly' | 'pro_yearly' | null
   trial_ends_at: string | null
