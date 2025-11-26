@@ -61,7 +61,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <div className="relative z-10 flex flex-1 overflow-y-auto px-3 pb-8 pt-4 sm:px-6 sm:pt-6">
-          <div className="mx-auto flex flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
             <TrialBanner className="border-none bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-400/10 shadow-[0px_8px_24px_-18px_rgba(124,58,237,0.28)] backdrop-blur-sm" />
             <div className="rounded-3xl border border-white/60 bg-white/85 p-6 shadow-[0px_18px_45px_-28px_rgba(124,58,237,0.3)] backdrop-blur-sm sm:p-8">
               {children}

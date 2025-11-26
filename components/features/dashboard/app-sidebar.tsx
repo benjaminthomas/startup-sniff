@@ -124,16 +124,6 @@ const navigationSections: {
         href: "/dashboard/billing",
         icon: FeatureIcons.Billing,
       },
-      {
-        title: "Epic 1 Metrics",
-        href: "/dashboard/metrics",
-        icon: FeatureIcons.DataAnalysis,
-      },
-      {
-        title: "Epic 2 Metrics",
-        href: "/dashboard/epic2",
-        icon: FeatureIcons.MarketResearch,
-      },
     ],
   },
 ]
