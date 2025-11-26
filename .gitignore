@@ -43,4 +43,7 @@ yarn-error.log*
 next-env.d.ts
 
 # playwright mcp screenshots and artifacts
-.playwright-mcp/instrumentation.ts.sentry-disabled
+.playwright-mcp/
+
+# sentry instrumentation backup
+instrumentation.ts.sentry-disabled
