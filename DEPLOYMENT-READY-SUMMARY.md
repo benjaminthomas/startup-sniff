@@ -130,7 +130,6 @@
 | Reddit Fetch | Every 4 hours | Pull new posts |
 | Weekly Summaries | Monday 9 AM | User engagement |
 | Scheduled Emails | Hourly | Onboarding drip |
-| Calculate Metrics | Daily midnight | Analytics |
 | Variant Metrics | Daily 1 AM | A/B testing |
 
 All configured in `vercel.json` ✅
@@ -139,7 +138,7 @@ All configured in `vercel.json` ✅
 
 ## 📦 Database Migrations
 
-21 migrations ready to apply in order:
+19 migrations ready to apply in order:
 
 1. Initial schema & auth
 2. Reddit integration & trends
@@ -147,7 +146,6 @@ All configured in `vercel.json` ✅
 4. Epic 2: Messaging & payments
 5. Email notifications
 6. Template A/B testing
-7. Analytics dashboards
 
 **Command**: `npx supabase db push`
 
@@ -250,7 +248,7 @@ All configured in `vercel.json` ✅
 5. Enable Sentry if needed
 
 ### Week 2-3
-1. Build validation dashboards (Story 1.12 & 2.12)
+1. Set up external analytics (Google Analytics/Mixpanel/Posthog)
 2. Start collecting Epic 1 metrics
 3. Start collecting Epic 2 metrics
 4. Prepare for validation gate
@@ -270,11 +268,11 @@ All configured in `vercel.json` ✅
 - Monitor for stability
 - Gather user feedback
 
-### Phase 2: Validation Dashboards (Week 2-3)
-- Build Story 1.12 (Epic 1 dashboard)
-- Build Story 2.12 (Epic 2 dashboard)
-- Implement automated reporting
-- Set up validation gates
+### Phase 2: Analytics Setup (Week 2-3)
+- Set up external analytics tools (Google Analytics/Mixpanel/Posthog)
+- Configure event tracking for Epic 1 & 2 metrics
+- Set up Razorpay reporting integration
+- Define validation gates and thresholds
 
 ### Phase 3: Data-Driven Decision (Month 2)
 - Analyze validation metrics

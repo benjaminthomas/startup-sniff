@@ -61,30 +61,20 @@
 
 ---
 
-#### **Story 1.12: Epic 1 Validation Dashboard** ✅
-**Status:** COMPLETED
-**Priority:** MEDIUM (Business intelligence)
+#### **Story 1.12: Epic 1 Validation Dashboard** ❌
+**Status:** NOT IMPLEMENTED (Removed from scope)
+**Priority:** LOW (Business intelligence)
 
-**What's Needed:**
+**Decision:** Validation dashboards removed from the application. Epic 1 validation should be done through external analytics tools (Google Analytics, Mixpanel, etc.) rather than building custom dashboards.
+
+**Original Requirements (for reference):**
 - Admin dashboard showing Epic 1 success metrics
 - Real-time GREEN/YELLOW/RED zone indicators
 - Weekly automated reports
 - User feedback survey integration
 - Recommendation engine (proceed/iterate/pivot)
 
-**Acceptance Criteria:**
-```
-- [ ] Dashboard displays key metrics with zone indicators
-- [ ] Average session time: >2 min (GREEN)
-- [ ] 7-day return rate: >25% (GREEN)
-- [ ] Pain points per session: >2 (GREEN)
-- [ ] Bounce rate tracking: <60% (GREEN)
-- [ ] User feedback survey and sentiment analysis
-- [ ] Automated recommendation based on thresholds
-- [ ] Exportable stakeholder report (PDF)
-```
-
-**Effort:** 3-5 days
+**Note:** Basic analytics tracking remains in place via `lib/services/analytics-tracker.ts` for integration with external tools.
 
 ---
 
@@ -172,11 +162,13 @@
 
 ---
 
-#### **Story 2.12: Epic 2 Validation Dashboard** ✅
-**Status:** COMPLETED
-**Priority:** MEDIUM (Business validation)
+#### **Story 2.12: Epic 2 Validation Dashboard** ❌
+**Status:** NOT IMPLEMENTED (Removed from scope)
+**Priority:** LOW (Business validation)
 
-**What's Needed:**
+**Decision:** Validation dashboards removed from the application. Epic 2 validation should be done through external analytics tools and Razorpay's built-in reporting rather than building custom dashboards.
+
+**Original Requirements (for reference):**
 - Epic 2 success metrics dashboard
 - Conversion funnel analysis
 - MRR tracking
@@ -184,19 +176,7 @@
 - Cohort analysis
 - Recommendation engine
 
-**Acceptance Criteria:**
-```
-- [ ] Dashboard with GREEN/YELLOW/RED zones
-- [ ] Free-to-paid conversion: >5% target
-- [ ] Message send rate: >10% target
-- [ ] Template response rate: >15% target
-- [ ] MRR tracking: $200+ Month 3 target
-- [ ] Churn rate: <15% target
-- [ ] Cohort analysis by user segment
-- [ ] Recommendation: Proceed/Iterate/Pivot
-```
-
-**Effort:** 4-5 days
+**Note:** Template variant A/B testing dashboard (`/dashboard/analytics/template-variants`) remains implemented as it provides unique value not available in external tools.
 
 ---
 
@@ -301,7 +281,7 @@
 ### Phase 2: Epic 1 Validation (2-3 Weeks)
 **Goal:** Validate Epic 1 success criteria
 
-1. ❌ **Story 1.12:** Build validation dashboard
+1. Set up external analytics (Google Analytics, Mixpanel, or Posthog)
 2. Gather user feedback (surveys, interviews)
 3. Analyze metrics:
    - Session time >2 min?
@@ -309,23 +289,24 @@
    - Opportunities explored >2?
 4. **Decision Gate:** GREEN zone = Proceed to Phase 3
 
-**Deliverable:** Data-driven Epic 1 validation report
+**Deliverable:** Data-driven Epic 1 validation report (using external analytics)
 
 ---
 
 ### Phase 3: Epic 2 Validation & Enhancement (3-4 Weeks)
 **Goal:** Validate paid tier and optimize conversions
 
-1. ❌ **Story 2.12:** Build Epic 2 validation dashboard
-2. ❌ **Story 2.10:** Implement template A/B testing
-3. Monitor key metrics:
+1. Use Razorpay dashboard for payment/MRR tracking
+2. Use external analytics for conversion funnel analysis
+3. ✅ Template A/B testing already implemented (`/dashboard/analytics/template-variants`)
+4. Monitor key metrics:
    - Free-to-paid conversion >5%?
    - Message send rate >10%?
    - Response rate >15%?
    - MRR >$200?
-4. **Decision Gate:** GREEN zone = Proceed to Epic 3
+5. **Decision Gate:** GREEN zone = Proceed to Epic 3
 
-**Deliverable:** Epic 2 validation + optimized templates
+**Deliverable:** Epic 2 validation report + optimized templates
 
 ---
 
@@ -399,10 +380,9 @@ These were considered but **not included** in the scope:
 
 ### If Continuing Development:
 1. **Priority 1:** Story 1.11 (Error tracking) - 2-3 days
-2. **Priority 2:** Story 2.9 (Email notifications) - 3-4 days
-3. **Priority 3:** Story 1.12 (Validation dashboard) - 3-5 days
-4. **Priority 4:** Mobile testing - 2-3 days
-5. **Decision:** Epic 2 validation or Epic 3 start?
+2. **Priority 2:** Set up external analytics (GA/Mixpanel/Posthog) - 1-2 days
+3. **Priority 3:** Mobile testing - 2-3 days
+4. **Decision:** Epic 2 validation or Epic 3 start?
 
 ---
 
@@ -412,7 +392,7 @@ These were considered but **not included** in the scope:
 - ✅ Session time metric implemented
 - ✅ Return rate tracking
 - ✅ Engagement analytics
-- ⏳ Need formal validation dashboard
+- ✅ Analytics tracking ready for external tools
 
 ### Epic 2 → Epic 3 Gate (Upcoming)
 - ⏳ Message send rate >10%

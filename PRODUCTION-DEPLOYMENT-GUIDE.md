@@ -101,26 +101,22 @@ Run these migrations in your production Supabase project:
 ### Epic 1: Opportunity Discovery
 8. `20251013120000_add_epic1_viability_and_trend_fields.sql`
 9. `20251014000000_create_analytics_tables.sql`
-10. `20251024000000_create_analytics_dashboard.sql`
 
 ### Epic 2: Human Contact & Messaging
-11. `20251013000000_rename_stripe_to_razorpay_fields.sql`
-12. `20250113000001_update_pricing_strategy_free_premium.sql`
-13. `20241009_update_plan_types.sql`
-14. `20251014010000_create_reddit_contacts.sql`
-15. `20251014020000_add_reddit_oauth_fields.sql`
-16. `20251014030000_create_messages_table.sql`
-17. `20251014040000_add_message_quota.sql`
+10. `20251013000000_rename_stripe_to_razorpay_fields.sql`
+11. `20250113000001_update_pricing_strategy_free_premium.sql`
+12. `20241009_update_plan_types.sql`
+13. `20251014010000_create_reddit_contacts.sql`
+14. `20251014020000_add_reddit_oauth_fields.sql`
+15. `20251014030000_create_messages_table.sql`
+16. `20251014040000_add_message_quota.sql`
 
 ### Story 2.9: Email Notifications
-18. `20251023000000_add_email_preferences.sql`
-19. `20251024000000_create_email_tables.sql`
+17. `20251023000000_add_email_preferences.sql`
+18. `20251024000000_create_email_tables.sql`
 
 ### Story 2.10: Template A/B Testing
-20. `20251024010000_add_template_variants.sql`
-
-### Epic 2 Analytics
-21. `20251024010000_create_epic2_analytics.sql`
+19. `20251024010000_add_template_variants.sql`
 
 ### Migration Command
 ```bash
@@ -182,7 +178,6 @@ Vercel automatically reads `vercel.json` and configures these cron jobs:
 | `/api/reddit/fetch` | Every 4 hours | Fetch new Reddit posts |
 | `/api/cron/send-weekly-summaries` | Monday 9 AM | Send weekly performance emails |
 | `/api/cron/send-scheduled-emails` | Every hour | Send onboarding drip campaign |
-| `/api/cron/calculate-metrics` | Daily midnight | Calculate user analytics |
 | `/api/cron/update-variant-metrics` | Daily 1 AM | Update template variant metrics |
 
 ### Cron Job Security
@@ -369,8 +364,8 @@ When ready to enable:
 - [ ] Review OpenAI costs and optimize
 
 ### Week 2
-- [ ] Create Epic 1 validation report
-- [ ] Plan Epic 2 enhancements
+- [ ] Set up external analytics (Google Analytics/Mixpanel/Posthog)
+- [ ] Configure event tracking for validation metrics
 - [ ] Implement Story 1.11 (Sentry) if not done
 - [ ] Set up automated monitoring alerts
 - [ ] Prepare for Epic 2 validation
@@ -384,10 +379,10 @@ When ready to enable:
    - Fix any bugs
    - Gather user feedback
 
-2. **Build Validation Dashboards** (Story 1.12 & 2.12)
-   - Epic 1 validation metrics
-   - Epic 2 conversion funnel
-   - MRR tracking
+2. **Set Up Analytics Tools**
+   - External analytics (Google Analytics/Mixpanel/Posthog)
+   - Event tracking for Epic 1 & 2 validation
+   - Razorpay reporting integration
 
 3. **Data-Driven Decision**
    - Analyze validation metrics
