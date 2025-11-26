@@ -353,29 +353,31 @@ StartupSniff transformation consists of 3 sequential epics, each validating crit
 
 ### Story 1.12: Epic 1 Validation Dashboard
 
-**As a** product owner
-**I want to** see real-time validation of Epic 1 success criteria
-**So that** I can make data-driven decision to proceed to Epic 2 or pivot
+**STATUS: REMOVED FROM APPLICATION** (User decision - November 2025)
 
-**Prerequisites:**
-- All Epic 1 stories complete
-- Minimum 2 weeks of user data
+**Decision:** This story has been removed from the application. Epic 1 validation metrics should be tracked through external analytics tools (Google Analytics, Mixpanel, Posthog) rather than building custom validation dashboards within the application.
 
-**Acceptance Criteria:**
-1. Dashboard displays Epic 1 metrics with GREEN/YELLOW/RED zone indicators
-2. Average session time: Target >2 min (GREEN), 60-120s (YELLOW), <60s (RED)
-3. 7-day return rate: Target >25% (GREEN), 15-25% (YELLOW), <15% (RED)
-4. Pain points explored per session: Target >2 (GREEN), 1-2 (YELLOW), <1 (RED)
-5. Bounce rate: Target <60% (GREEN), 60-75% (YELLOW), >75% (RED)
-6. User feedback survey results: "Saves me hours vs. manual Reddit" sentiment analysis
-7. Recommendation: "PROCEED TO EPIC 2", "ITERATE FOR 2 WEEKS", or "PIVOT/KILL"
-8. Exportable report for stakeholder review (PDF or Google Docs)
+**What Was Removed:**
+- ❌ Epic 1 validation dashboard page (`/dashboard/epic1-validation`)
+- ❌ Validation dashboard components
+- ❌ Analytics database tables
+- ❌ Calculate metrics cron job
 
-**Technical Notes:**
-- Custom analytics dashboard built in Next.js or admin panel
-- Data visualization with Chart.js or Recharts
-- Automated zone calculation based on thresholds
-- Weekly email report with key metrics
+**Rationale:**
+- Validation metrics are better suited for external analytics platforms
+- Building custom dashboards adds maintenance overhead without unique value
+- External tools provide richer analytics capabilities and integrations
+
+**Alternative Approach:**
+Use external analytics tools to track Epic 1 success criteria:
+- Session time, return rate, bounce rate → Google Analytics, Mixpanel, Posthog
+- User feedback surveys → Typeform, Google Forms
+- Custom event tracking via analytics SDK
+
+~~**Original Story (for reference):**~~
+~~**As a** product owner~~
+~~**I want to** see real-time validation of Epic 1 success criteria~~
+~~**So that** I can make data-driven decision to proceed to Epic 2 or pivot~~
 
 ---
 
@@ -707,29 +709,34 @@ StartupSniff transformation consists of 3 sequential epics, each validating crit
 
 ### Story 2.12: Epic 2 Validation Dashboard
 
-**As a** product owner
-**I want to** see real-time validation of Epic 2 success criteria
-**So that** I can decide to proceed to Epic 3 or iterate
+**STATUS: REMOVED FROM APPLICATION** (User decision - November 2025)
 
-**Prerequisites:**
-- All Epic 2 stories complete
-- Minimum 30 days of paid tier data
+**Decision:** This story has been removed from the application. Epic 2 validation metrics should be tracked through external analytics tools and Razorpay's built-in reporting rather than building custom validation dashboards within the application.
 
-**Acceptance Criteria:**
-1. Dashboard displays Epic 2 metrics with GREEN/YELLOW/RED zone indicators
-2. Free-to-paid conversion: Target >5% (GREEN), 3-5% (YELLOW), <3% (RED)
-3. Message send rate: Target >10% (GREEN), 5-10% (YELLOW), <5% (RED)
-4. Template response rate: Target >15% (GREEN), 10-15% (YELLOW), <10% (RED)
-5. MRR: Target $200+ Month 3 (GREEN), $100-200 (YELLOW), <$100 (RED)
-6. Churn rate: Target <15% (GREEN), 15-25% (YELLOW), >25% (RED)
-7. Recommendation: "PROCEED TO EPIC 3", "ITERATE TEMPLATES/PRICING", or "PIVOT"
-8. Cohort analysis: Conversion and retention by user segment (first-timer vs. experienced)
+**What Was Removed:**
+- ❌ Epic 2 validation dashboard page (`/dashboard/epic2-validation`)
+- ❌ Epic 2 analytics components
+- ❌ Epic 2 analytics backend modules
+- ❌ Epic 2 analytics database tables
+- ❌ Calculate metrics cron job
 
-**Technical Notes:**
-- Custom analytics dashboard
-- Cohort analysis queries (SQL or analytics tool)
-- Automated zone calculation and recommendation logic
-- Weekly stakeholder report export
+**Rationale:**
+- External analytics tools provide better funnel and conversion tracking
+- Razorpay dashboard already provides MRR, subscription, and churn metrics
+- Custom dashboards add development and maintenance overhead
+- Template A/B testing dashboard (Story 2.10) remains as it provides unique value
+
+**Alternative Approach:**
+Use combination of tools for Epic 2 validation:
+- Conversion funnel, send rate → Google Analytics, Mixpanel, Posthog
+- MRR, churn rate, cohort analysis → Razorpay Dashboard
+- Template performance → Story 2.10 dashboard (`/dashboard/analytics/template-variants`)
+- Custom event tracking via analytics SDK
+
+~~**Original Story (for reference):**~~
+~~**As a** product owner~~
+~~**I want to** see real-time validation of Epic 2 success criteria~~
+~~**So that** I can decide to proceed to Epic 3 or iterate~~
 
 ---
 
