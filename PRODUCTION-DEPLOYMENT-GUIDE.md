@@ -118,6 +118,8 @@ Run these migrations in your production Supabase project:
 ### Story 2.10: Template A/B Testing
 19. `20251024010000_add_template_variants.sql`
 
+**Note:** Migrations `20251024000000_create_analytics_dashboard.sql` and `20251024010000_create_epic2_analytics.sql` have been removed as Stories 1.12 & 2.12 (Validation Dashboards) are not included in the application.
+
 ### Migration Command
 ```bash
 # Using Supabase CLI (recommended)
@@ -179,6 +181,8 @@ Vercel automatically reads `vercel.json` and configures these cron jobs:
 | `/api/cron/send-weekly-summaries` | Monday 9 AM | Send weekly performance emails |
 | `/api/cron/send-scheduled-emails` | Every hour | Send onboarding drip campaign |
 | `/api/cron/update-variant-metrics` | Daily 1 AM | Update template variant metrics |
+
+**Note:** The `/api/cron/calculate-metrics` cron job has been removed as Stories 1.12 & 2.12 (Validation Dashboards) are not included in the application.
 
 ### Cron Job Security
 Each cron endpoint checks for the `CRON_SECRET` header:

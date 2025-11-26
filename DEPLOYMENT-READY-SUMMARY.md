@@ -62,6 +62,8 @@
    - Post-launch monitoring
    - Success metrics
 
+**Note:** Stories 1.12 & 2.12 (Validation Dashboards) have been removed from the application per user decision. Validation metrics should be tracked through external analytics tools (Google Analytics, Mixpanel, Posthog) and Razorpay reporting.
+
 ---
 
 ## 🎯 Deployment Steps
@@ -133,6 +135,8 @@
 | Variant Metrics | Daily 1 AM | A/B testing |
 
 All configured in `vercel.json` ✅
+
+**Note:** Calculate metrics cron job removed (validation dashboards not included)
 
 ---
 
