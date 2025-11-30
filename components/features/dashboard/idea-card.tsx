@@ -129,7 +129,7 @@ export function IdeaCard({ idea }: IdeaCardProps) {
   return (
     <>
       <Link href={`/dashboard/ideas/${idea.id}`} className="block">
-        <Card className="h-full hover:shadow-lg transition-shadow duration-200 cursor-pointer border-2 hover:border-primary/20">
+        <Card className="h-full card-hover cursor-pointer border-2 hover:border-primary/20 fade-in">
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
               <CardTitle className="text-lg leading-tight pr-2">{idea.title}</CardTitle>

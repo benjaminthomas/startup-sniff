@@ -41,7 +41,12 @@
       "mcp__playwright__browser_take_screenshot",
       "Bash(npx shadcn@latest add:*)",
       "mcp__supabase__generate_typescript_types",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(while read dir)",
+      "Bash(do if [ ! -f \"$dir/loading.tsx\" ])",
+      "Bash(then echo \"$dir\")",
+      "Bash(fi)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
