@@ -14,6 +14,7 @@
 
 import OpenAI from 'openai'
 import type { RedditPost } from '@/types/supabase'
+import { retry, retryPresets } from '@/lib/utils/retry'
 
 export interface DeepAnalysis {
   viability_explanation: string
@@ -56,16 +57,20 @@ export class OpportunityDeepAnalyzer {
 
   /**
    * Analyze a high-potential Reddit post using GPT-4
+   * With retry logic and error handling
    */
   async analyzePost(post: RedditPost): Promise<DeepAnalysis> {
-    const prompt = this.buildAnalysisPrompt(post)
+    // Wrap OpenAI call with retry logic
+    return retry(
+      async () => {
+        const prompt = this.buildAnalysisPrompt(post)
 
-    const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o', // Using GPT-4o for cost efficiency
-      messages: [
-        {
-          role: 'system',
-          content: `You are a business opportunity analyzer specializing in identifying viable startup ideas from Reddit discussions.
+        const completion = await this.openai.chat.completions.create({
+          model: 'gpt-4o', // Using GPT-4o for cost efficiency
+          messages: [
+            {
+              role: 'system',
+              content: `You are a business opportunity analyzer specializing in identifying viable startup ideas from Reddit discussions.
 
 You analyze posts from entrepreneurial subreddits to assess:
 1. Problem clarity and market need
@@ -75,24 +80,83 @@ You analyze posts from entrepreneurial subreddits to assess:
 5. Overall business potential
 
 Provide concise, actionable analysis focused on commercial viability.`
-        },
-        {
-          role: 'user',
-          content: prompt
+            },
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          temperature: 0.3, // Lower temperature for consistent, analytical responses
+          max_tokens: 1500,
+          response_format: { type: 'json_object' }
+        })
+
+        const response = completion.choices[0].message.content
+        if (!response) {
+          throw new Error('No response from OpenAI')
         }
-      ],
-      temperature: 0.3, // Lower temperature for consistent, analytical responses
-      max_tokens: 1500,
-      response_format: { type: 'json_object' }
-    })
 
-    const response = completion.choices[0].message.content
-    if (!response) {
-      throw new Error('No response from OpenAI')
-    }
+        const analysis = JSON.parse(response) as DeepAnalysis
+        return analysis
+      },
+      {
+        ...retryPresets.patient, // Use patient retry for external API
+        shouldRetry: (error: Error) => {
+          // Retry on network errors and rate limits
+          const message = error.message.toLowerCase()
 
-    const analysis = JSON.parse(response) as DeepAnalysis
-    return analysis
+          // Don't retry on auth errors (401, 403)
+          if (message.includes('401') || message.includes('403') || message.includes('invalid api key')) {
+            console.error('[OpenAI] Authentication error - not retrying:', error.message)
+            return false
+          }
+
+          // Don't retry on invalid requests (400)
+          if (message.includes('400') || message.includes('invalid_request')) {
+            console.error('[OpenAI] Invalid request - not retrying:', error.message)
+            return false
+          }
+
+          // Retry on rate limits (429), server errors (5xx), and network issues
+          if (
+            message.includes('429') ||
+            message.includes('rate limit') ||
+            message.includes('500') ||
+            message.includes('502') ||
+            message.includes('503') ||
+            message.includes('timeout') ||
+            message.includes('network') ||
+            message.includes('fetch')
+          ) {
+            console.warn('[OpenAI] Retryable error:', error.message)
+            return true
+          }
+
+          return false
+        },
+        onRetry: (error: Error, attempt: number) => {
+          console.warn(`[OpenAI] Retry attempt ${attempt} after error:`, error.message)
+
+          // Log to Sentry if available
+          if (typeof window !== 'undefined') {
+            import('@sentry/nextjs').then((Sentry) => {
+              Sentry.captureMessage(`OpenAI retry attempt ${attempt}`, {
+                level: 'warning',
+                contexts: {
+                  openai: {
+                    error: error.message,
+                    attempt,
+                    postId: post.id,
+                  },
+                },
+              })
+            }).catch(() => {
+              // Silently fail if Sentry not available
+            })
+          }
+        }
+      }
+    )
   }
 
   /**
