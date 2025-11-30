@@ -463,8 +463,11 @@ Please report security vulnerabilities to [security@yourdomain.com](mailto:secur
 
 ### v1.0 (Latest)
 - ✅ **UI/UX Overhaul**: Complete migration to shadcn/ui components
-- ✅ **Icon System**: Replaced SVGs with Lucide React icon system  
+- ✅ **Icon System**: Replaced SVGs with Lucide React icon system
 - ✅ **Responsive Dashboard**: Mobile-first sidebar with collapse functionality
+- ✅ **Container Width Fix**: Consistent max-width (1280px) across all dashboard pages
+- ✅ **Navigation Cleanup**: Removed deprecated validation dashboard links from sidebar
+- ✅ **UI Audit Report**: Comprehensive testing with Playwright MCP for design consistency
 - ✅ **Profile Dropdown**: Fixed hover states and visibility issues
 - ✅ **Dynamic Favicon**: Next.js 15+ branded favicon generation
 - ✅ **Plan Badges**: Visual subscription indicators in header
