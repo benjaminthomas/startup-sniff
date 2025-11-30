@@ -6,6 +6,7 @@
  */
 
 import 'server-only'
+import { createElement } from 'react'
 
 interface BaseEmailTemplateProps {
   preheader?: string
@@ -18,15 +19,13 @@ export function BaseEmailTemplate({
   children,
   footerText = 'You received this email because you signed up for StartupSniff.'
 }: BaseEmailTemplateProps) {
-  return (
-    <html lang="en">
-      {/* eslint-disable-next-line @next/next/no-head-element */}
-      <head>
-        <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <meta name="x-apple-disable-message-reformatting" />
-        <title>StartupSniff</title>
-        <style>{`
+  // Use createElement to avoid Next.js document tag detection during build
+  const headContent = createElement('head', null,
+    createElement('meta', { charSet: 'utf-8' }),
+    createElement('meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }),
+    createElement('meta', { name: 'x-apple-disable-message-reformatting' }),
+    createElement('title', null, 'StartupSniff'),
+    createElement('style', null, `
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
           body {
@@ -195,47 +194,44 @@ export function BaseEmailTemplate({
               box-sizing: border-box;
             }
           }
-        `}</style>
-      </head>
-      <body>
-        {preheader && (
-          <div className="preheader">{preheader}</div>
-        )}
-
-        <table width="100%" cellPadding="0" cellSpacing="0" role="presentation" style={{ backgroundColor: '#f3f4f6', padding: '24px 0' }}>
-          <tr>
-            <td align="center">
-              <div className="email-wrapper">
-                {/* Header */}
-                <div className="email-header">
-                  <h1 className="email-logo">StartupSniff</h1>
-                  <p className="email-tagline">Find Pain Points. Connect with Humans. Build Solutions.</p>
-                </div>
-
-                {/* Body */}
-                <div className="email-body">
-                  {children}
-                </div>
-
-                {/* Footer */}
-                <div className="email-footer">
-                  <p className="email-footer-text">{footerText}</p>
-                  <div className="email-footer-links">
-                    <a href="https://startupsniff.com/dashboard">Dashboard</a>
-                    <span>•</span>
-                    <a href="https://startupsniff.com/dashboard/settings">Email Preferences</a>
-                    <span>•</span>
-                    <a href="https://startupsniff.com/support">Support</a>
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#9ca3af', margin: '16px 0 0' }}>
-                    StartupSniff, Inc. • San Francisco, CA
-                  </p>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </body>
-    </html>
+        `)
   )
+
+  const bodyContent = createElement('body', null,
+    preheader && createElement('div', { className: 'preheader' }, preheader),
+    createElement('table', {
+      width: '100%',
+      cellPadding: '0',
+      cellSpacing: '0',
+      role: 'presentation',
+      style: { backgroundColor: '#f3f4f6', padding: '24px 0' }
+    },
+      createElement('tr', null,
+        createElement('td', { align: 'center' },
+          createElement('div', { className: 'email-wrapper' },
+            createElement('div', { className: 'email-header' },
+              createElement('h1', { className: 'email-logo' }, 'StartupSniff'),
+              createElement('p', { className: 'email-tagline' }, 'Find Pain Points. Connect with Humans. Build Solutions.')
+            ),
+            createElement('div', { className: 'email-body' }, children),
+            createElement('div', { className: 'email-footer' },
+              createElement('p', { className: 'email-footer-text' }, footerText),
+              createElement('div', { className: 'email-footer-links' },
+                createElement('a', { href: 'https://startupsniff.com/dashboard' }, 'Dashboard'),
+                createElement('span', null, '•'),
+                createElement('a', { href: 'https://startupsniff.com/dashboard/settings' }, 'Email Preferences'),
+                createElement('span', null, '•'),
+                createElement('a', { href: 'https://startupsniff.com/support' }, 'Support')
+              ),
+              createElement('p', { style: { fontSize: '12px', color: '#9ca3af', margin: '16px 0 0' } },
+                'StartupSniff, Inc. • San Francisco, CA'
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  return createElement('html', { lang: 'en' }, headContent, bodyContent)
 }
