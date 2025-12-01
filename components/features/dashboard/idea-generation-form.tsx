@@ -759,14 +759,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {industries.map((industry) => (
-                <Button
+                <button
                   key={industry.id}
-                  variant={formData.industry === industry.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.industry === industry.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.industry === industry.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.industry === industry.id ? undefined : industry.id;
@@ -776,21 +778,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <industry.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.industry === industry.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.industry === industry.id ? "text-primary-foreground" : "text-foreground"
                     )}>{industry.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.industry === industry.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.industry === industry.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{industry.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -809,14 +811,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {problemAreas.map((problem) => (
-                <Button
+                <button
                   key={problem.id}
-                  variant={formData.problemArea === problem.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.problemArea === problem.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.problemArea === problem.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.problemArea === problem.id ? undefined : problem.id;
@@ -826,21 +830,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <problem.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.problemArea === problem.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.problemArea === problem.id ? "text-primary-foreground" : "text-foreground"
                     )}>{problem.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.problemArea === problem.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.problemArea === problem.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{problem.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
             {renderInlineDynamicPrompt(
@@ -863,14 +867,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {audiences.map((audience) => (
-                <Button
+                <button
                   key={audience.id}
-                  variant={formData.targetAudience === audience.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.targetAudience === audience.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.targetAudience === audience.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.targetAudience === audience.id ? undefined : audience.id;
@@ -880,21 +886,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <audience.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.targetAudience === audience.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.targetAudience === audience.id ? "text-primary-foreground" : "text-foreground"
                     )}>{audience.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.targetAudience === audience.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.targetAudience === audience.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{audience.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
             {renderInlineDynamicPrompt(
