@@ -323,11 +323,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                           </Link>
                         )}
                       </SidebarMenuButton>
-                      {isLocked && (
-                        <SidebarMenuBadge className="bg-primary text-primary-foreground">
-                          Upgrade
-                        </SidebarMenuBadge>
-                      )}
                     </SidebarMenuItem>
                   )
                 })}
