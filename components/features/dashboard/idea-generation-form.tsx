@@ -616,7 +616,7 @@ export function IdeaGenerationForm() {
                 size="sm"
                 onClick={() => goToStep(index)}
                 className={cn(
-                  "flex-1 min-w-[140px] sm:min-w-[160px] transition-all duration-200",
+                  "flex-1 min-w-[140px] sm:min-w-[160px] h-auto min-h-[40px] py-2 px-3 transition-all duration-200",
                   isActive && "shadow-sm",
                   isCompleted && !isActive && "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
                 )}
@@ -627,7 +627,7 @@ export function IdeaGenerationForm() {
                   ) : (
                     <StepIcon className="w-4 h-4 flex-shrink-0" />
                   )}
-                  <span className="text-sm font-medium line-clamp-1">
+                  <span className="text-sm font-medium leading-tight break-words">
                     {selectionLabel ?? step.title}
                   </span>
                 </div>
