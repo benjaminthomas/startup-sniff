@@ -610,15 +610,32 @@ export function IdeaGenerationForm() {
             const selectionLabel = getStepValueLabel(step.id);
 
             return (
-              <Button
+              <button
                 key={step.id}
-                variant={isActive ? "default" : isCompleted ? "secondary" : "ghost"}
-                size="sm"
+                type="button"
                 onClick={() => goToStep(index)}
                 className={cn(
-                  "flex-1 min-w-[140px] sm:min-w-[160px] h-auto min-h-[40px] py-2 px-3 transition-all duration-200",
-                  isActive && "shadow-sm",
-                  isCompleted && !isActive && "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
+                  // Base styles
+                  "flex-1 min-w-[140px] sm:min-w-[160px] h-auto min-h-[40px] py-2.5 px-3",
+                  "rounded-md border font-medium text-sm",
+                  "cursor-pointer transition-all duration-200",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  // Active state (default variant style)
+                  isActive && [
+                    "bg-primary text-primary-foreground border-primary",
+                    "shadow-sm hover:bg-primary/90",
+                    "focus:ring-primary",
+                  ],
+                  // Completed state (secondary variant style)
+                  isCompleted && !isActive && [
+                    "bg-green-100 hover:bg-green-200 text-green-700 border-green-200",
+                    "dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+                  ],
+                  // Inactive/ghost state
+                  !isActive && !isCompleted && [
+                    "bg-transparent border-transparent text-foreground/60",
+                    "hover:bg-accent hover:text-accent-foreground",
+                  ]
                 )}
               >
                 <div className="flex w-full items-center gap-2 text-left">
@@ -627,11 +644,11 @@ export function IdeaGenerationForm() {
                   ) : (
                     <StepIcon className="w-4 h-4 flex-shrink-0" />
                   )}
-                  <span className="text-sm font-medium leading-tight break-words">
+                  <span className="leading-tight break-words">
                     {selectionLabel ?? step.title}
                   </span>
                 </div>
-              </Button>
+              </button>
             );
           })}
         </div>
