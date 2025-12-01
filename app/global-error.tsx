@@ -11,6 +11,10 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 
+// Force dynamic rendering to avoid prerendering issues
+export const dynamic = 'force-dynamic'
+export const fetchCache = 'force-no-store'
+
 export default function GlobalError({
   error,
   reset,

@@ -41,7 +41,17 @@
       "mcp__playwright__browser_take_screenshot",
       "Bash(npx shadcn@latest add:*)",
       "mcp__supabase__generate_typescript_types",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git merge:*)",
+      "Bash(git restore:*)",
+      "Bash(tee:*)",
+      "WebSearch",
+      "Bash(echo:*)",
+      "Bash(unset NODE_ENV:*)",
+      "Bash(cat:*)",
+      "Bash(npm outdated:*)",
+      "mcp__context7__get-library-docs",
+      "Bash(NODE_ENV=production npx next build:*)"
     ],
     "deny": [],
     "ask": []
