@@ -3,19 +3,23 @@
   "crons": [
     {
       "path": "/api/reddit/fetch",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 8 * * *",
+      "comment": "Daily at 8:00 AM UTC - Vercel Hobby plan compatible"
     },
     {
       "path": "/api/cron/send-weekly-summaries",
-      "schedule": "0 9 * * 1"
+      "schedule": "0 9 * * 1",
+      "comment": "Weekly on Monday at 9:00 AM UTC"
     },
     {
       "path": "/api/cron/send-scheduled-emails",
-      "schedule": "0 * * * *"
+      "schedule": "0 9 * * *",
+      "comment": "Daily at 9:00 AM UTC - Vercel Hobby plan compatible"
     },
     {
       "path": "/api/cron/update-variant-metrics",
-      "schedule": "0 1 * * *"
+      "schedule": "0 1 * * *",
+      "comment": "Daily at 1:00 AM UTC"
     }
   ]
 }
