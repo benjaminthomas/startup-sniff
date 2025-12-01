@@ -586,7 +586,7 @@ export function IdeaGenerationForm() {
         <div className="flex flex-wrap gap-2 p-1 bg-muted/30 rounded-lg mt-4">
           {steps.map((step, index) => {
             const isActive = index === currentStep;
-            
+
             // Map step IDs to the correct FormData keys
             const getStepCompletion = (stepId: string) => {
               switch (stepId) {
@@ -604,11 +604,11 @@ export function IdeaGenerationForm() {
                   return false;
               }
             };
-            
+
             const isCompleted = getStepCompletion(step.id);
             const StepIcon = step.icon;
             const selectionLabel = getStepValueLabel(step.id);
-            
+
             return (
               <Button
                 key={step.id}
@@ -616,7 +616,7 @@ export function IdeaGenerationForm() {
                 size="sm"
                 onClick={() => goToStep(index)}
                 className={cn(
-                  "flex-1 min-w-0 transition-all duration-200",
+                  "flex-1 min-w-[140px] sm:min-w-[160px] transition-all duration-200",
                   isActive && "shadow-sm",
                   isCompleted && !isActive && "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
                 )}
@@ -627,7 +627,7 @@ export function IdeaGenerationForm() {
                   ) : (
                     <StepIcon className="w-4 h-4 flex-shrink-0" />
                   )}
-                  <span className="truncate text-sm font-medium min-w-0">
+                  <span className="text-sm font-medium line-clamp-1">
                     {selectionLabel ?? step.title}
                   </span>
                 </div>
