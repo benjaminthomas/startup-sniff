@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/reddit/fetch",
-      "schedule": "0 */4 * * *"
+      "schedule": "0 8 * * *"
     },
     {
       "path": "/api/cron/send-weekly-summaries",
@@ -11,7 +11,7 @@
     },
     {
       "path": "/api/cron/send-scheduled-emails",
-      "schedule": "0 * * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/update-variant-metrics",
