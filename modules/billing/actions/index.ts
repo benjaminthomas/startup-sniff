@@ -7,6 +7,7 @@ import {
   createSubscription as createRazorpaySubscription,
   cancelSubscription as cancelRazorpaySubscription,
   updateSubscription as updateRazorpaySubscription,
+  createOrGetCustomer,
 } from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
 
@@ -33,12 +34,33 @@ export async function createSubscription(planId: string) {
       };
     }
 
-    // Create Razorpay subscription
+    // Get user profile to check for customer ID and full name
+    const { data: profile } = await supabase
+      .from('users')
+      .select('razorpay_customer_id, full_name')
+      .eq('id', session.userId)
+      .single();
+
+    // Step 1: Create or get Razorpay customer
+    const customer = await createOrGetCustomer(
+      session.email || '',
+      profile?.full_name || undefined
+    );
+
+    // Update user profile with customer ID if not present
+    if (!profile?.razorpay_customer_id) {
+      await supabase
+        .from('users')
+        .update({ razorpay_customer_id: customer.id })
+        .eq('id', session.userId);
+    }
+
+    // Step 2: Create Razorpay subscription
     const subscription = await createRazorpaySubscription({
       plan_id: plan.priceId, // Using priceId as Razorpay plan_id
       customer_notify: 1,
       quantity: 1,
-      total_count: plan.id === 'pro_yearly' ? 1 : 12, // 1 year for yearly, 12 months for monthly (or use 0 for unlimited)
+      total_count: 0, // 0 for unlimited recurring billing (Razorpay standard)
       notes: {
         user_id: session.userId,
         user_email: session.email,
@@ -65,21 +87,35 @@ export async function createSubscription(planId: string) {
     };
   } catch (error) {
     console.error('Error creating subscription:', error);
-    let errorMessage = 'Failed to create subscription';
+    let errorMessage = 'Unable to create subscription. Please try again or contact support.';
 
     if (typeof error === 'object' && error !== null && 'error' in error) {
-      const razorpayError = (error as { error?: { description?: string; reason?: string } }).error;
-      if (razorpayError?.description) {
-        errorMessage = `Razorpay error: ${razorpayError.description}`;
-      } else if (razorpayError?.reason) {
-        errorMessage = `Razorpay error: ${razorpayError.reason}`;
-      }
-    } else if (error instanceof Error && error.message) {
-      errorMessage = error.message;
-    }
+      const razorpayError = (error as { error?: { description?: string; reason?: string; code?: string } }).error;
 
-    if (errorMessage.includes('Plan') || errorMessage.includes('plan')) {
-      errorMessage += ' — confirm that the Razorpay plan IDs for each paid tier are set to your test-mode plans.';
+      // Handle specific Razorpay error codes
+      if (razorpayError?.code === 'BAD_REQUEST_ERROR') {
+        if (razorpayError.description?.includes('plan')) {
+          errorMessage = 'The selected plan is not properly configured. Please contact support or try a different plan.';
+        } else if (razorpayError.description?.includes('customer')) {
+          errorMessage = 'There was an issue with your account. Please contact support.';
+        } else {
+          errorMessage = razorpayError.description || 'Invalid request. Please check your details and try again.';
+        }
+      } else if (razorpayError?.description) {
+        errorMessage = razorpayError.description;
+      } else if (razorpayError?.reason) {
+        errorMessage = razorpayError.reason;
+      }
+    } else if (error instanceof Error) {
+      if (error.message.includes('network') || error.message.includes('fetch')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      } else if (error.message.includes('timeout')) {
+        errorMessage = 'Request timed out. Please try again.';
+      } else if (error.message.includes('customer')) {
+        errorMessage = 'Unable to verify your account. Please try again or contact support.';
+      } else {
+        errorMessage = error.message;
+      }
     }
 
     return { error: errorMessage };

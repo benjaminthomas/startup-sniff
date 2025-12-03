@@ -73,6 +73,32 @@ export const createSubscription = async ({
   return await razorpay.subscriptions.create(subscriptionData);
 };
 
+export const createOrGetCustomer = async (email: string, name?: string) => {
+  checkRazorpayCredentials();
+
+  try {
+    // Try to find existing customer by email
+    const customers = await razorpay.customers.all({
+      email: email,
+      count: 1
+    });
+
+    if (customers.items && customers.items.length > 0) {
+      return customers.items[0];
+    }
+
+    // Create new customer if not found
+    return await razorpay.customers.create({
+      email: email,
+      name: name || email.split('@')[0],
+      fail_existing: '0' // Don't fail if customer already exists
+    });
+  } catch (error: any) {
+    console.error('[Razorpay] Customer creation failed:', error);
+    throw new Error(`Failed to create customer: ${error.message}`);
+  }
+};
+
 export const cancelSubscription = async (subscriptionId: string) => {
   checkRazorpayCredentials();
 

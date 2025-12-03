@@ -108,6 +108,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           <PricingCards
             currentPlanId={displayUser.plan_type || 'free'}
             userId={session.userId}
+            userEmail={session.email || displayUser.email || ''}
           />
         </div>
 

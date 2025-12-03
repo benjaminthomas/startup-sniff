@@ -13,6 +13,7 @@ import { formatCurrency } from '@/lib/utils';
 interface PricingCardsProps {
   currentPlanId: string;
   userId: string;
+  userEmail?: string;
 }
 
 declare global {
@@ -21,23 +22,48 @@ declare global {
   }
 }
 
-export function PricingCards({ currentPlanId }: PricingCardsProps) {
+export function PricingCards({ currentPlanId, userEmail }: PricingCardsProps) {
   const [isPending, startTransition] = useTransition();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [scriptError, setScriptError] = useState(false);
 
   // Load Razorpay script
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.async = true;
+
+    script.onload = () => {
+      setScriptLoaded(true);
+    };
+
+    script.onerror = () => {
+      setScriptError(true);
+      toast.error('Payment gateway failed to load. Please refresh the page.');
+    };
+
     document.body.appendChild(script);
 
     return () => {
-      document.body.removeChild(script);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
     };
   }, []);
 
   const handleSubscribe = (planId: string) => {
+    // Check script status
+    if (scriptError) {
+      toast.error('Payment gateway is unavailable. Please try again later.');
+      return;
+    }
+
+    if (!scriptLoaded || !window.Razorpay) {
+      toast.info('Loading payment gateway...');
+      return;
+    }
+
     setSelectedPlan(planId);
     startTransition(async () => {
       const publicKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
@@ -79,7 +105,7 @@ export function PricingCards({ currentPlanId }: PricingCardsProps) {
           }
         },
         prefill: {
-          email: '',
+          email: userEmail || '',
         },
         theme: {
           color: '#8B5CF6'
