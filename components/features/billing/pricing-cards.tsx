@@ -94,9 +94,37 @@ export function PricingCards({ currentPlanId, userEmail }: PricingCardsProps) {
         subscription_id: result.subscriptionId,
         name: 'Startup Sniff',
         description: `Subscribe to ${PRICING_PLANS.find(p => p.id === planId)?.name} plan`,
-        handler: function () {
-          toast.success('Subscription activated successfully!');
-          window.location.href = '/dashboard/billing/success';
+        handler: async function (response: {
+          razorpay_payment_id: string;
+          razorpay_subscription_id: string;
+          razorpay_signature: string;
+        }) {
+          try {
+            // Verify payment signature on backend
+            const verifyResponse = await fetch('/api/payments/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_subscription_id: response.razorpay_subscription_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyData.verified) {
+              toast.success('Subscription activated successfully!');
+              window.location.href = '/dashboard/billing/success';
+            } else {
+              toast.error('Payment verification failed. Please contact support.');
+              setSelectedPlan(null);
+            }
+          } catch (error) {
+            console.error('Payment verification error:', error);
+            toast.error('Payment verification failed. Please contact support.');
+            setSelectedPlan(null);
+          }
         },
         modal: {
           ondismiss: function () {

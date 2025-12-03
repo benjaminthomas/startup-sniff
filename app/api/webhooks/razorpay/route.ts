@@ -67,7 +67,41 @@ export async function POST(req: NextRequest) {
   const payload = JSON.parse(body) as RazorpayWebhookPayload;
   const eventType = payload.event;
 
-  console.log('Razorpay webhook event:', eventType);
+  // Extract event ID from payload (Razorpay includes this in webhook payload)
+  const eventId = (payload as unknown as { event_id?: string }).event_id;
+
+  if (!eventId) {
+    console.error('No event_id in webhook payload');
+    return NextResponse.json({ error: 'No event_id in payload' }, { status: 400 });
+  }
+
+  console.log('Razorpay webhook event:', eventType, 'ID:', eventId);
+
+  // Idempotency check: Has this event been processed before?
+  const { data: existingEvent } = await supabaseAdmin
+    .from('webhook_events')
+    .select('id, processed, error_message')
+    .eq('event_id', eventId)
+    .single();
+
+  if (existingEvent) {
+    if (existingEvent.processed) {
+      console.log(`Event ${eventId} already processed, returning success (idempotent)`);
+      return NextResponse.json({ received: true, idempotent: true });
+    } else {
+      console.log(`Event ${eventId} found but not processed, will retry`);
+    }
+  } else {
+    // Store new event for idempotency tracking
+    await supabaseAdmin
+      .from('webhook_events')
+      .insert({
+        event_id: eventId,
+        event_type: eventType,
+        payload: payload,
+        processed: false,
+      });
+  }
 
   try {
     switch (eventType) {
@@ -107,9 +141,32 @@ export async function POST(req: NextRequest) {
         console.log(`Unhandled event type: ${eventType}`);
     }
 
+    // Mark event as successfully processed
+    await supabaseAdmin
+      .from('webhook_events')
+      .update({
+        processed: true,
+        processed_at: new Date().toISOString(),
+        error_message: null,
+      })
+      .eq('event_id', eventId);
+
+    console.log(`Event ${eventId} processed successfully`);
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook handler error:', error);
+
+    // Mark event as failed for retry
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    await supabaseAdmin
+      .from('webhook_events')
+      .update({
+        processed: false,
+        error_message: errorMessage,
+        retry_count: supabaseAdmin.raw('retry_count + 1'),
+      })
+      .eq('event_id', eventId);
+
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }
