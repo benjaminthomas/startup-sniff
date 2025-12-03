@@ -60,7 +60,7 @@ export async function createSubscription(planId: string) {
       plan_id: plan.priceId, // Using priceId as Razorpay plan_id
       customer_notify: 1,
       quantity: 1,
-      total_count: 9999, // Very high number for effectively unlimited billing (Razorpay requires either total_count or end_at)
+      total_count: 1200, // Maximum allowed by Razorpay (1200 months = 100 years for monthly, effectively unlimited)
       notes: {
         user_id: session.userId,
         user_email: session.email,
