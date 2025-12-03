@@ -77,25 +77,16 @@ export const createOrGetCustomer = async (email: string, name?: string) => {
   checkRazorpayCredentials();
 
   try {
-    // Try to find existing customer by email
-    const customers = await razorpay.customers.all({
-      email: email,
-      count: 1
-    });
-
-    if (customers.items && customers.items.length > 0) {
-      return customers.items[0];
-    }
-
-    // Create new customer if not found
+    // Create customer with fail_existing: 0 which returns existing customer if email already exists
     return await razorpay.customers.create({
       email: email,
       name: name || email.split('@')[0],
-      fail_existing: '0' // Don't fail if customer already exists
+      fail_existing: 0 // Don't fail if customer already exists, return existing instead
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('[Razorpay] Customer creation failed:', error);
-    throw new Error(`Failed to create customer: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to create customer: ${errorMessage}`);
   }
 };
 
