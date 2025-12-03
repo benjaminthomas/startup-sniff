@@ -77,13 +77,54 @@ export const createOrGetCustomer = async (email: string, name?: string) => {
   checkRazorpayCredentials();
 
   try {
-    // Create customer with fail_existing: 0 which returns existing customer if email already exists
+    // Try to create customer
     return await razorpay.customers.create({
       email: email,
       name: name || email.split('@')[0],
-      fail_existing: 0 // Don't fail if customer already exists, return existing instead
+      fail_existing: 0
     });
-  } catch (error) {
+  } catch (error: unknown) {
+    // Check if error is because customer already exists
+    const razorpayError = error as {
+      statusCode?: number;
+      error?: {
+        code?: string;
+        description?: string;
+      }
+    };
+
+    if (
+      razorpayError.error?.code === 'BAD_REQUEST_ERROR' &&
+      razorpayError.error?.description?.includes('Customer already exists')
+    ) {
+      // Customer exists, fetch and return it
+      console.log('[Razorpay] Customer already exists, fetching existing customer');
+      try {
+        const customers = await razorpay.customers.all({
+          count: 100 // Get up to 100 customers
+        });
+
+        // Find customer by email
+        const existingCustomer = customers.items?.find(
+          (customer: { email?: string }) => customer.email === email
+        );
+
+        if (existingCustomer) {
+          console.log('[Razorpay] Found existing customer:', existingCustomer.id);
+          return existingCustomer;
+        }
+
+        // If not found in list, the customer might exist but we can't fetch it
+        // This shouldn't happen, but log it for debugging
+        console.error('[Razorpay] Customer exists but could not be found in list');
+        throw new Error('Customer exists but could not be retrieved. Please contact support.');
+      } catch (fetchError) {
+        console.error('[Razorpay] Failed to fetch existing customer:', fetchError);
+        throw new Error('Failed to retrieve existing customer');
+      }
+    }
+
+    // For other errors, throw with details
     console.error('[Razorpay] Customer creation failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`Failed to create customer: ${errorMessage}`);
