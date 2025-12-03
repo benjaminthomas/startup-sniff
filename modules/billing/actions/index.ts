@@ -60,7 +60,8 @@ export async function createSubscription(planId: string) {
       plan_id: plan.priceId, // Using priceId as Razorpay plan_id
       customer_notify: 1,
       quantity: 1,
-      total_count: 0, // 0 for unlimited recurring billing (Razorpay standard)
+      // Omit total_count for unlimited recurring billing
+      // Razorpay requires total_count >= 1, so we don't pass it for unlimited subscriptions
       notes: {
         user_id: session.userId,
         user_email: session.email,
