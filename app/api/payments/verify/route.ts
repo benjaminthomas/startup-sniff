@@ -32,9 +32,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify payment signature
+    // For subscriptions, Razorpay signs: payment_id|subscription_id
+    // So we pass payment_id as orderId and subscription_id as paymentId
     const isValid = verifyPaymentSignature({
-      orderId: razorpay_subscription_id,
-      paymentId: razorpay_payment_id,
+      orderId: razorpay_payment_id,
+      paymentId: razorpay_subscription_id,
       signature: razorpay_signature,
     });
 
