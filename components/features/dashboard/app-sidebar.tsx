@@ -293,26 +293,19 @@ export function AppSidebar({ user }: AppSidebarProps) {
                   return (
                     <SidebarMenuItem key={item.href} className="relative">
                       <SidebarMenuButton
-                        asChild={!isLocked}
+                        asChild
                         isActive={isActive && !isLocked}
                         tooltip={tooltip}
-                        onClick={
-                          isLocked && upgradeUrl
-                            ? () => {
-                                router.push(upgradeUrl)
-                              }
-                            : undefined
-                        }
                         className={cn(
                           isLocked
-                            ? "border border-primary/50 bg-primary/5 text-primary hover:bg-primary/10"
+                            ? "border border-primary/50 bg-primary/5 text-primary hover:bg-primary/10 cursor-pointer"
                             : isActive
                               ? "bg-primary text-primary-foreground shadow-sm"
                               : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
                         )}
                       >
                         {isLocked ? (
-                          <div className="flex w-full items-center gap-3">
+                          <Link href={upgradeUrl || '/dashboard/billing'} className="flex w-full items-center gap-3">
                             <item.icon className="h-4 w-4" />
                             {!collapsed && (
                               <div className="flex flex-1 items-center justify-between">
@@ -322,7 +315,7 @@ export function AppSidebar({ user }: AppSidebarProps) {
                                 </span>
                               </div>
                             )}
-                          </div>
+                          </Link>
                         ) : (
                           <Link href={item.href} className="group flex w-full items-center gap-3">
                             <item.icon className="h-4 w-4 transition-colors text-inherit" />
@@ -330,11 +323,6 @@ export function AppSidebar({ user }: AppSidebarProps) {
                           </Link>
                         )}
                       </SidebarMenuButton>
-                      {isLocked && (
-                        <SidebarMenuBadge className="bg-primary text-primary-foreground">
-                          Upgrade
-                        </SidebarMenuBadge>
-                      )}
                     </SidebarMenuItem>
                   )
                 })}
@@ -352,11 +340,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
               Access unlimited workspaces, priority support, and advanced automations.
             </p>
             <Button
+              asChild
               variant="secondary"
               size="sm"
               className="mt-3 w-full border-0 bg-white text-purple-600 hover:bg-white/90"
             >
-              Upgrade plan
+              <Link href="/dashboard/billing?upgrade=true">
+                Upgrade plan
+              </Link>
             </Button>
           </div>
         )}

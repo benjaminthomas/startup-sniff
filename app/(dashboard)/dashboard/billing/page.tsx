@@ -72,19 +72,23 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             <AlertCircle className="h-5 w-5" />
             <AlertTitle>Upgrade Required</AlertTitle>
             <AlertDescription className="mt-2">
-              {redirectReason
-                ? redirectReason
-                : 'You were redirected here because this feature needs a paid StartupSniff plan.'}
+              <div className="space-y-3">
+                <p>
+                  {redirectReason
+                    ? redirectReason
+                    : 'You were redirected here because this feature needs a paid StartupSniff plan.'}
+                </p>
+                <div>
+                  <p className="font-medium mb-2">Review the plans below to get started:</p>
+                  <ul className="list-disc list-inside space-y-1 text-blue-800">
+                    <li>Track all conversations and outcomes</li>
+                    <li>Discover unlimited contacts from Reddit</li>
+                    <li>Send personalized outreach messages</li>
+                    <li>Access advanced analytics and metrics</li>
+                  </ul>
+                </div>
+              </div>
             </AlertDescription>
-            <div className="mt-3 text-sm">
-              <p className="font-medium mb-2">Review the plans below to get started:</p>
-              <ul className="list-disc list-inside space-y-1 text-blue-800">
-                <li>Track all conversations and outcomes</li>
-                <li>Discover unlimited contacts from Reddit</li>
-                <li>Send personalized outreach messages</li>
-                <li>Access advanced analytics and metrics</li>
-              </ul>
-            </div>
           </Alert>
         )}
 

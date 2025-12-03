@@ -586,7 +586,7 @@ export function IdeaGenerationForm() {
         <div className="flex flex-wrap gap-2 p-1 bg-muted/30 rounded-lg mt-4">
           {steps.map((step, index) => {
             const isActive = index === currentStep;
-            
+
             // Map step IDs to the correct FormData keys
             const getStepCompletion = (stepId: string) => {
               switch (stepId) {
@@ -604,21 +604,38 @@ export function IdeaGenerationForm() {
                   return false;
               }
             };
-            
+
             const isCompleted = getStepCompletion(step.id);
             const StepIcon = step.icon;
             const selectionLabel = getStepValueLabel(step.id);
-            
+
             return (
-              <Button
+              <button
                 key={step.id}
-                variant={isActive ? "default" : isCompleted ? "secondary" : "ghost"}
-                size="sm"
+                type="button"
                 onClick={() => goToStep(index)}
                 className={cn(
-                  "flex-1 min-w-0 transition-all duration-200",
-                  isActive && "shadow-sm",
-                  isCompleted && !isActive && "bg-green-100 hover:bg-green-200 text-green-700 dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400"
+                  // Base styles
+                  "flex-1 min-w-[140px] sm:min-w-[160px] h-auto min-h-[40px] py-2.5 px-3",
+                  "rounded-md border font-medium text-sm",
+                  "cursor-pointer transition-all duration-200",
+                  "focus:outline-none focus:ring-2 focus:ring-offset-2",
+                  // Active state (default variant style)
+                  isActive && [
+                    "bg-primary text-primary-foreground border-primary",
+                    "shadow-sm hover:bg-primary/90",
+                    "focus:ring-primary",
+                  ],
+                  // Completed state (secondary variant style)
+                  isCompleted && !isActive && [
+                    "bg-green-100 hover:bg-green-200 text-green-700 border-green-200",
+                    "dark:bg-green-900/20 dark:hover:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+                  ],
+                  // Inactive/ghost state
+                  !isActive && !isCompleted && [
+                    "bg-transparent border-transparent text-foreground/60",
+                    "hover:bg-accent hover:text-accent-foreground",
+                  ]
                 )}
               >
                 <div className="flex w-full items-center gap-2 text-left">
@@ -627,11 +644,11 @@ export function IdeaGenerationForm() {
                   ) : (
                     <StepIcon className="w-4 h-4 flex-shrink-0" />
                   )}
-                  <span className="truncate text-sm font-medium min-w-0">
+                  <span className="leading-tight break-words">
                     {selectionLabel ?? step.title}
                   </span>
                 </div>
-              </Button>
+              </button>
             );
           })}
         </div>
@@ -742,14 +759,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {industries.map((industry) => (
-                <Button
+                <button
                   key={industry.id}
-                  variant={formData.industry === industry.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.industry === industry.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.industry === industry.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.industry === industry.id ? undefined : industry.id;
@@ -759,21 +778,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <industry.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.industry === industry.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.industry === industry.id ? "text-primary-foreground" : "text-foreground"
                     )}>{industry.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.industry === industry.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.industry === industry.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{industry.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
           </div>
@@ -792,14 +811,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {problemAreas.map((problem) => (
-                <Button
+                <button
                   key={problem.id}
-                  variant={formData.problemArea === problem.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.problemArea === problem.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.problemArea === problem.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.problemArea === problem.id ? undefined : problem.id;
@@ -809,21 +830,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <problem.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.problemArea === problem.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.problemArea === problem.id ? "text-primary-foreground" : "text-foreground"
                     )}>{problem.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.problemArea === problem.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.problemArea === problem.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{problem.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
             {renderInlineDynamicPrompt(
@@ -846,14 +867,16 @@ export function IdeaGenerationForm() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {audiences.map((audience) => (
-                <Button
+                <button
                   key={audience.id}
-                  variant={formData.targetAudience === audience.id ? "default" : "outline"}
+                  type="button"
                   className={cn(
-                    "h-auto p-4 flex flex-col items-start text-left transition-all duration-200 hover:scale-[1.02]",
-                    formData.targetAudience === audience.id 
-                      ? "bg-primary text-primary-foreground shadow-sm" 
-                      : "hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm"
+                    "h-auto min-h-[72px] p-4 flex flex-col items-start text-left w-full",
+                    "rounded-lg border-2 transition-all duration-200",
+                    "cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary",
+                    formData.targetAudience === audience.id
+                      ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                      : "bg-background border-input hover:bg-muted/80 hover:border-primary/30 hover:shadow-sm hover:scale-[1.02]"
                   )}
                   onClick={() => {
                     const newValue = formData.targetAudience === audience.id ? undefined : audience.id;
@@ -863,21 +886,21 @@ export function IdeaGenerationForm() {
                     }
                   }}
                 >
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1.5 w-full">
                     <audience.icon className={cn(
-                      "h-5 w-5", 
+                      "h-5 w-5 flex-shrink-0",
                       formData.targetAudience === audience.id ? "text-primary-foreground" : "text-foreground"
                     )} />
                     <span className={cn(
-                      "font-semibold",
+                      "font-semibold text-base",
                       formData.targetAudience === audience.id ? "text-primary-foreground" : "text-foreground"
                     )}>{audience.label}</span>
                   </div>
                   <span className={cn(
-                    "text-xs",
-                    formData.targetAudience === audience.id ? "text-primary-foreground/80" : "text-muted-foreground"
+                    "text-sm leading-snug",
+                    formData.targetAudience === audience.id ? "text-primary-foreground/90" : "text-muted-foreground"
                   )}>{audience.description}</span>
-                </Button>
+                </button>
               ))}
             </div>
             {renderInlineDynamicPrompt(
