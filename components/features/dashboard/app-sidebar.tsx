@@ -340,11 +340,14 @@ export function AppSidebar({ user }: AppSidebarProps) {
               Access unlimited workspaces, priority support, and advanced automations.
             </p>
             <Button
+              asChild
               variant="secondary"
               size="sm"
               className="mt-3 w-full border-0 bg-white text-purple-600 hover:bg-white/90"
             >
-              Upgrade plan
+              <Link href="/dashboard/billing?upgrade=true">
+                Upgrade plan
+              </Link>
             </Button>
           </div>
         )}
