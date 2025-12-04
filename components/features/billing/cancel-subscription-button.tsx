@@ -71,19 +71,21 @@ export function CancelSubscriptionButton({ subscriptionId, isCancelled }: Cancel
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
-            <AlertDialogDescription className="space-y-2">
-              <p>
-                Are you sure you want to cancel your subscription? You will lose access to:
-              </p>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                <li>Unlimited startup idea generation</li>
-                <li>Unlimited idea validations</li>
-                <li>Priority support</li>
-                <li>Advanced analytics</li>
-              </ul>
-              <p className="pt-2 font-medium">
-                You will retain access until the end of your current billing period.
-              </p>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>
+                  Are you sure you want to cancel your subscription? You will lose access to:
+                </p>
+                <ul className="list-disc list-inside space-y-1 text-sm">
+                  <li>Unlimited startup idea generation</li>
+                  <li>Unlimited idea validations</li>
+                  <li>Priority support</li>
+                  <li>Advanced analytics</li>
+                </ul>
+                <p className="pt-2 font-medium">
+                  You will retain access until the end of your current billing period.
+                </p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

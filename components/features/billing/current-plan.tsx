@@ -12,8 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Loader2, ExternalLink, AlertCircle } from "lucide-react";
-import { manageBilling } from "@/modules/billing";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CreditCard, Loader2, Settings, TrendingUp, FileText, Download, XCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { CancelSubscriptionButton } from './cancel-subscription-button';
@@ -46,15 +52,46 @@ export function CurrentPlan({
 }: CurrentPlanProps) {
   const [isPending, startTransition] = useTransition();
 
-  const handleManageBilling = () => {
-    startTransition(async () => {
-      const result = await manageBilling();
+  const handleUpgradeToYearly = () => {
+    // Scroll to pricing cards section
+    const pricingSection = document.querySelector('#pricing-cards');
+    if (pricingSection) {
+      pricingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
-      if (result?.error) {
-        toast.error(result.error);
+  const handleViewInvoices = () => {
+    // Scroll to billing history section
+    const billingHistory = document.querySelector('#billing-history');
+    if (billingHistory) {
+      billingHistory.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleDownloadLatestInvoice = async () => {
+    try {
+      // Get latest payment transaction
+      const response = await fetch('/api/billing/history');
+      const data = await response.json();
+
+      if (data.transactions && data.transactions.length > 0) {
+        const latestTransaction = data.transactions[0];
+        // Download invoice for latest transaction
+        const invoiceResponse = await fetch(`/api/billing/invoice/${latestTransaction.id}`);
+        const invoiceData = await invoiceResponse.json();
+
+        if (invoiceResponse.ok && invoiceData.invoice_url) {
+          window.open(invoiceData.invoice_url, '_blank');
+        } else {
+          toast.error('No invoice available');
+        }
+      } else {
+        toast.error('No invoices found');
       }
-      // Success case will redirect to billing page
-    });
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast.error('Failed to download invoice');
+    }
   };
 
   return (
@@ -68,24 +105,34 @@ export function CurrentPlan({
             </CardTitle>
             <CardDescription>Your current subscription details</CardDescription>
           </div>
-          {hasRazorpayCustomerId && (
-            <Button
-              variant="outline"
-              onClick={handleManageBilling}
-              disabled={isPending}
-            >
-              {isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <ExternalLink className="mr-2 h-4 w-4" />
-                  Manage Billing
-                </>
-              )}
-            </Button>
+          {hasRazorpayCustomerId && currentPlan.id !== 'free' && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <Settings className="mr-2 h-4 w-4" />
+                  Manage Subscription
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {currentPlan.id === 'pro_monthly' && (
+                  <>
+                    <DropdownMenuItem onClick={handleUpgradeToYearly}>
+                      <TrendingUp className="mr-2 h-4 w-4" />
+                      Upgrade to Yearly (Save 17%)
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={handleViewInvoices}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  View Invoices
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownloadLatestInvoice}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Latest Invoice
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </CardHeader>

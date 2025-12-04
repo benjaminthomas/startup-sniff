@@ -111,7 +111,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           hasRazorpayCustomerId={!!profile?.razorpay_customer_id}
         />
 
-        <div>
+        <div id="pricing-cards">
           <h2 className="text-2xl font-semibold mb-6">Available Plans</h2>
           <PricingCards
             currentPlanId={displayUser.plan_type || 'free'}
@@ -122,7 +122,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         </div>
 
         {profile?.razorpay_customer_id && (
-          <div>
+          <div id="billing-history">
             <h2 className="text-2xl font-semibold mb-6">Billing History</h2>
             <BillingHistory userId={session.userId} />
           </div>
