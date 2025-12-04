@@ -158,12 +158,19 @@ export async function POST(req: NextRequest) {
 
     // Mark event as failed for retry
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    // Get current retry count and increment it
+    const { data: currentEvent } = await supabaseAdmin
+      .from('webhook_events')
+      .select('retry_count')
+      .eq('event_id', eventId)
+      .single();
+
     await supabaseAdmin
       .from('webhook_events')
       .update({
         processed: false,
         error_message: errorMessage,
-        retry_count: supabaseAdmin.raw('retry_count + 1'),
+        retry_count: (currentEvent?.retry_count || 0) + 1,
       })
       .eq('event_id', eventId);
 
@@ -390,7 +397,50 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
       .update({ status: 'active' })
       .eq('razorpay_subscription_id', payment.subscription_id);
 
-    console.log(`Payment captured for subscription: ${payment.subscription_id}`);
+    // Get subscription to find user_id
+    const { data: subscription } = await supabaseAdmin
+      .from('subscriptions')
+      .select('user_id')
+      .eq('razorpay_subscription_id', payment.subscription_id)
+      .single();
+
+    if (subscription) {
+      // Create or update payment transaction record
+      const { data: existingPayment } = await supabaseAdmin
+        .from('payment_transactions')
+        .select('id')
+        .eq('razorpay_payment_id', payment.id)
+        .single();
+
+      if (existingPayment) {
+        // Update existing record
+        await supabaseAdmin
+          .from('payment_transactions')
+          .update({
+            status: 'captured',
+            amount: payment.amount,
+            captured_at: new Date().toISOString(),
+          })
+          .eq('razorpay_payment_id', payment.id);
+      } else {
+        // Create new record
+        await supabaseAdmin
+          .from('payment_transactions')
+          .insert({
+            user_id: subscription.user_id,
+            razorpay_subscription_id: payment.subscription_id,
+            razorpay_payment_id: payment.id,
+            razorpay_order_id: payment.order_id,
+            amount: payment.amount,
+            currency: 'INR',
+            status: 'captured',
+            payment_method: payment.method,
+            captured_at: new Date().toISOString(),
+          });
+      }
+    }
+
+    console.log(`Payment captured for subscription: ${payment.subscription_id}, amount: ${payment.amount}`);
   }
 }
 

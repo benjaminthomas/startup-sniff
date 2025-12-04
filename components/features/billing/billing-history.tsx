@@ -2,115 +2,117 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Download, Calendar, CreditCard } from 'lucide-react';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { getBillingHistory } from '@/modules/billing/actions/billing-history';
+import { Loader2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 
-interface BillingTransaction {
+interface Transaction {
   id: string;
-  date: string;
+  razorpay_payment_id: string;
+  razorpay_subscription_id: string | null;
   amount: number;
+  currency: string;
   status: string;
-  description: string;
-  invoice_url: string;
+  created_at: string;
 }
 
-interface BillingHistoryProps {
-  userId: string;
-}
-
-export function BillingHistory({ userId }: BillingHistoryProps) {
-  const [billingHistory, setBillingHistory] = useState<BillingTransaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+export function BillingHistory({ userId }: { userId: string }) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchBillingHistory() {
-      try {
-        // Subscriptions table not yet implemented - showing empty state
-        const transactions: BillingTransaction[] = [];
+    async function fetchHistory() {
+      setLoading(true);
+      const result = await getBillingHistory();
 
-        setBillingHistory(transactions);
-      } catch (error) {
-        console.error('Error fetching billing history:', error);
-        setBillingHistory([]);
-      } finally {
-        setIsLoading(false);
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setTransactions(result.transactions as Transaction[]);
       }
+
+      setLoading(false);
     }
 
-    fetchBillingHistory();
+    fetchHistory();
   }, [userId]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Billing History</CardTitle>
+          <CardDescription>Your recent transactions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Billing History</CardTitle>
+          <CardDescription>Your recent transactions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-red-500">{error}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5" />
-          Billing History
-        </CardTitle>
-        <CardDescription>Your recent billing transactions</CardDescription>
+        <CardTitle>Billing History</CardTitle>
+        <CardDescription>Your recent transactions</CardDescription>
       </CardHeader>
-
       <CardContent>
-        {isLoading ? (
-          <div className="text-center py-8 text-muted-foreground">
-            Loading billing history...
+        {transactions.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-8 text-center">
+            <p className="text-sm text-muted-foreground">No billing history yet</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {billingHistory.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                No billing history yet
-              </div>
-            ) : (
-              billingHistory.map((item) => (
+          <div className="space-y-3">
+            {transactions.map((transaction) => (
               <div
-                key={item.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                key={transaction.id}
+                className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <CreditCard className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <div className="font-medium">{item.description}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {formatDate(item.date)}
-                    </div>
-                  </div>
+                <div className="space-y-1">
+                  <p className="font-medium">
+                    {transaction.currency.toUpperCase()} {(transaction.amount / 100).toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(transaction.created_at), { addSuffix: true })}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Payment ID: {transaction.razorpay_payment_id}
+                  </p>
                 </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="font-medium">
-                      {formatCurrency(item.amount)}
-                    </div>
-                    <Badge 
-                      variant={item.status === 'paid' ? 'secondary' : 'destructive'}
-                      className="text-xs"
-                    >
-                      {item.status}
-                    </Badge>
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => window.open(item.invoice_url, '_blank')}
+                <div className="text-right">
+                  <span
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      transaction.status === 'captured' || transaction.status === 'verified'
+                        ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                        : transaction.status === 'failed'
+                        ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                        : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                    }`}
                   >
-                    <Download className="h-4 w-4" />
-                  </Button>
+                    {transaction.status}
+                  </span>
                 </div>
               </div>
-            ))
-          )}
-
-          {billingHistory.length > 0 && (
-            <div className="flex justify-center mt-6">
-              <Button variant="outline">Load More</Button>
-            </div>
-          )}
-        </div>
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

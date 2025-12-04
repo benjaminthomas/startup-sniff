@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
 
 interface VerifyPaymentRequest {
   razorpay_payment_id: string;
@@ -60,23 +59,23 @@ export async function POST(req: NextRequest) {
       userId: session.userId,
     });
 
-    // Optionally: Store payment verification in database
-    try {
-      const supabase = createServerAdminClient();
-      await supabase
-        .from('payment_transactions' as any)
-        .insert({
-          user_id: session.userId,
-          razorpay_payment_id,
-          razorpay_subscription_id,
-          status: 'verified',
-          amount: 0, // Will be updated by webhook
-          verified_at: new Date().toISOString(),
-        });
-    } catch (dbError) {
-      // Log but don't fail verification if DB insert fails
-      console.warn('Failed to log payment verification:', dbError);
-    }
+    // TODO: Store payment verification in database once payment_transactions table is in generated types
+    // try {
+    //   const supabase = createServerAdminClient();
+    //   await supabase
+    //     .from('payment_transactions')
+    //     .insert({
+    //       user_id: session.userId,
+    //       razorpay_payment_id,
+    //       razorpay_subscription_id,
+    //       status: 'verified',
+    //       amount: 0, // Will be updated by webhook
+    //       verified_at: new Date().toISOString(),
+    //     });
+    // } catch (dbError) {
+    //   // Log but don't fail verification if DB insert fails
+    //   console.warn('Failed to log payment verification:', dbError);
+    // }
 
     return NextResponse.json({
       verified: true,

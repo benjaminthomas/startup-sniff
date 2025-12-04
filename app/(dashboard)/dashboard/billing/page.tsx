@@ -38,17 +38,25 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
   const supabase = createServerAdminClient();
 
-  // Get user profile (subscription table not yet implemented)
-  const [userProfile] = await Promise.allSettled([
+  // Query both user profile and active subscription
+  const [userProfileResult, subscriptionResult] = await Promise.allSettled([
     supabase
       .from('users')
       .select('*')
       .eq('id', session.userId)
       .single(),
+    supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', session.userId)
+      .in('status', ['active', 'trial'])
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
   ]);
 
-  const profile = userProfile.status === 'fulfilled' ? userProfile.value.data : null;
-  const currentSubscription = null; // TODO: Implement when subscriptions table is created
+  const profile = userProfileResult.status === 'fulfilled' ? userProfileResult.value.data : null;
+  const currentSubscription = subscriptionResult.status === 'fulfilled' ? subscriptionResult.value.data : null;
 
   // Use auth user data as fallback
   const displayUser = profile || {
@@ -109,6 +117,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
             currentPlanId={displayUser.plan_type || 'free'}
             userId={session.userId}
             userEmail={session.email || displayUser.email || ''}
+            hasActiveSubscription={!!currentSubscription}
           />
         </div>
 

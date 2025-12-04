@@ -1,7 +1,7 @@
 'use client'
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { useTransition, type SVGProps, type ComponentType } from "react"
 import { FeatureIcons } from "@/lib/icons"
 import { cn } from "@/lib/utils"
@@ -14,7 +14,6 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
@@ -144,8 +143,14 @@ type NormalizedPlan = "free" | "founder" | "growth"
 function normalizePlanType(planType?: string): NormalizedPlan {
   const plan = (planType || "free").toLowerCase()
 
+  // Handle actual database plan types
+  if (plan === "pro_monthly" || plan === "pro_yearly") {
+    return "growth"  // Map paid plans to "growth" tier
+  }
+
   if (plan === "growth") return "growth"
   if (plan === "founder") return "founder"
+
   return "free"
 }
 
@@ -174,7 +179,6 @@ function getPlanBadge(planType: NormalizedPlan) {
 
 export function AppSidebar({ user }: AppSidebarProps) {
   const pathname = usePathname()
-  const router = useRouter()
   const { state } = useSidebar()
   const collapsed = state === "collapsed"
   const [isSigningOut, startTransition] = useTransition()

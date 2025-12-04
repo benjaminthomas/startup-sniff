@@ -11,10 +11,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CreditCard, Calendar, Loader2, ExternalLink } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { CreditCard, Loader2, ExternalLink, AlertCircle } from "lucide-react";
 import { manageBilling } from "@/modules/billing";
 import { toast } from "sonner";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import { CancelSubscriptionButton } from './cancel-subscription-button';
 
 interface CurrentPlanProps {
   currentPlan: {
@@ -28,8 +30,11 @@ interface CurrentPlanProps {
     };
   };
   subscription: {
-    current_period_end: string;
-    cancel_at_period_end: boolean;
+    razorpay_subscription_id: string | null;
+    status: string | null;
+    current_period_start: string | null;
+    current_period_end: string | null;
+    cancel_at_period_end: boolean | null;
   } | null;
   hasRazorpayCustomerId: boolean;
 }
@@ -104,20 +109,35 @@ export function CurrentPlan({
             </p>
           </div>
 
-          {subscription && (
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium">Next billing date</span>
+          {subscription && subscription.razorpay_subscription_id && subscription.current_period_end && (
+            <div className="space-y-3 rounded-lg border p-4 bg-muted/50">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Status</span>
+                <span className="font-medium capitalize">{subscription.status || 'active'}</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                {formatDate(subscription.current_period_end)}
-              </p>
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Next Billing Date</span>
+                <span className="font-medium">
+                  {new Date(subscription.current_period_end).toLocaleDateString('en-IN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </span>
+              </div>
               {subscription.cancel_at_period_end && (
-                <Badge variant="destructive" className="mt-2">
-                  Cancels at period end
-                </Badge>
+                <div className="flex items-center gap-2 text-sm text-amber-600">
+                  <AlertCircle className="h-4 w-4" />
+                  <span>Your subscription will be cancelled at the end of the billing period</span>
+                </div>
               )}
+
+              <Separator className="my-2" />
+
+              <CancelSubscriptionButton
+                subscriptionId={subscription.razorpay_subscription_id}
+                isCancelled={subscription.cancel_at_period_end || false}
+              />
             </div>
           )}
         </div>
