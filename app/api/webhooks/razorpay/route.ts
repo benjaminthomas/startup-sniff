@@ -75,7 +75,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No event_id in payload' }, { status: 400 });
   }
 
-  console.log('Razorpay webhook event:', eventType, 'ID:', eventId);
+  console.log('[WEBHOOK] Received Razorpay webhook:', {
+    eventType,
+    eventId,
+    timestamp: new Date().toISOString()
+  });
 
   // Idempotency check: Has this event been processed before?
   const { data: existingEvent } = await supabaseAdmin
@@ -182,18 +186,31 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
+  console.log('[WEBHOOK] Processing subscription.activated:', {
+    subscriptionId: subscription.id,
+    planId: subscription.plan_id,
+    status: subscription.status,
+    notes: subscription.notes
+  });
+
   const userId = subscription.notes.user_id;
 
   if (!userId) {
+    console.error('[WEBHOOK] ❌ User ID not found in subscription notes');
     throw new Error('User ID not found in subscription notes');
   }
+
+  console.log('[WEBHOOK] User ID from notes:', userId);
 
   // Find the plan type based on plan ID
   const plan = PRICING_PLANS.find(p => p.priceId === subscription.plan_id);
 
   if (!plan) {
+    console.error('[WEBHOOK] ❌ Plan not found for plan ID:', subscription.plan_id);
     throw new Error(`Plan not found for plan ID: ${subscription.plan_id}`);
   }
+
+  console.log('[WEBHOOK] Mapped to plan:', plan.id, '(' + plan.name + ')');
 
   // Check if subscription already exists
   const { data: existingSub } = await supabaseAdmin
@@ -239,7 +256,9 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   }
 
   // Update user's plan and subscription status
-  await supabaseAdmin
+  console.log('[WEBHOOK] Updating user plan:', { userId, planType: plan.id });
+
+  const { error: userUpdateError } = await supabaseAdmin
     .from('users')
     .update({
       subscription_status: 'active',
@@ -247,8 +266,22 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
     })
     .eq('id', userId);
 
+  if (userUpdateError) {
+    console.error('[WEBHOOK] ❌ Failed to update user:', userUpdateError);
+    throw new Error(`Failed to update user: ${userUpdateError.message}`);
+  }
+
+  console.log('[WEBHOOK] ✅ User updated successfully');
+
   // Update usage limits
-  await supabaseAdmin
+  console.log('[WEBHOOK] Updating usage limits:', {
+    userId,
+    planType: plan.id,
+    ideas: plan.limits.ideas === -1 ? 'unlimited' : plan.limits.ideas,
+    validations: plan.limits.validations === -1 ? 'unlimited' : plan.limits.validations
+  });
+
+  const { error: limitsError } = await supabaseAdmin
     .from('usage_limits')
     .update({
       plan_type: plan.id,
@@ -257,7 +290,66 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
     })
     .eq('user_id', userId);
 
-  console.log(`Subscription activated for user ${userId}: ${subscription.id}`);
+  if (limitsError) {
+    console.error('[WEBHOOK] ⚠️  Failed to update usage limits:', limitsError);
+    // Don't throw - this is not critical
+  } else {
+    console.log('[WEBHOOK] ✅ Usage limits updated');
+  }
+
+  // Send activation/upgrade email
+  try {
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('email, full_name')
+      .eq('id', userId)
+      .single();
+
+    if (user?.email) {
+      // Get most recent payment transaction
+      const { data: payment } = await supabaseAdmin
+        .from('payment_transactions')
+        .select('razorpay_invoice_url, amount')
+        .eq('razorpay_subscription_id', subscription.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      // Determine event type
+      const isUpgrade = subscription.notes.upgraded_from === 'pro_monthly';
+
+      // Import appropriate email function
+      const { sendSubscriptionActivatedEmail, sendSubscriptionUpgradedEmail } = await import('@/lib/email/subscription-emails');
+      const emailFunction = isUpgrade ? sendSubscriptionUpgradedEmail : sendSubscriptionActivatedEmail;
+
+      await emailFunction({
+        to: user.email,
+        userName: user.full_name || user.email.split('@')[0],
+        planName: plan.name,
+        amount: payment?.amount || 0,
+        currency: 'INR',
+        invoiceUrl: payment?.razorpay_invoice_url || 'https://startupsniff.com/dashboard/billing',
+        nextBillingDate: subscription.current_end
+          ? new Date(subscription.current_end * 1000).toISOString()
+          : null,
+        prorationCredit: subscription.notes.proration_credit
+          ? parseInt(subscription.notes.proration_credit)
+          : undefined,
+      });
+
+      console.log(`${isUpgrade ? 'Upgrade' : 'Activation'} email sent to ${user.email}`);
+    }
+  } catch (emailError) {
+    console.error('Email notification failed:', emailError);
+    // Don't throw - email failure shouldn't block activation
+  }
+
+  console.log('[WEBHOOK] ✅ Subscription activation complete:', {
+    userId,
+    subscriptionId: subscription.id,
+    planType: plan.id,
+    status: 'active'
+  });
 }
 
 async function handleSubscriptionCharged(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
@@ -300,6 +392,37 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
         subscription_status: 'cancelled',
       })
       .eq('id', userId);
+
+    // Send cancellation email
+    try {
+      const { data: user } = await supabaseAdmin
+        .from('users')
+        .select('email, full_name, plan_type')
+        .eq('id', userId)
+        .single();
+
+      if (user?.email) {
+        const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
+
+        if (plan) {
+          const { sendSubscriptionCancelledEmail } = await import('@/lib/email/subscription-emails');
+
+          await sendSubscriptionCancelledEmail({
+            to: user.email,
+            userName: user.full_name || user.email.split('@')[0],
+            planName: plan.name,
+            nextBillingDate: subscription.current_end
+              ? new Date(subscription.current_end * 1000).toISOString()
+              : null,
+          });
+
+          console.log(`Cancellation email sent to ${user.email}`);
+        }
+      }
+    } catch (emailError) {
+      console.error('Cancellation email failed:', emailError);
+      // Don't throw - email failure shouldn't block cancellation
+    }
   }
 
   console.log(`Subscription cancelled: ${subscription.id}`);
@@ -438,6 +561,63 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
             captured_at: new Date().toISOString(),
           });
       }
+
+      // Generate or fetch invoice
+      let invoiceId: string | null = null;
+      let invoiceUrl: string | null = null;
+
+      try {
+        const { createInvoice, fetchInvoicesByPayment } = await import('@/lib/razorpay');
+
+        // Try fetching existing invoice first
+        const existingInvoices = await fetchInvoicesByPayment(payment.id);
+
+        if (existingInvoices.items && existingInvoices.items.length > 0) {
+          const invoice = existingInvoices.items[0];
+          invoiceId = invoice.id;
+          invoiceUrl = invoice.short_url;
+          console.log(`Found existing invoice ${invoiceId} for payment ${payment.id}`);
+        } else {
+          // Get user details for invoice generation
+          const { data: user } = await supabaseAdmin
+            .from('users')
+            .select('email, full_name, razorpay_customer_id')
+            .eq('id', subscription.user_id)
+            .single();
+
+          if (user && user.razorpay_customer_id) {
+            // Create new invoice
+            const newInvoice = await createInvoice({
+              customerId: user.razorpay_customer_id,
+              amount: payment.amount,
+              currency: payment.currency || 'INR',
+              description: 'StartupSniff Pro Subscription',
+              customer_email: user.email,
+              customer_name: user.full_name || user.email.split('@')[0],
+              payment_id: payment.id,
+            });
+
+            invoiceId = newInvoice.id;
+            invoiceUrl = newInvoice.short_url;
+            console.log(`Generated new invoice ${invoiceId} for payment ${payment.id}`);
+          }
+        }
+
+        // Store invoice ID and URL in payment transaction
+        if (invoiceId) {
+          await supabaseAdmin
+            .from('payment_transactions')
+            .update({
+              razorpay_invoice_id: invoiceId,
+              razorpay_invoice_url: invoiceUrl,
+              invoice_generated_at: new Date().toISOString(),
+            })
+            .eq('razorpay_payment_id', payment.id);
+        }
+      } catch (invoiceError) {
+        console.error('Invoice generation failed:', invoiceError);
+        // Continue - non-critical for payment processing
+      }
     }
 
     console.log(`Payment captured for subscription: ${payment.subscription_id}, amount: ${payment.amount}`);
@@ -451,6 +631,44 @@ async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['p
       .from('subscriptions')
       .update({ status: 'past_due' })
       .eq('razorpay_subscription_id', payment.subscription_id);
+
+    // Send payment failed email
+    try {
+      const { data: subscription } = await supabaseAdmin
+        .from('subscriptions')
+        .select('user_id')
+        .eq('razorpay_subscription_id', payment.subscription_id)
+        .single();
+
+      if (subscription) {
+        const { data: user } = await supabaseAdmin
+          .from('users')
+          .select('email, full_name, plan_type')
+          .eq('id', subscription.user_id)
+          .single();
+
+        if (user?.email) {
+          const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
+
+          if (plan) {
+            const { sendPaymentFailedEmail } = await import('@/lib/email/subscription-emails');
+
+            await sendPaymentFailedEmail({
+              to: user.email,
+              userName: user.full_name || user.email.split('@')[0],
+              planName: plan.name,
+              amount: payment.amount,
+              currency: 'INR',
+            });
+
+            console.log(`Payment failed email sent to ${user.email}`);
+          }
+        }
+      }
+    } catch (emailError) {
+      console.error('Payment failed email error:', emailError);
+      // Don't throw - email failure shouldn't block webhook processing
+    }
 
     console.log(`Payment failed for subscription: ${payment.subscription_id}`);
   }

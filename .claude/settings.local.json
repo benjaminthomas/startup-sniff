@@ -51,7 +51,18 @@
       "Bash(cat:*)",
       "Bash(npm outdated:*)",
       "mcp__context7__get-library-docs",
-      "Bash(NODE_ENV=production npx next build:*)"
+      "Bash(NODE_ENV=production npx next build:*)",
+      "Bash(set:*)",
+      "Bash(set SUPABASE_SERVICE_ROLE_KEY:*)",
+      "Bash(npx cross-env:*)",
+      "Bash(npx supabase link:*)",
+      "Bash(where:*)",
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(ping:*)",
+      "Bash(ngrok http:*)",
+      "Bash(npx ngrok http 3000)",
+      "Bash(ngrok config add-authtoken:*)",
+      "Bash(npx ngrok:*)"
     ],
     "deny": [],
     "ask": []

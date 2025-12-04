@@ -222,3 +222,71 @@ export const toPaise = (amountInRupees: number): number => {
 export const toRupees = (amountInPaise: number): number => {
   return amountInPaise / 100;
 };
+
+// ===== Invoice Management =====
+
+export interface RazorpayInvoiceParams {
+  customerId: string;
+  amount: number; // in smallest currency unit (paise for INR)
+  currency?: string;
+  description: string;
+  customer_email?: string;
+  customer_name?: string;
+  payment_id?: string;
+}
+
+/**
+ * Fetch invoice by ID
+ * Returns invoice with short_url for downloading
+ */
+export const fetchInvoice = async (invoiceId: string) => {
+  checkRazorpayCredentials();
+
+  return await razorpay.invoices.fetch(invoiceId);
+};
+
+/**
+ * Fetch invoices by payment ID
+ * Razorpay automatically creates invoices for subscription payments
+ */
+export const fetchInvoicesByPayment = async (paymentId: string) => {
+  checkRazorpayCredentials();
+
+  return await razorpay.invoices.all({ payment_id: paymentId });
+};
+
+/**
+ * Create and issue a new invoice
+ * Returns invoice with short_url for downloading
+ */
+export const createInvoice = async ({
+  customerId,
+  amount,
+  currency = 'INR',
+  description,
+  customer_email,
+  customer_name,
+  payment_id,
+}: RazorpayInvoiceParams) => {
+  checkRazorpayCredentials();
+
+  // Create invoice (draft state)
+  const invoice = await razorpay.invoices.create({
+    type: 'invoice',
+    customer_id: customerId,
+    amount,
+    currency,
+    description,
+    customer: {
+      email: customer_email,
+      name: customer_name,
+    },
+    // Link to payment if provided
+    ...(payment_id && { payment_id }),
+  });
+
+  // Issue the invoice to make it downloadable
+  const issuedInvoice = await razorpay.invoices.issue(invoice.id);
+
+  return issuedInvoice;
+};
