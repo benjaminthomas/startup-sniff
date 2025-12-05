@@ -275,6 +275,68 @@ export type Database = {
           },
         ]
       }
+      payment_transactions: {
+        Row: {
+          amount: number
+          captured_at: string | null
+          created_at: string | null
+          currency: string
+          id: string
+          invoice_generated_at: string | null
+          payment_method: string | null
+          plan_type: string | null
+          razorpay_invoice_id: string | null
+          razorpay_invoice_url: string | null
+          razorpay_order_id: string | null
+          razorpay_payment_id: string
+          razorpay_subscription_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          captured_at?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          invoice_generated_at?: string | null
+          payment_method?: string | null
+          plan_type?: string | null
+          razorpay_invoice_id?: string | null
+          razorpay_invoice_url?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id: string
+          razorpay_subscription_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          captured_at?: string | null
+          created_at?: string | null
+          currency?: string
+          id?: string
+          invoice_generated_at?: string | null
+          payment_method?: string | null
+          plan_type?: string | null
+          razorpay_invoice_id?: string | null
+          razorpay_invoice_url?: string | null
+          razorpay_order_id?: string | null
+          razorpay_payment_id?: string
+          razorpay_subscription_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reddit_contacts: {
         Row: {
           account_age_days: number

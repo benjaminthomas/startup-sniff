@@ -53,7 +53,11 @@ export async function GET(request: NextRequest) {
 
     let successCount = 0;
     let errorCount = 0;
-    const errors: any[] = [];
+    const errors: Array<{
+      subscription_id: string;
+      user_email?: string;
+      error: string;
+    }> = [];
 
     for (const subscription of expiredSubscriptions) {
       try {
@@ -88,13 +92,14 @@ export async function GET(request: NextRequest) {
           );
 
         successCount++;
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Failed to process subscription ${subscription.id}:`, error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         errorCount++;
         errors.push({
           subscription_id: subscription.id,
-          user_email: (subscription as any).users?.email,
-          error: error.message,
+          user_email: subscription.user_id, // Using user_id as identifier instead
+          error: errorMessage,
         });
       }
     }
@@ -107,10 +112,11 @@ export async function GET(request: NextRequest) {
       failed: errorCount,
       errors: errors.length > 0 ? errors : undefined,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Fatal error in expire-subscriptions cron:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: errorMessage },
       { status: 500 }
     );
   }

@@ -16,6 +16,28 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+// Type for Razorpay payment object
+interface RazorpayPayment {
+  id: string;
+  email?: string;
+  amount: number;
+  status: string;
+  method?: string;
+  created_at: number;
+  order_id?: string;
+  currency: string;
+}
+
+// Type for Razorpay subscription object
+interface RazorpaySubscription {
+  id: string;
+  customer_id: string;
+  status: string;
+  plan_id: string;
+  current_start?: number;
+  current_end?: number;
+}
+
 async function syncFromRazorpay(customerEmail: string) {
   console.log('🔄 Syncing payment data from Razorpay...\n');
 
@@ -48,8 +70,8 @@ async function syncFromRazorpay(customerEmail: string) {
     });
 
     // Filter subscriptions for this customer
-    const userSubscriptions = subscriptions.items.filter(
-      (sub: any) => sub.customer_id === user.razorpay_customer_id
+    const userSubscriptions = (subscriptions.items as RazorpaySubscription[]).filter(
+      (sub) => sub.customer_id === user.razorpay_customer_id
     );
 
     if (userSubscriptions.length === 0) {
@@ -65,8 +87,8 @@ async function syncFromRazorpay(customerEmail: string) {
         count: 10,
       });
 
-      const userPayments = payments.items.filter(
-        (payment: any) => payment.email === customerEmail
+      const userPayments = (payments.items as RazorpayPayment[]).filter(
+        (payment) => payment.email === customerEmail
       );
 
       if (userPayments.length === 0) {
@@ -78,7 +100,7 @@ async function syncFromRazorpay(customerEmail: string) {
 
       console.log(`\n✅ Found ${userPayments.length} payment(s):\n`);
 
-      userPayments.forEach((payment: any, idx: number) => {
+      userPayments.forEach((payment, idx: number) => {
         console.log(`Payment ${idx + 1}:`);
         console.log(`  ID: ${payment.id}`);
         console.log(`  Amount: ₹${payment.amount / 100}`);
@@ -88,7 +110,7 @@ async function syncFromRazorpay(customerEmail: string) {
       });
 
       // Use the most recent captured payment
-      const capturedPayment = userPayments.find((p: any) => p.status === 'captured') || userPayments[0];
+      const capturedPayment = userPayments.find((p) => p.status === 'captured') || userPayments[0];
 
       if (capturedPayment.status !== 'captured') {
         console.log('⚠️  No captured payment found');
@@ -136,13 +158,17 @@ async function syncFromRazorpay(customerEmail: string) {
     console.log(`✅ Found ${userSubscriptions.length} subscription(s)\n`);
 
     // Use the most recent active subscription
-    const activeSubscription = userSubscriptions.find((s: any) => s.status === 'active') || userSubscriptions[0];
+    const activeSubscription = userSubscriptions.find((s) => s.status === 'active') || userSubscriptions[0];
 
     console.log('📦 Subscription Details:');
     console.log(`   ID: ${activeSubscription.id}`);
     console.log(`   Status: ${activeSubscription.status}`);
     console.log(`   Plan ID: ${activeSubscription.plan_id}`);
-    console.log(`   Current Period: ${new Date(activeSubscription.current_start * 1000).toLocaleDateString()} - ${new Date(activeSubscription.current_end * 1000).toLocaleDateString()}\n`);
+    if (activeSubscription.current_start && activeSubscription.current_end) {
+      console.log(`   Current Period: ${new Date(activeSubscription.current_start * 1000).toLocaleDateString()} - ${new Date(activeSubscription.current_end * 1000).toLocaleDateString()}\n`);
+    } else {
+      console.log('   Current Period: Not available\n');
+    }
 
     // 3. Map plan ID to our plan type
     const planMapping: Record<string, string> = {
@@ -171,8 +197,12 @@ async function syncFromRazorpay(customerEmail: string) {
         razorpay_plan_id: activeSubscription.plan_id,
         status: activeSubscription.status,
         plan_type: planType,
-        current_period_start: new Date(activeSubscription.current_start * 1000).toISOString(),
-        current_period_end: new Date(activeSubscription.current_end * 1000).toISOString(),
+        current_period_start: activeSubscription.current_start
+          ? new Date(activeSubscription.current_start * 1000).toISOString()
+          : null,
+        current_period_end: activeSubscription.current_end
+          ? new Date(activeSubscription.current_end * 1000).toISOString()
+          : null,
       });
 
     if (subError) {

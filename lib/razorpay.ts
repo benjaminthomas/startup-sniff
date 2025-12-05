@@ -274,13 +274,20 @@ export const createInvoice = async ({
   const invoice = await razorpay.invoices.create({
     type: 'invoice',
     customer_id: customerId,
-    amount,
     currency,
     description,
     customer: {
       email: customer_email,
       name: customer_name,
     },
+    line_items: [
+      {
+        name: description,
+        amount,
+        currency,
+        quantity: 1,
+      },
+    ],
     // Link to payment if provided
     ...(payment_id && { payment_id }),
   });

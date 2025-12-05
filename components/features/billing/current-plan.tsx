@@ -1,6 +1,4 @@
 "use client";
-
-import { useTransition } from "react";
 import {
   Card,
   CardContent,
@@ -19,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreditCard, Loader2, Settings, TrendingUp, FileText, Download, XCircle, AlertCircle } from "lucide-react";
+import { CreditCard, Settings, TrendingUp, FileText, Download, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { CancelSubscriptionButton } from './cancel-subscription-button';
@@ -50,8 +48,6 @@ export function CurrentPlan({
   subscription,
   hasRazorpayCustomerId,
 }: CurrentPlanProps) {
-  const [isPending, startTransition] = useTransition();
-
   const handleUpgradeToYearly = () => {
     // Scroll to pricing cards section
     const pricingSection = document.querySelector('#pricing-cards');

@@ -4,7 +4,7 @@
  */
 
 interface Subscription {
-  status: 'trial' | 'active' | 'inactive' | 'cancelled';
+  status: 'trial' | 'active' | 'inactive' | 'cancelled' | null;
   cancel_at_period_end: boolean | null;
   current_period_end: string | null;
 }

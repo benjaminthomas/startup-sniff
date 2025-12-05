@@ -63,7 +63,11 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Get plan details
-    const planDetails: Record<string, any> = {
+    const planDetails: Record<string, {
+      name: string;
+      limits: { ideas: number; validations: number };
+      periodDays: number;
+    }> = {
       pro_monthly: {
         name: 'Pro Monthly',
         limits: { ideas: 999999, validations: 999999 },
@@ -192,10 +196,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error activating subscription:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Internal server error: ' + error.message },
+      { error: 'Internal server error: ' + errorMessage },
       { status: 500 }
     );
   }

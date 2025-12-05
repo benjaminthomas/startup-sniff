@@ -78,6 +78,8 @@ export async function upgradeMonthlyToYearly() {
           daysRemaining: 0,
           fullYearlyAmount: yearlyPlan.price,
           finalAmount: yearlyPlan.price,
+          amountDue: yearlyPlan.price,
+          savings: 0,
           message: 'Upgrading from manual subscription. You will pay the full yearly amount.',
         }
       : calculateMonthlyToYearlyProration(

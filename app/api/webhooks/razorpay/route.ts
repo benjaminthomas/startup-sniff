@@ -23,6 +23,8 @@ interface RazorpayWebhookPayload {
           user_id?: string;
           user_email?: string;
           plan_type?: string;
+          upgraded_from?: string;
+          proration_credit?: string;
         };
         current_start?: number;
         current_end?: number;
@@ -35,6 +37,7 @@ interface RazorpayWebhookPayload {
         id: string;
         amount: number;
         status: string;
+        currency?: string;
         subscription_id?: string;
         order_id?: string;
         method?: string;
@@ -575,7 +578,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
         if (existingInvoices.items && existingInvoices.items.length > 0) {
           const invoice = existingInvoices.items[0];
           invoiceId = invoice.id;
-          invoiceUrl = invoice.short_url;
+          invoiceUrl = invoice.short_url ?? null;
           console.log(`Found existing invoice ${invoiceId} for payment ${payment.id}`);
         } else {
           // Get user details for invoice generation
@@ -598,7 +601,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
             });
 
             invoiceId = newInvoice.id;
-            invoiceUrl = newInvoice.short_url;
+            invoiceUrl = newInvoice.short_url ?? null;
             console.log(`Generated new invoice ${invoiceId} for payment ${payment.id}`);
           }
         }
