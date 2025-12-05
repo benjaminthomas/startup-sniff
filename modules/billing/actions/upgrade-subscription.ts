@@ -64,34 +64,51 @@ export async function upgradeMonthlyToYearly() {
       };
     }
 
-    // 3. Calculate proration
+    // 3. Check if manual subscription (needed for proration and cancellation logic)
+    const isManualSubscription = currentSubscription.razorpay_subscription_id.startsWith('manual_');
+
+    // 4. Calculate proration
     const monthlyPlan = PRICING_PLANS.find(p => p.id === 'pro_monthly')!;
     const yearlyPlan = PRICING_PLANS.find(p => p.id === 'pro_yearly')!;
 
-    const proration = calculateMonthlyToYearlyProration(
-      currentSubscription.current_period_end,
-      monthlyPlan.price,
-      yearlyPlan.price
-    );
+    // For manual subscriptions, don't calculate proration (they didn't pay through Razorpay)
+    const proration = isManualSubscription
+      ? {
+          creditAmount: 0,
+          daysRemaining: 0,
+          fullYearlyAmount: yearlyPlan.price,
+          finalAmount: yearlyPlan.price,
+          message: 'Upgrading from manual subscription. You will pay the full yearly amount.',
+        }
+      : calculateMonthlyToYearlyProration(
+          currentSubscription.current_period_end,
+          monthlyPlan.price,
+          yearlyPlan.price
+        );
 
-    // 4. Cancel current monthly subscription at Razorpay
-    try {
-      await cancelRazorpaySubscription(currentSubscription.razorpay_subscription_id);
-    } catch (cancelError) {
-      console.error('Failed to cancel monthly subscription:', cancelError);
-      // Continue anyway - we'll mark it cancelled in our DB
+    // 5. Cancel current monthly subscription at Razorpay
+    if (!isManualSubscription) {
+      // Only call Razorpay API for real subscriptions
+      try {
+        await cancelRazorpaySubscription(currentSubscription.razorpay_subscription_id);
+      } catch (cancelError) {
+        console.error('Failed to cancel monthly subscription:', cancelError);
+        // Continue anyway - we'll mark it cancelled in our DB
+      }
+    } else {
+      console.log('Skipping Razorpay cancellation for manual subscription');
     }
 
-    // 5. Update current subscription status in database
+    // 6. Update current subscription status in database (works for both manual and real subscriptions)
+    // Mark for cancellation but keep it active until period ends
     await supabase
       .from('subscriptions')
       .update({
-        status: 'cancelled',
         cancel_at_period_end: true,
       })
       .eq('id', currentSubscription.id);
 
-    // 6. Create new yearly subscription at Razorpay
+    // 7. Create new yearly subscription at Razorpay
     const yearlySubscription = await createRazorpaySubscription({
       plan_id: yearlyPlan.priceId,
       customer_notify: 1,
@@ -108,7 +125,7 @@ export async function upgradeMonthlyToYearly() {
       // The prorated amount should be handled in the payment flow
     });
 
-    // 7. Create new subscription record in database
+    // 8. Create new subscription record in database
     await supabase.from('subscriptions').insert({
       user_id: session.userId,
       razorpay_subscription_id: yearlySubscription.id,
@@ -120,7 +137,7 @@ export async function upgradeMonthlyToYearly() {
       current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
     });
 
-    // 8. Return subscription details for payment
+    // 9. Return subscription details for payment
     return {
       success: true,
       subscriptionId: yearlySubscription.id,

@@ -156,19 +156,27 @@ export async function cancelSubscription(subscriptionId: string) {
       return { error: 'Subscription not found' };
     }
 
-    // Cancel subscription in Razorpay
-    await cancelRazorpaySubscription(subscriptionId);
+    // Check if this is a manual subscription (created outside of Razorpay)
+    const isManualSubscription = subscriptionId.startsWith('manual_');
 
-    // Update subscription in database
+    if (!isManualSubscription) {
+      // Only call Razorpay API for real subscriptions
+      await cancelRazorpaySubscription(subscriptionId);
+    }
+
+    // Update subscription in database - keep it active until period ends
+    // Status will be changed to 'cancelled' by a background job when current_period_end is reached
     await supabase
       .from('subscriptions')
       .update({
-        status: 'cancelled',
         cancel_at_period_end: true
       })
       .eq('razorpay_subscription_id', subscriptionId);
 
-    return { success: true, message: 'Subscription cancelled successfully' };
+    return {
+      success: true,
+      message: 'Subscription cancelled. You will retain access until the end of your current billing period.'
+    };
   } catch (error) {
     console.error('Error cancelling subscription:', error);
     return { error: 'Failed to cancel subscription' };
