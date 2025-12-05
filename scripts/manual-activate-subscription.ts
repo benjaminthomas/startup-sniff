@@ -172,6 +172,14 @@ async function activateSubscription(email: string, planType: string) {
 
     // 8. Summary
     console.log('\n═══════════════════════════════════════════════════════════');
+    console.log('⚠️  IMPORTANT: MANUAL SUBSCRIPTION CREATED');
+    console.log('═══════════════════════════════════════════════════════════');
+    console.log('\n⚠️  Manual Subscription Limitations:');
+    console.log('   • Cannot be managed through Razorpay dashboard');
+    console.log('   • No automatic billing/renewal');
+    console.log('   • Upgrades will charge full amount (no proration)');
+    console.log('   • Use webhooks for production subscriptions!');
+    console.log('\n═══════════════════════════════════════════════════════════');
     console.log('✅ SUBSCRIPTION ACTIVATED!');
     console.log('═══════════════════════════════════════════════════════════');
     console.log(`📧 Email: ${user.email}`);

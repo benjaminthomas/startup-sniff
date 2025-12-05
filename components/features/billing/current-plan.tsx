@@ -178,6 +178,14 @@ export function CurrentPlan({
                   <span>Your subscription will be cancelled at the end of the billing period</span>
                 </div>
               )}
+              {subscription.razorpay_subscription_id.startsWith('manual_') && (
+                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>
+                    Manual Subscription - Managed directly. Consider upgrading to unlock full management features.
+                  </span>
+                </div>
+              )}
 
               <Separator className="my-2" />
 
