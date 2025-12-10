@@ -16,6 +16,9 @@ export const metadata = {
   description: 'Manage your email notification preferences',
 }
 
+// Force dynamic rendering since this page requires authentication
+export const dynamic = 'force-dynamic'
+
 async function EmailPreferencesContent() {
   const user = await getCurrentUser()
 
