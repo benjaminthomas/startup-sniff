@@ -1,5 +1,6 @@
 import { openai } from '@/modules/ai'
 import { validationResponseSchema, type ValidationData } from '../schemas/validation-schemas'
+import { log } from '@/lib/logger'
 
 const getOpenAIClient = () => {
   if (!openai) {
@@ -49,8 +50,12 @@ Target Market: ${targetMarketStr}
 
 Provide detailed market validation analysis.`
 
-  console.log('🤖 Calling OpenAI for validation analysis...')
+  log.ai('openai', 'gpt-4-turbo', undefined, {
+    action: 'validate_idea',
+    title: input.title
+  })
 
+  const startTime = Date.now()
   const response = await getOpenAIClient().chat.completions.create({
     model: 'gpt-4-turbo',
     messages: [
@@ -67,17 +72,30 @@ Provide detailed market validation analysis.`
     throw new Error('No response from OpenAI')
   }
 
-  console.log('✅ OpenAI response received, parsing JSON...')
+  const duration = Date.now() - startTime
+  const tokens = response.usage?.total_tokens
+
+  log.ai('openai', 'gpt-4-turbo', tokens, {
+    action: 'validate_idea_complete',
+    duration,
+    title: input.title
+  })
 
   try {
     const parsedResponse = JSON.parse(rawResponse)
-    console.log('📄 Full OpenAI response:', JSON.stringify(parsedResponse, null, 2))
+    log.debug('OpenAI response parsed', {
+      responseLength: rawResponse.length,
+      hasMarketAnalysis: !!parsedResponse.market_analysis
+    })
 
     // Try strict parsing first
     try {
       return validationResponseSchema.parse(parsedResponse)
-    } catch {
-      console.log('⚠️ Strict parsing failed, using fallback data...')
+    } catch (parseError) {
+      log.warn('OpenAI response schema validation failed, using fallback', {
+        error: parseError instanceof Error ? parseError.message : 'Unknown error',
+        title: input.title
+      })
 
       // Fallback data when OpenAI response doesn't match schema
       return {
@@ -136,8 +154,10 @@ Provide detailed market validation analysis.`
       }
     }
   } catch (parseError) {
-    console.error('❌ JSON parsing error:', parseError)
-    console.log('Raw OpenAI response:', rawResponse?.substring(0, 500))
+    log.error('Failed to parse OpenAI response', parseError, {
+      title: input.title,
+      responsePreview: rawResponse?.substring(0, 200)
+    })
     throw new Error('Failed to parse AI response')
   }
 }

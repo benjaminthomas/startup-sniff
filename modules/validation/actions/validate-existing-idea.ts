@@ -5,6 +5,7 @@ import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase'
 import { validateWithAI } from '../services/ai-validator'
 import { checkValidationLimits, updateValidationUsage } from '../services/usage-checker'
+import { log } from '@/lib/logger'
 
 interface ValidationResult {
   success: boolean
@@ -17,16 +18,20 @@ interface ValidationResult {
  * Uses AI to generate comprehensive market analysis and implementation plan
  */
 export async function validateExistingIdea(ideaId: string): Promise<ValidationResult> {
+  const startTime = Date.now()
+
   try {
-    console.log('🚀 Starting existing idea validation for ID:', ideaId)
+    log.info('Starting idea validation', { ideaId, action: 'validate_existing_idea' })
 
     // Get user session and validate authentication
     const session = await getCurrentSession()
 
     if (!session) {
-      console.error('❌ Authentication required')
+      log.warn('Validation attempted without authentication', { ideaId })
       return { success: false, error: 'Authentication required' }
     }
+
+    const userId = session.userId
 
     const supabase = createServerAdminClient()
 
@@ -39,16 +44,17 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       .single()
 
     if (ideaError || !idea) {
-      console.error('❌ Idea not found:', ideaError)
+      log.error('Idea not found', ideaError, { ideaId, userId })
       return { success: false, error: 'Idea not found' }
     }
 
     if (idea.is_validated) {
+      log.warn('Attempted to validate already validated idea', { ideaId, userId })
       return { success: false, error: 'Idea is already validated' }
     }
 
     // Check validation limits
-    const limits = await checkValidationLimits(session.userId)
+    const limits = await checkValidationLimits(userId)
     if (!limits.canValidate) {
       return { success: false, error: limits.error }
     }
@@ -114,14 +120,19 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       .single()
 
     if (updateError) {
-      console.error('❌ Database update error:', updateError)
+      log.error('Failed to save validation data', updateError, { ideaId, userId })
       throw new Error('Failed to save validation data')
     }
 
-    console.log('✅ Idea validation saved to database:', updatedIdea.id)
-
     // Update usage limits
-    await updateValidationUsage(session.userId)
+    await updateValidationUsage(userId)
+
+    const duration = Date.now() - startTime
+    log.validation(ideaId, true, {
+      userId,
+      duration,
+      score: validationData.ai_confidence_score
+    })
 
     // Revalidate relevant pages
     revalidatePath('/dashboard')
@@ -132,7 +143,8 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
     return { success: true, ideaId: ideaId }
 
   } catch (error) {
-    console.error('💥 Validation error:', error)
+    const duration = Date.now() - startTime
+    log.error('Validation failed', error, { ideaId, duration })
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Validation failed'
