@@ -73,24 +73,11 @@ class Logger {
     } else {
       console.warn(`[WARN] ${message}`, context || '')
     }
-
-    // Send warnings to Sentry in production (if available)
-    if (IS_PRODUCTION && typeof window !== 'undefined') {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const Sentry = require('@sentry/nextjs')
-        Sentry.captureMessage(message, {
-          level: 'warning',
-          extra: context,
-        })
-      } catch {
-        // Sentry not available
-      }
-    }
   }
 
   /**
    * Error level - error events that might still allow the app to continue
+   * Note: Sentry error tracking is handled by sentry.*.config.ts files
    */
   error(message: string, error?: Error | unknown, context?: LogContext) {
     const errorObj = error instanceof Error ? error : new Error(String(error))
@@ -107,20 +94,6 @@ class Logger {
         error: errorObj.message,
         stack: errorObj.stack,
       })
-    }
-
-    // Send errors to Sentry (if available)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const Sentry = require('@sentry/nextjs')
-      Sentry.captureException(errorObj, {
-        extra: {
-          message,
-          ...context,
-        },
-      })
-    } catch {
-      // Sentry not available
     }
   }
 

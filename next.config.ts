@@ -78,6 +78,20 @@ const nextConfig: NextConfig = {
         'winston-daily-rotate-file': false,
       };
     }
+
+    // Suppress warnings from OpenTelemetry/Prisma instrumentation in Sentry
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /@opentelemetry\/instrumentation/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+      {
+        module: /@prisma\/instrumentation/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
     return config;
   },
 
