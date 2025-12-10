@@ -20,7 +20,8 @@
     "ngrok": "ngrok http 3000",
     "webhook:check": "npx tsx scripts/check-webhooks.ts",
     "webhook:diagnose": "npx tsx scripts/diagnose-subscription.ts",
-    "subscription:expire": "npx tsx scripts/process-expired-subscriptions.ts"
+    "subscription:expire": "npx tsx scripts/process-expired-subscriptions.ts",
+    "db:clear": "npx tsx scripts/clear-database.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

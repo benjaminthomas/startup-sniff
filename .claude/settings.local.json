@@ -62,7 +62,13 @@
       "Bash(ngrok http:*)",
       "Bash(npx ngrok http 3000)",
       "Bash(ngrok config add-authtoken:*)",
-      "Bash(npx ngrok:*)"
+      "Bash(npx ngrok:*)",
+      "Bash(npm run db:clear:*)",
+      "Bash(npm run db:types:*)",
+      "Bash(npm run db:start:*)",
+      "Bash(npx supabase:*)",
+      "Bash(while read file)",
+      "Bash(while read f)"
     ],
     "deny": [],
     "ask": []
