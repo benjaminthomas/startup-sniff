@@ -29,7 +29,7 @@ export async function getTrialStatus(): Promise<TrialStatus> {
     .single();
 
   if (error || !profile) {
-    log.error('Failed to fetch trial status:', error);
+    log.error('Failed to fetch trial status', error);
     return null;
   }
 

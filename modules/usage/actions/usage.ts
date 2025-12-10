@@ -88,8 +88,8 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
 
     // Count actual startup ideas generated this month
     const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    startOfMonth.setUTCDate(1);
+    startOfMonth.setUTCHours(0, 0, 0, 0);
 
     const { data: ideasCount } = await supabase
       .from('startup_ideas')

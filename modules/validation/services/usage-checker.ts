@@ -24,8 +24,8 @@ export async function checkValidationLimits(userId: string): Promise<UsageLimits
 
   // Get validations done this month
   const startOfMonth = new Date()
-  startOfMonth.setDate(1)
-  startOfMonth.setHours(0, 0, 0, 0)
+  startOfMonth.setUTCDate(1)
+  startOfMonth.setUTCHours(0, 0, 0, 0)
 
   const { data: allValidatedIdeas } = await supabase
     .from('startup_ideas')
