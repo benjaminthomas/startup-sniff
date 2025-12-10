@@ -3,10 +3,37 @@
  * Replaces scattered console.log statements with structured logging
  */
 
-import winston from 'winston'
-import DailyRotateFile from 'winston-daily-rotate-file'
+import type * as WinstonTypes from 'winston'
+import type DailyRotateFileType from 'winston-daily-rotate-file'
 
-const { combine, timestamp, printf, colorize, errors } = winston.format
+// Conditional imports for server-only
+let winston: typeof import('winston') | null = null
+let DailyRotateFile: typeof DailyRotateFileType | null = null
+
+const isServer = typeof window === 'undefined'
+
+if (isServer) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    winston = require('winston')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    DailyRotateFile = require('winston-daily-rotate-file')
+  } catch {
+    // Winston not available
+  }
+}
+
+// Fallback format functions for client-side (won't actually be used)
+const fallbackFormat = {
+  combine: (...args: unknown[]) => args[0],
+  timestamp: () => ({}),
+  printf: (fn: unknown) => fn,
+  colorize: () => ({}),
+  errors: () => ({})
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { combine, timestamp, printf, colorize, errors } = (winston?.format || fallbackFormat) as any
 
 // Environment configuration
 const isProduction = process.env.NODE_ENV === 'production'
@@ -16,7 +43,7 @@ const logLevel = process.env.LOG_LEVEL || (isProduction ? 'info' : 'debug')
 /**
  * Custom log format for better readability
  */
-const customFormat = printf(({ level, message, timestamp, requestId, userId, ...metadata }) => {
+const customFormat = printf(({ level, message, timestamp, requestId, userId, ...metadata }: Record<string, unknown>) => {
   let msg = `${timestamp} [${level}]`
 
   // Add request ID if available (for tracing)
@@ -32,7 +59,8 @@ const customFormat = printf(({ level, message, timestamp, requestId, userId, ...
   msg += `: ${message}`
 
   // Add metadata if present
-  if (Object.keys(metadata).length > 0) {
+  const metadataKeys = Object.keys(metadata)
+  if (metadataKeys.length > 0) {
     msg += ` ${JSON.stringify(metadata)}`
   }
 
@@ -42,8 +70,13 @@ const customFormat = printf(({ level, message, timestamp, requestId, userId, ...
 /**
  * Create Winston logger instance
  */
-function createLogger() {
-  const transports: winston.transport[] = []
+function createLogger(): WinstonTypes.Logger | null {
+  // If winston is not available (client-side), return null
+  if (!winston) {
+    return null
+  }
+
+  const transports: WinstonTypes.transport[] = []
 
   // Console transport (always enabled)
   transports.push(
@@ -58,8 +91,8 @@ function createLogger() {
     })
   )
 
-  // File transports (production only)
-  if (isProduction) {
+  // File transports (production only, server-side only)
+  if (isProduction && isServer && DailyRotateFile && winston) {
     // Error logs
     transports.push(
       new DailyRotateFile({
@@ -99,15 +132,11 @@ function createLogger() {
       winston.format.json()
     ),
     transports,
-    // Don't exit on errors
     exitOnError: false,
   })
 }
 
-// Singleton logger instance
 export const logger = createLogger()
-
-// Export log level for conditional logging
 export const LOG_LEVEL = logLevel
 export const IS_PRODUCTION = isProduction
 export const IS_DEVELOPMENT = isDevelopment

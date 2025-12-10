@@ -8,6 +8,7 @@ import { createServerAdminClient } from '@/modules/supabase';
 import { openai } from '@/modules/ai';
 import { VALIDATION_SCHEMAS } from '@/constants';
 import { incrementUsage } from '@/modules/usage';
+import { log } from '@/lib/logger'
 
 const generateContentSchema = z.object({
   contentType: z.enum(['blog_post', 'tweet', 'email', 'landing_page']),
@@ -91,11 +92,11 @@ export async function generateContent(formData: FormData) {
       .single();
 
     if (saveError) {
-      console.error('Error saving content:', saveError);
+      log.error('Error saving content:', saveError);
       throw new Error('Failed to save generated content');
     }
 
-    console.log(`📝 Content generated successfully for user ${session.userId}: ${savedContent.title}`);
+    log.info(`📝 Content generated successfully for user ${session.userId}: ${savedContent.title}`);
 
     // Increment usage count
     await incrementUsage('content');
@@ -105,7 +106,7 @@ export async function generateContent(formData: FormData) {
 
     return { success: true, content: savedContent };
   } catch (error) {
-    console.error('Error generating content:', error);
+    log.error('Error generating content:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to generate content');
   }
 }
@@ -225,7 +226,7 @@ IMPORTANT: Return a valid JSON object with this exact structure:
   try {
     // Use mock data if OpenAI API key is not configured
     if (!openai) {
-      console.log('Using mock content - OpenAI API key not configured');
+      log.info('Using mock content - OpenAI API key not configured');
       // Add small delay to simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000));
       return generateMockContent(params);
@@ -256,7 +257,7 @@ IMPORTANT: Return a valid JSON object with this exact structure:
     try {
       parsedContent = JSON.parse(response);
     } catch {
-      console.error('Failed to parse OpenAI response as JSON:', response);
+      log.error('Failed to parse OpenAI response as JSON:', response);
       throw new Error('Invalid JSON response from AI');
     }
 
@@ -278,12 +279,12 @@ IMPORTANT: Return a valid JSON object with this exact structure:
       wordCount: (parsedContent as Record<string, unknown>).wordCount as number || Math.ceil(parsedContent.content.length / 5)
     };
   } catch (error) {
-    console.error('Error generating content with AI:', error);
+    log.error('Error generating content with AI:', error);
     
     if (error instanceof Error) {
       if (error.message.includes('API key')) {
         // Fallback to mock data if API key issues
-        console.log('Falling back to mock content due to API key issues');
+        log.info('Falling back to mock content due to API key issues');
         return generateMockContent(params);
       }
       if (error.message.includes('quota')) {
@@ -468,13 +469,13 @@ A: If you don't see measurable progress within 60 days, we'll refund every penny
 export async function getUserContent(limit: number = 10) {
   const session = await getCurrentSession();
   if (!session) {
-    console.log('❌ getUserContent: No authenticated user');
+    log.info('❌ getUserContent: No authenticated user');
     return [];
   }
 
   const supabase = createServerAdminClient();
 
-  console.log('🔍 getUserContent called for user:', {
+  log.info('🔍 getUserContent called for user:', {
     userId: session.userId
   });
 
@@ -486,16 +487,16 @@ export async function getUserContent(limit: number = 10) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    console.log(`📄 Found ${content?.length || 0} content pieces for user ${session.userId}`);
+    log.info(`📄 Found ${content?.length || 0} content pieces for user ${session.userId}`);
 
     if (error) {
-      console.error('Error fetching content:', error);
+      log.error('Error fetching content:', error);
       return [];
     }
 
     return content || [];
   } catch (error) {
-    console.error('Error getting user content:', error);
+    log.error('Error getting user content:', error);
     return [];
   }
 }
@@ -520,12 +521,12 @@ export async function deleteContent(contentId: string) {
       throw new Error('Failed to delete content');
     }
 
-    console.log(`🗑️ Content deleted successfully for user ${session.userId}: ${contentId}`);
+    log.info(`🗑️ Content deleted successfully for user ${session.userId}: ${contentId}`);
 
     revalidatePath('/dashboard/content');
     return { success: true };
   } catch (error) {
-    console.error('Error deleting content:', error);
+    log.error('Error deleting content:', error);
     throw new Error('Failed to delete content');
   }
 }

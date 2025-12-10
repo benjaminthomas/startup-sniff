@@ -1,4 +1,5 @@
 import { createServerAdminClient } from '@/modules/supabase'
+import { log } from '@/lib/logger'
 
 interface UsageLimits {
   canValidate: boolean
@@ -51,7 +52,7 @@ export async function checkValidationLimits(userId: string): Promise<UsageLimits
   const planType = user?.plan_type || 'free'
   const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1
 
-  console.log('📊 Validation limit check:', {
+  log.info('📊 Validation limit check:', {
     planType,
     limit,
     used: validationsThisMonth,
@@ -85,12 +86,12 @@ export async function updateValidationUsage(userId: string): Promise<void> {
     .eq('is_validated', true)
 
   if (countError) {
-    console.error('❌ Error counting validated ideas:', countError)
+    log.error('❌ Error counting validated ideas:', countError)
     return
   }
 
   const actualValidatedCount = validatedIdeas.length || 0
-  console.log(`📊 Updating usage limits: ${actualValidatedCount} validations completed`)
+  log.info(`📊 Updating usage limits: ${actualValidatedCount} validations completed`)
 
   const { error: usageUpdateError } = await supabase
     .from('usage_limits')
@@ -101,8 +102,8 @@ export async function updateValidationUsage(userId: string): Promise<void> {
     .eq('user_id', userId)
 
   if (usageUpdateError) {
-    console.error('❌ Usage limits update error:', usageUpdateError)
+    log.error('Usage limits update error', usageUpdateError)
   } else {
-    console.log('✅ Usage limits updated with actual count:', actualValidatedCount)
+    log.info('Usage limits updated with actual count', { actualValidatedCount })
   }
 }

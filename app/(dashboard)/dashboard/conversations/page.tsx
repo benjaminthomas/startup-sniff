@@ -12,6 +12,7 @@ import { enforcePaidAccess } from '@/lib/paywall'
 import { ConversationMetrics } from '@/components/features/conversations/conversation-metrics'
 import { MessageList } from '@/components/features/conversations/message-list'
 import Link from 'next/link'
+import { log } from '@/lib/logger'
 
 export const metadata = {
   title: 'My Conversations | StartupSniff',
@@ -52,7 +53,7 @@ export default async function ConversationsPage() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('[conversations] Error fetching messages:', error)
+    log.error('[conversations] Error fetching messages:', error)
   }
 
   const userMessages = messages || []

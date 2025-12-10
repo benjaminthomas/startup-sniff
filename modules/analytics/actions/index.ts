@@ -12,6 +12,7 @@
 
 import { createServerAdminClient } from '@/modules/supabase/server'
 import { getCurrentSession } from '@/modules/auth/services/jwt'
+import { log } from '@/lib/logger'
 
 export interface ValidationMetric {
   metric_name: string
@@ -75,7 +76,7 @@ export async function getValidationMetricsAction(): Promise<{
       .order('metric_date', { ascending: false })
 
     if (metricsError) {
-      console.error('[analytics] Failed to fetch daily metrics:', metricsError)
+      log.error('[analytics] Failed to fetch daily metrics:', metricsError)
       return {
         success: false,
         error: 'Failed to load metrics',
@@ -88,7 +89,7 @@ export async function getValidationMetricsAction(): Promise<{
       .select('*')
 
     if (thresholdsError) {
-      console.error('[analytics] Failed to fetch thresholds:', thresholdsError)
+      log.error('[analytics] Failed to fetch thresholds:', thresholdsError)
       return {
         success: false,
         error: 'Failed to load thresholds',
@@ -254,7 +255,7 @@ export async function getValidationMetricsAction(): Promise<{
       metrics,
     }
   } catch (error) {
-    console.error('[analytics] Error in getValidationMetricsAction:', error)
+    log.error('[analytics] Error in getValidationMetricsAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -291,7 +292,7 @@ export async function getDailyMetricsTrendAction(days: number = 30): Promise<{
       .order('metric_date', { ascending: true })
 
     if (error) {
-      console.error('[analytics] Failed to fetch daily metrics trend:', error)
+      log.error('[analytics] Failed to fetch daily metrics trend:', error)
       return {
         success: false,
         error: 'Failed to load trend data',
@@ -303,7 +304,7 @@ export async function getDailyMetricsTrendAction(days: number = 30): Promise<{
       data: data || [],
     }
   } catch (error) {
-    console.error('[analytics] Error in getDailyMetricsTrendAction:', error)
+    log.error('[analytics] Error in getDailyMetricsTrendAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -344,7 +345,7 @@ export async function submitFeedbackAction(
     })
 
     if (error) {
-      console.error('[analytics] Failed to submit feedback:', error)
+      log.error('[analytics] Failed to submit feedback:', error)
       return {
         success: false,
         error: 'Failed to submit feedback',
@@ -355,7 +356,7 @@ export async function submitFeedbackAction(
       success: true,
     }
   } catch (error) {
-    console.error('[analytics] Error in submitFeedbackAction:', error)
+    log.error('[analytics] Error in submitFeedbackAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -385,19 +386,19 @@ export async function calculateDailyMetricsAction(targetDate?: string): Promise<
     })
 
     if (error) {
-      console.error('[analytics] Failed to calculate daily metrics:', error)
+      log.error('[analytics] Failed to calculate daily metrics:', error)
       return {
         success: false,
         error: 'Failed to calculate metrics',
       }
     }
 
-    console.log(`[analytics] Daily metrics calculated for ${dateToCalculate}`)
+    log.info(`[analytics] Daily metrics calculated for ${dateToCalculate}`)
     return {
       success: true,
     }
   } catch (error) {
-    console.error('[analytics] Error in calculateDailyMetricsAction:', error)
+    log.error('[analytics] Error in calculateDailyMetricsAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',

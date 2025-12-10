@@ -6,6 +6,7 @@ import { verifyEmailToken } from '../services/email-mailgun-official'
 import { verifyCSRFToken } from '../utils/csrf'
 import { resetPasswordSchema } from '../schemas/auth-schemas'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Reset password action - Resets password with valid token
@@ -93,7 +94,7 @@ export async function resetPasswordAction(formData: FormData): Promise<AuthRespo
       redirectTo: '/auth/signin',
     }
   } catch (error) {
-    console.error('Reset password error:', error)
+    log.error('Reset password error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

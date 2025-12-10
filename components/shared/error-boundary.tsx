@@ -12,6 +12,7 @@ import React from 'react'
 import { AlertTriangle, RefreshCw, Home, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { log } from '@/lib/logger/client'
 
 interface ErrorBoundaryProps {
   children: React.ReactNode
@@ -57,13 +58,13 @@ export class ErrorBoundary extends React.Component<
           })
         })
       } catch (e) {
-        console.error('Failed to log to Sentry:', e)
+        log.error('Failed to log to Sentry:', e)
       }
     }
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error, errorInfo)
+      log.error('Error Boundary caught an error', error, { componentStack: errorInfo.componentStack })
     }
 
     // Call custom error handler if provided

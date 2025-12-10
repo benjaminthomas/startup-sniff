@@ -16,6 +16,7 @@ import { OnboardingDay3Email } from '@/lib/email/templates/onboarding-day-3'
 import { OnboardingDay7Email } from '@/lib/email/templates/onboarding-day-7'
 import { createServerSupabaseClient as createClient } from '@/modules/supabase/server'
 import { createElement } from 'react'
+import { log } from '@/lib/logger'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://startupsniff.com'
 
@@ -34,7 +35,7 @@ export async function sendOnboardingDay1Email(userId: string) {
       .single()
 
     if (error || !user) {
-      console.error('[onboarding-day-1] User not found:', error)
+      log.error('[onboarding-day-1] User not found', error)
       return { success: false, error: 'User not found' }
     }
 
@@ -67,12 +68,12 @@ export async function sendOnboardingDay1Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      console.log('[onboarding-day-1] Email sent successfully:', user.email)
+      log.info('[onboarding-day-1] Email sent successfully', { email: user.email })
     }
 
     return result
   } catch (error) {
-    console.error('[onboarding-day-1] Failed to send email:', error)
+    log.error('[onboarding-day-1] Failed to send email', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -95,7 +96,7 @@ export async function sendOnboardingDay3Email(userId: string) {
       .single()
 
     if (userError || !user) {
-      console.error('[onboarding-day-3] User not found:', userError)
+      log.error('[onboarding-day-3] User not found', userError)
       return { success: false, error: 'User not found' }
     }
 
@@ -139,12 +140,12 @@ export async function sendOnboardingDay3Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      console.log('[onboarding-day-3] Email sent successfully:', user.email)
+      log.info('[onboarding-day-3] Email sent successfully', { email: user.email })
     }
 
     return result
   } catch (error) {
-    console.error('[onboarding-day-3] Failed to send email:', error)
+    log.error('[onboarding-day-3] Failed to send email', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -167,7 +168,7 @@ export async function sendOnboardingDay7Email(userId: string) {
       .single()
 
     if (userError || !user) {
-      console.error('[onboarding-day-7] User not found:', userError)
+      log.error('[onboarding-day-7] User not found', userError)
       return { success: false, error: 'User not found' }
     }
 
@@ -214,12 +215,12 @@ export async function sendOnboardingDay7Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      console.log('[onboarding-day-7] Email sent successfully:', user.email)
+      log.info('[onboarding-day-7] Email sent successfully', { email: user.email })
     }
 
     return result
   } catch (error) {
-    console.error('[onboarding-day-7] Failed to send email:', error)
+    log.error('[onboarding-day-7] Failed to send email', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -257,11 +258,11 @@ export async function triggerOnboardingSequence(userId: string) {
       }
     ])
 
-    console.log('[onboarding-sequence] Onboarding emails scheduled for user:', userId)
+    log.info('[onboarding-sequence] Onboarding emails scheduled for user', { userId })
 
     return { success: true }
   } catch (error) {
-    console.error('[onboarding-sequence] Failed to trigger sequence:', error)
+    log.error('[onboarding-sequence] Failed to trigger sequence', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

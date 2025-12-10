@@ -21,6 +21,7 @@ import { CreditCard, Settings, TrendingUp, FileText, Download, AlertCircle } fro
 import { toast } from "sonner";
 import { formatCurrency } from "@/lib/utils";
 import { CancelSubscriptionButton } from './cancel-subscription-button';
+import { log } from '@/lib/logger/client'
 
 interface CurrentPlanProps {
   currentPlan: {
@@ -85,7 +86,7 @@ export function CurrentPlan({
         toast.error('No invoices found');
       }
     } catch (error) {
-      console.error('Error downloading invoice:', error);
+      log.error('Error downloading invoice:', error);
       toast.error('Failed to download invoice');
     }
   };

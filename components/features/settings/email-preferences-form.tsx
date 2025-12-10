@@ -10,6 +10,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/hooks/use-toast'
+import { log } from '@/lib/logger/client'
 import {
   getEmailPreferencesAction,
   updateEmailPreferencesAction,
@@ -37,7 +38,7 @@ export function EmailPreferencesForm() {
           setPreferences(result.preferences)
         }
       } catch (error) {
-        console.error('Failed to load email preferences:', error)
+        log.error('Failed to load email preferences:', error)
         toast({
           title: 'Error',
           description: 'Failed to load email preferences',
@@ -76,7 +77,7 @@ export function EmailPreferencesForm() {
         })
       }
     } catch (error) {
-      console.error('Failed to save email preferences:', error)
+      log.error('Failed to save email preferences:', error)
       toast({
         title: 'Error',
         description: 'An unexpected error occurred',

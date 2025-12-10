@@ -4,6 +4,7 @@ import * as React from "react"
 import * as RechartsPrimitive from "recharts"
 
 import { cn } from "@/lib/utils"
+import { log } from '@/lib/logger/client'
 
 // Format: { THEME_NAME: CSS_SELECTOR }
 const THEMES = { light: "", dark: ".dark" } as const
@@ -29,7 +30,7 @@ function useChart() {
 
   if (!context) {
     if (process.env.NODE_ENV !== "production") {
-      console.warn(
+      log.warn(
         "useChart called outside of <ChartContainer />. Returning empty config."
       )
     }

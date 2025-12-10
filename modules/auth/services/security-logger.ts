@@ -5,6 +5,7 @@
  */
 
 import { createServerSupabaseClient } from '@/modules/supabase'
+import { log } from '@/lib/logger'
 
 export interface SecurityEvent {
   event_type: 'login_success' | 'login_failure' | 'signup' | 'password_reset_request' | 
@@ -30,11 +31,11 @@ export const logSecurityEvent = async (event: SecurityEvent): Promise<void> => {
     }
 
     // Security events table not implemented - log to console
-    console.log('Security Event (console only):', JSON.stringify(event, null, 2))
+    log.info('Security Event (console only)', { event: JSON.stringify(event, null, 2) })
   } catch (error) {
-    console.error('Security logging error:', error)
+    log.error('Security logging error', error)
     // Always log to console as fallback
-    console.warn('Security Event (fallback):', JSON.stringify(event, null, 2))
+    log.warn('Security Event (fallback)', { event: JSON.stringify(event, null, 2) })
   }
 }
 
@@ -50,7 +51,7 @@ export const detectSuspiciousActivity = async (
     const error = null
 
     if (error) {
-      console.error('Error checking suspicious activity:', error)
+      log.error('Error checking suspicious activity:', error)
       return false
     }
 
@@ -73,7 +74,7 @@ export const detectSuspiciousActivity = async (
 
     return isSuspicious
   } catch (error) {
-    console.error('Suspicious activity detection error:', error)
+    log.error('Suspicious activity detection error:', error)
     return false
   }
 }

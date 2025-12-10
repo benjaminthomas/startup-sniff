@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { openai } from '@/modules/ai/openai';
+import { log } from '@/lib/logger'
 
 export type DynamicQuestionType = 'insight' | 'constraint' | 'differentiator';
 
@@ -310,7 +311,7 @@ Return JSON with the shape:
           : undefined
     }));
   } catch (error) {
-    console.error('Failed to generate dynamic questions', error);
+    log.error('Failed to generate dynamic questions', error);
     return fallback;
   }
 }

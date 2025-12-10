@@ -53,6 +53,7 @@ import { UnlockOverlay } from '@/components/ui/unlock-overlay';
 import { StartupIdea, StartupIdeaRow, IdeaGenerationFormData, mapDatabaseRowToStartupIdea } from '@/types/startup-ideas';
 import type { DynamicIdeaQuestion, DynamicQuestionType } from '@/modules/ideas/services/question-engine';
 import type { UsageData } from '@/modules/usage';
+import { log } from '@/lib/logger/client'
 
 const industries = [
   { id: 'technology', label: 'Technology', icon: Monitor, description: 'Software, AI, hardware' },
@@ -189,7 +190,7 @@ export function IdeaGenerationForm() {
         setDynamicQuestions(data?.questions ?? []);
       } catch (err) {
         if (controller.signal.aborted) return;
-        console.error('Dynamic prompt fetch failed', err);
+        log.error('Dynamic prompt fetch failed', err);
         setQuestionsError('Unable to personalise prompts right now.');
       } finally {
         if (!controller.signal.aborted) {
@@ -447,7 +448,7 @@ export function IdeaGenerationForm() {
           const updatedUsage = await refreshUsage();
           remainingIdeas = calculateRemainingIdeas(updatedUsage);
         } catch (refreshError) {
-          console.error('Failed to refresh usage after idea generation:', refreshError);
+          log.error('Failed to refresh usage after idea generation:', refreshError);
         }
 
         toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {

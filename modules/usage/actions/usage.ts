@@ -4,6 +4,7 @@ import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { UserDatabase } from '@/modules/auth/services/database';
 import { createServerAdminClient } from '@/modules/supabase';
 import { PlanType } from '@/types/database';
+import { log } from '@/lib/logger'
 
 export interface UsageData {
   planType: PlanType;
@@ -24,23 +25,23 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
   try {
     const session = await getCurrentSession();
 
-    console.log('🔒 getCurrentUserUsage called for:', {
+    log.info('🔒 getCurrentUserUsage called for:', {
       userId: session?.userId,
       userEmail: session?.email,
       authError: session ? null : 'Auth session missing!'
     });
 
     if (!session) {
-      console.log('❌ No authenticated user in getCurrentUserUsage');
+      log.info('❌ No authenticated user in getCurrentUserUsage');
       return null;
     }
 
     // Get user data from database instead of Supabase
-    console.log('🔍 Looking up user in database:', session.userId);
+    log.info('Looking up user in database', { userId: session.userId });
     const user = await UserDatabase.findById(session.userId);
     
     if (!user) {
-      console.error('❌ User not found in database:', {
+      log.error('❌ User not found in database:', {
         userId: session.userId,
         email: session.email,
         sessionId: session.sessionId
@@ -48,7 +49,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       return null;
     }
     
-    console.log('✅ User found in database:', {
+    log.info('✅ User found in database:', {
       userId: user.id,
       email: user.email,
       planType: user.plan_type
@@ -57,7 +58,7 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
     // Ensure user has a valid plan type, default to free if not set
     const planType = (user.plan_type || 'free') as PlanType;
 
-    console.log('📊 Server-side usage data:', {
+    log.info('📊 Server-side usage data:', {
       userId: user.id,
       planType: planType,
       userEmail: user.email
@@ -130,15 +131,15 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       last_reset: startOfMonth.toISOString()
     };
 
-    console.log('✅ Final usage data being returned:', usageData);
-    console.log('📅 Start of month:', startOfMonth.toISOString());
-    console.log('📊 Validation count details:', {
+    log.info('Final usage data being returned', { usageData });
+    log.info('Start of month', { startOfMonth: startOfMonth.toISOString() });
+    log.info('Validation count details', {
       totalValidated: allValidatedIdeas?.length || 0,
       thisMonth: validationsUsed
     });
 
     const limits = PLAN_LIMITS[planType];
-    
+
     // Ensure we always return a complete data structure
     const result: UsageData = {
       planType,
@@ -146,11 +147,11 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       limits: limits || PLAN_LIMITS.free // Fallback to free plan limits
     };
 
-    console.log('📦 Returning complete usage data with limits:', result);
+    log.info('Returning complete usage data with limits', { result });
 
     return result;
   } catch (error) {
-    console.error('💥 Error in getCurrentUserUsage:', error);
+    log.error('Error in getCurrentUserUsage', error);
     return null;
   }
 }

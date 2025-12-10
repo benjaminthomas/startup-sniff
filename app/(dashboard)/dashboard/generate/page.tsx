@@ -4,6 +4,7 @@ import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generat
 import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
 import { getUserIdeas } from '@/modules/ideas';
 import { StartupIdea } from '@/types/global';
+import { log } from '@/lib/logger'
 
 // Force dynamic rendering since this page uses cookies/auth
 export const dynamic = 'force-dynamic'
@@ -14,7 +15,7 @@ export default async function GeneratePage() {
   try {
     recentIdeas = await getUserIdeas(3) as unknown as StartupIdea[];
   } catch (error) {
-    console.log('Failed to fetch recent ideas:', error);
+    log.error('Failed to fetch recent ideas', error);
     // Continue with empty array - component will handle this gracefully
   }
   return (

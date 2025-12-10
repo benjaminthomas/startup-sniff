@@ -12,6 +12,7 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { verifySessionToken } from './jwt'
 import { UserDatabase } from './database'
+import { log } from '@/lib/logger'
 
 export interface VerifiedSession {
   userId: string
@@ -61,7 +62,7 @@ export const verifySession = cache(async (): Promise<VerifiedSession | null> => 
       sessionId: sessionPayload.sessionId,
     }
   } catch (error) {
-    console.error('Session verification error:', error)
+    log.error('Session verification error:', error)
     return null
   }
 })
@@ -96,7 +97,7 @@ export const getCurrentUser = cache(async () => {
       last_login_at: user.last_login_at,
     }
   } catch (error) {
-    console.error('Get current user error:', error)
+    log.error('Get current user error:', error)
     return null
   }
 })

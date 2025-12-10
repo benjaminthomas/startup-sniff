@@ -27,6 +27,7 @@ import {
 import { validateExistingIdea } from "@/modules/validation";
 import { usePlanLimits } from "@/modules/usage/hooks";
 import { getUserIdeas } from "@/modules/ideas";
+import { log } from '@/lib/logger/client'
 
 interface GeneratedIdea {
   id: string;
@@ -69,7 +70,7 @@ export function ValidationForm() {
 
       setGeneratedIdeas(mappedIdeas);
     } catch (err) {
-      console.error("Error loading ideas:", err);
+      log.error("Error loading ideas:", err);
       setError("Failed to load your generated ideas");
     } finally {
       setLoading(false);

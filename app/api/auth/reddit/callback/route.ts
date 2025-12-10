@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RedditApiClient } from '@/lib/reddit/api-client'
 import { createServerAdminClient } from '@/modules/supabase/server'
+import { log } from '@/lib/logger'
 
 /**
  * Epic 2, Story 2.2: Reddit OAuth Integration
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
 
     // Check for Reddit authorization errors
     if (error) {
-      console.error('[reddit-oauth] Authorization error:', error)
+      log.error('[reddit-oauth] Authorization error:', error)
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_denied', request.url)
       )
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // Validate required parameters
     if (!code || !state) {
-      console.error('[reddit-oauth] Missing code or state parameter')
+      log.error('[reddit-oauth] Missing code or state parameter')
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_invalid', request.url)
       )
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     // Extract user ID from state (format: userId:token)
     const [userId, stateToken] = state.split(':')
     if (!userId || !stateToken) {
-      console.error('[reddit-oauth] Invalid state format')
+      log.error('[reddit-oauth] Invalid state format')
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_invalid', request.url)
       )
@@ -53,7 +54,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!tokenResult.success || !tokenResult.data) {
-      console.error('[reddit-oauth] Token exchange failed:', tokenResult.error)
+      log.error('[reddit-oauth] Token exchange failed:', tokenResult.error)
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_failed', request.url)
       )
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     // Get user's Reddit identity
     const identityResult = await RedditApiClient.getUserIdentity(tokens.access_token)
     if (!identityResult.success || !identityResult.data) {
-      console.error('[reddit-oauth] Failed to get user identity:', identityResult.error)
+      log.error('[reddit-oauth] Failed to get user identity:', identityResult.error)
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_failed', request.url)
       )
@@ -89,13 +90,13 @@ export async function GET(request: NextRequest) {
       .eq('id', userId)
 
     if (updateError) {
-      console.error('[reddit-oauth] Failed to store tokens:', updateError)
+      log.error('[reddit-oauth] Failed to store tokens:', updateError)
       return NextResponse.redirect(
         new URL('/dashboard/settings?error=reddit_auth_failed', request.url)
       )
     }
 
-    console.log(`[reddit-oauth] Successfully connected Reddit account for user ${userId} (u/${redditUsername})`)
+    log.info(`[reddit-oauth] Successfully connected Reddit account for user ${userId} (u/${redditUsername})`)
 
     // Redirect back to the page they came from (or settings as fallback)
     const redirectUrl = new URL(request.url)
@@ -104,7 +105,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(redirectUrl)
   } catch (error) {
-    console.error('[reddit-oauth] Unexpected error during callback:', error)
+    log.error('[reddit-oauth] Unexpected error during callback:', error)
     return NextResponse.redirect(
       new URL('/dashboard/settings?error=reddit_auth_failed', request.url)
     )

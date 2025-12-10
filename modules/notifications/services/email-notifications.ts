@@ -12,6 +12,7 @@
 
 import { MailgunMessageData } from 'mailgun.js/definitions'
 import { createMailgunClient, EMAIL_CONFIG } from './mailgun-client'
+import { log } from '@/lib/logger'
 
 // Re-export for convenience
 const { from: EMAIL_FROM, fromName: EMAIL_FROM_NAME, appUrl: APP_URL } = EMAIL_CONFIG
@@ -165,11 +166,11 @@ The StartupSniff Team
   }
 
   try {
-    console.log(`📧 Sending welcome email to ${data.email}...`)
+    log.info(`📧 Sending welcome email to ${data.email}...`)
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Welcome email sent:', result.id)
+    log.info('✅ Welcome email sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send welcome email:', error)
+    log.error('❌ Failed to send welcome email', error)
     // Don't throw - email failure shouldn't block signup
   }
 }
@@ -273,11 +274,11 @@ The StartupSniff Team
   }
 
   try {
-    console.log(`📧 Sending message confirmation to ${data.email}...`)
+    log.info(`📧 Sending message confirmation to ${data.email}...`)
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Message confirmation sent:', result.id)
+    log.info('✅ Message confirmation sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send message confirmation:', error)
+    log.error('❌ Failed to send message confirmation', error)
   }
 }
 
@@ -442,11 +443,11 @@ The StartupSniff Team
   }
 
   try {
-    console.log(`📧 Sending weekly summary to ${data.email}...`)
+    log.info(`📧 Sending weekly summary to ${data.email}...`)
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Weekly summary sent:', result.id)
+    log.info('✅ Weekly summary sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send weekly summary:', error)
+    log.error('❌ Failed to send weekly summary', error)
   }
 }
 
@@ -532,9 +533,9 @@ The StartupSniff Team
 
   try {
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Onboarding Day 1 sent:', result.id)
+    log.info('✅ Onboarding Day 1 sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send onboarding day 1:', error)
+    log.error('❌ Failed to send onboarding day 1', error)
   }
 }
 
@@ -618,9 +619,9 @@ The StartupSniff Team
 
   try {
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Onboarding Day 3 sent:', result.id)
+    log.info('✅ Onboarding Day 3 sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send onboarding day 3:', error)
+    log.error('❌ Failed to send onboarding day 3', error)
   }
 }
 
@@ -710,8 +711,8 @@ The StartupSniff Team
 
   try {
     const result = await mg.messages.create(domain, messageData)
-    console.log('✅ Onboarding Day 7 sent:', result.id)
+    log.info('✅ Onboarding Day 7 sent', { messageId: result.id })
   } catch (error) {
-    console.error('❌ Failed to send onboarding day 7:', error)
+    log.error('❌ Failed to send onboarding day 7', error)
   }
 }

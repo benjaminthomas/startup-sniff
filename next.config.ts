@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['argon2'],
+  serverExternalPackages: ['argon2', 'winston', 'winston-daily-rotate-file'],
   // Security & Performance
   poweredByHeader: false,
   reactStrictMode: true,
@@ -59,6 +59,27 @@ const nextConfig: NextConfig = {
 
   // Transpile packages for better compatibility
   transpilePackages: ['jspdf'],
+
+  // Custom webpack configuration
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // For client-side bundles, replace winston modules with empty modules
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        path: false,
+        os: false,
+      };
+
+      // Ignore winston imports on client side
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        winston: false,
+        'winston-daily-rotate-file': false,
+      };
+    }
+    return config;
+  },
 
   // Output optimization (removed standalone for development compatibility)
 

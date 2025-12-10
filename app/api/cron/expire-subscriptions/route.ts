@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { log } from '@/lib/logger'
 
 const CRON_SECRET = process.env.CRON_SECRET || 'your-cron-secret-here';
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       .lt('current_period_end', now);
 
     if (fetchError) {
-      console.error('Error fetching expired subscriptions:', fetchError);
+      log.error('Error fetching expired subscriptions:', fetchError);
       return NextResponse.json(
         { error: 'Failed to fetch expired subscriptions', details: fetchError.message },
         { status: 500 }
@@ -93,7 +94,7 @@ export async function GET(request: NextRequest) {
 
         successCount++;
       } catch (error: unknown) {
-        console.error(`Failed to process subscription ${subscription.id}:`, error);
+        log.error(`Failed to process subscription ${subscription.id}:`, error);
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         errorCount++;
         errors.push({
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error: unknown) {
-    console.error('Fatal error in expire-subscriptions cron:', error);
+    log.error('Fatal error in expire-subscriptions cron:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: 'Internal server error', details: errorMessage },

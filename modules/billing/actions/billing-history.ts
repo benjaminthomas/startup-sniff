@@ -2,6 +2,7 @@
 
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerAdminClient } from '@/modules/supabase';
+import { log } from '@/lib/logger'
 
 export async function getBillingHistory() {
   const session = await getCurrentSession();
@@ -22,13 +23,13 @@ export async function getBillingHistory() {
       .limit(20);
 
     if (error) {
-      console.error('Failed to fetch billing history:', error);
+      log.error('Failed to fetch billing history:', error);
       return { error: 'Failed to load billing history', transactions: [] };
     }
 
     return { transactions: transactions || [] };
   } catch (error) {
-    console.error('Billing history error:', error);
+    log.error('Billing history error:', error);
     return { error: 'Failed to load billing history', transactions: [] };
   }
 }

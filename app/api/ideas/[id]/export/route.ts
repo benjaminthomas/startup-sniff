@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerAdminClient } from '@/modules/supabase';
+import { log } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
@@ -49,7 +50,7 @@ export async function GET(
       redditSources
     });
   } catch (error) {
-    console.error('Error exporting idea:', error);
+    log.error('Error exporting idea:', error);
     return NextResponse.json({ error: 'Failed to export idea' }, { status: 500 });
   }
 }

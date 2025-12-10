@@ -9,6 +9,7 @@
 
 import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase/server'
+import { log } from '@/lib/logger'
 
 export interface EmailPreferences {
   marketing: boolean
@@ -44,7 +45,7 @@ export async function getEmailPreferencesAction(): Promise<{
       .single()
 
     if (error) {
-      console.error('Failed to get email preferences:', error)
+      log.error('Failed to get email preferences:', error)
       return {
         success: false,
         error: 'Failed to load preferences',
@@ -65,7 +66,7 @@ export async function getEmailPreferencesAction(): Promise<{
       preferences: preferences as unknown as EmailPreferences,
     }
   } catch (error) {
-    console.error('Error in getEmailPreferencesAction:', error)
+    log.error('Error in getEmailPreferencesAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -101,7 +102,7 @@ export async function updateEmailPreferencesAction(
       .eq('id', session.userId)
 
     if (error) {
-      console.error('Failed to update email preferences:', error)
+      log.error('Failed to update email preferences:', error)
       return {
         success: false,
         error: 'Failed to save preferences',
@@ -112,7 +113,7 @@ export async function updateEmailPreferencesAction(
       success: true,
     }
   } catch (error) {
-    console.error('Error in updateEmailPreferencesAction:', error)
+    log.error('Error in updateEmailPreferencesAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -146,7 +147,7 @@ export async function unsubscribeFromAllEmailsAction(): Promise<{
       .eq('id', session.userId)
 
     if (error) {
-      console.error('Failed to unsubscribe from emails:', error)
+      log.error('Failed to unsubscribe from emails:', error)
       return {
         success: false,
         error: 'Failed to unsubscribe',
@@ -157,7 +158,7 @@ export async function unsubscribeFromAllEmailsAction(): Promise<{
       success: true,
     }
   } catch (error) {
-    console.error('Error in unsubscribeFromAllEmailsAction:', error)
+    log.error('Error in unsubscribeFromAllEmailsAction:', error)
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -193,7 +194,7 @@ export async function canSendEmailAction(
       .single()
 
     if (error) {
-      console.error('Failed to check email preferences:', error)
+      log.error('Failed to check email preferences:', error)
       return {
         canSend: false,
         error: 'Failed to check preferences',
@@ -215,7 +216,7 @@ export async function canSendEmailAction(
       canSend,
     }
   } catch (error) {
-    console.error('Error in canSendEmailAction:', error)
+    log.error('Error in canSendEmailAction:', error)
     return {
       canSend: false,
       error: 'An unexpected error occurred',

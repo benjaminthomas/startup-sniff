@@ -6,6 +6,7 @@
  */
 
 import { cookies } from 'next/headers'
+import { log } from '@/lib/logger'
 
 const CSRF_TOKEN_NAME = 'csrf-token'
 const TOKEN_LIFETIME = 24 * 60 * 60 * 1000 // 24 hours
@@ -90,7 +91,7 @@ export const verifyServerActionCSRF = async (formData: FormData): Promise<Server
     }
     
   } catch (error) {
-    console.error('Server Action CSRF verification error:', error)
+    log.error('Server Action CSRF verification error:', error)
     return {
       valid: false,
       error: 'CSRF verification failed due to system error'

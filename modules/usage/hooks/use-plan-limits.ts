@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getUserPlanAndUsage, incrementUsage as incrementUsageAction } from '@/modules/usage';
 import { PlanType } from '@/types/database';
+import { log } from '@/lib/logger/client'
 
 // Plan limits configuration
 export const PLAN_LIMITS = {
@@ -47,7 +48,7 @@ interface PlanLimitsState {
 }
 
 export function usePlanLimits(): PlanLimitsState {
-  console.log('🚀 HOOK CALLED: usePlanLimits function executed');
+  log.info('🚀 HOOK CALLED: usePlanLimits function executed');
   
   const [planType, setPlanType] = useState<PlanType>('free');
   const [usage, setUsage] = useState<UsageStats>({
@@ -61,14 +62,14 @@ export function usePlanLimits(): PlanLimitsState {
   // Add a dependency array and force re-fetch when needed
   const [refreshTrigger] = useState(0);
   
-  console.log('📊 HOOK STATE: Current usage state:', usage);
+  log.info('HOOK STATE: Current usage state', { usageData: JSON.stringify(usage) });
 
   useEffect(() => {
-    console.log('⚡ USEEFFECT RUNNING: usePlanLimits useEffect triggered');
+    log.info('⚡ USEEFFECT RUNNING: usePlanLimits useEffect triggered');
     let mounted = true;
 
     async function fetchPlanAndUsage() {
-      console.log('🚀 usePlanLimits: fetchPlanAndUsage called, refreshTrigger:', refreshTrigger);
+      log.info('usePlanLimits: fetchPlanAndUsage called', { refreshTrigger });
 
       if (!mounted) return;
 
@@ -78,20 +79,20 @@ export function usePlanLimits(): PlanLimitsState {
         const data = await getUserPlanAndUsage();
 
         if (!mounted || !data) {
-          console.log('❌ Early exit: no data from server action');
+          log.info('❌ Early exit: no data from server action');
           setIsLoading(false);
           return;
         }
 
-        console.log('📊 Server action result:', data);
+        log.info('Server action result', { data });
 
         // Set plan type and usage
         setPlanType(data.planType);
         setUsage(data.usage);
 
-        console.log('✅ Plan and usage updated from server action');
+        log.info('✅ Plan and usage updated from server action');
       } catch (error) {
-        console.error('💥 Error in fetchPlanAndUsage:', error);
+        log.error('Error in fetchPlanAndUsage', error);
       } finally {
         if (mounted) {
           setIsLoading(false);
@@ -123,7 +124,7 @@ export function usePlanLimits(): PlanLimitsState {
     const remaining = Math.max(0, limit - used);
     
     // Debug logging
-    console.log(`getRemainingLimit(${type}):`, {
+    log.info(`getRemainingLimit(${type}):`, {
       planType,
       limit,
       used,
@@ -169,7 +170,7 @@ export function usePlanLimits(): PlanLimitsState {
 
       return success;
     } catch (error) {
-      console.error('Error incrementing usage:', error);
+      log.error('Error incrementing usage', error);
       return false;
     }
   };

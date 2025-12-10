@@ -5,6 +5,7 @@ import { createServerAdminClient } from '@/modules/supabase';
 import { createSubscription as createRazorpaySubscription, cancelSubscription as cancelRazorpaySubscription } from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
 import { calculateMonthlyToYearlyProration } from '@/lib/proration';
+import { log } from '@/lib/logger'
 
 export async function upgradeMonthlyToYearly() {
   const session = await getCurrentSession();
@@ -94,11 +95,11 @@ export async function upgradeMonthlyToYearly() {
       try {
         await cancelRazorpaySubscription(currentSubscription.razorpay_subscription_id);
       } catch (cancelError) {
-        console.error('Failed to cancel monthly subscription:', cancelError);
+        log.error('Failed to cancel monthly subscription:', cancelError);
         // Continue anyway - we'll mark it cancelled in our DB
       }
     } else {
-      console.log('Skipping Razorpay cancellation for manual subscription');
+      log.info('Skipping Razorpay cancellation for manual subscription');
     }
 
     // 6. Update current subscription status in database (works for both manual and real subscriptions)
@@ -148,7 +149,7 @@ export async function upgradeMonthlyToYearly() {
       razorpayKeyId: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     };
   } catch (error: unknown) {
-    console.error('Upgrade error:', error);
+    log.error('Upgrade error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to upgrade subscription. Please try again.',
@@ -207,7 +208,7 @@ export async function getUpgradeProration() {
       proration,
     };
   } catch (error) {
-    console.error('Error calculating proration:', error);
+    log.error('Error calculating proration:', error);
     return {
       success: false,
       error: 'Failed to calculate upgrade cost',

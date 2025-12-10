@@ -5,6 +5,7 @@ import { createServerAdminClient } from '@/modules/supabase/server'
 import { RedditApiClient } from '@/lib/reddit/api-client'
 import { getRateLimiter } from '@/lib/services/rate-limiter'
 import { sendMessageConfirmation } from '@/modules/notifications/services/email-notifications'
+import { log } from '@/lib/logger'
 
 /**
  * Epic 2, Story 2.4 & 2.5: Rate Limiting + Message Sending
@@ -46,7 +47,7 @@ export async function sendRedditMessageAction(
       .single()
 
     if (messageError || !message) {
-      console.error('[send-message] Message not found:', messageId)
+      log.error('[send-message] Message not found:', messageId)
       return {
         success: false,
         error: 'Message not found'
@@ -69,7 +70,7 @@ export async function sendRedditMessageAction(
       .single()
 
     if (userError || !user || !user.reddit_access_token) {
-      console.error('[send-message] User Reddit not connected:', session.userId)
+      log.error('[send-message] User Reddit not connected:', session.userId)
       return {
         success: false,
         error: 'Reddit account not connected'
@@ -99,7 +100,7 @@ export async function sendRedditMessageAction(
     const now = new Date()
 
     if (tokenExpiry && now >= tokenExpiry && user.reddit_refresh_token) {
-      console.log('[send-message] Refreshing expired Reddit token')
+      log.info('[send-message] Refreshing expired Reddit token')
 
       const refreshResult = await RedditApiClient.refreshUserAccessToken({
         refreshToken: user.reddit_refresh_token,
@@ -137,7 +138,7 @@ export async function sendRedditMessageAction(
     const finalText = editedText || message.message_text
     const subject = 'Saw your post on Reddit'
 
-    console.log(`[send-message] Sending message to u/${message.reddit_username}`)
+    log.info(`[send-message] Sending message to u/${message.reddit_username}`)
 
     const sendResult = await RedditApiClient.sendDirectMessage({
       accessToken,
@@ -178,7 +179,7 @@ export async function sendRedditMessageAction(
     // 10. Increment Redis rate limit counter
     const updatedQuota = await rateLimiter.increment(session.userId)
 
-    console.log(`[send-message] Successfully sent message ${messageId}. Quota remaining: ${updatedQuota.remaining}`)
+    log.info(`[send-message] Successfully sent message ${messageId}. Quota remaining: ${updatedQuota.remaining}`)
 
     // 11. Send confirmation email (non-blocking)
     try {
@@ -206,7 +207,7 @@ export async function sendRedditMessageAction(
         })
       }
     } catch (emailError) {
-      console.error('[send-message] Failed to send confirmation email:', emailError)
+      log.error('[send-message] Failed to send confirmation email:', emailError)
       // Don't fail the send operation if email fails
     }
 
@@ -216,7 +217,7 @@ export async function sendRedditMessageAction(
       quotaRemaining: updatedQuota.remaining
     }
   } catch (error) {
-    console.error('[send-message] Unexpected error:', error)
+    log.error('[send-message] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

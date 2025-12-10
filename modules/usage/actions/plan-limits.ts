@@ -3,6 +3,7 @@
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerAdminClient } from '@/modules/supabase';
 import { PlanType } from '@/types/database';
+import { log } from '@/lib/logger'
 
 interface PlanAndUsageData {
   planType: PlanType;
@@ -30,7 +31,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       supabase.from('usage_limits').select('*').eq('user_id', session.userId).single()
     ]);
 
-    console.log('📊 Database results:', {
+    log.info('📊 Database results:', {
       profile: profileResult.data,
       profileError: profileResult.error,
       usageLimits: usageLimitsResult.data,
@@ -68,7 +69,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
 
       // Check for data inconsistency and fix it
       if (actualIdeasCount !== recordedIdeasCount || actualValidatedCount !== recordedValidatedCount || actualContentCount !== recordedContentCount) {
-        console.log('🔧 Data inconsistency detected, fixing usage_limits:', {
+        log.info('🔧 Data inconsistency detected, fixing usage_limits:', {
           actual: { ideas: actualIdeasCount, validated: actualValidatedCount, content: actualContentCount },
           recorded: { ideas: recordedIdeasCount, validated: recordedValidatedCount, content: recordedContentCount }
         });
@@ -83,7 +84,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           })
           .eq('user_id', session.userId);
 
-        console.log('✅ Usage counters update result:', {
+        log.info('✅ Usage counters update result:', {
           error: updateResult.error,
           status: updateResult.status,
           statusText: updateResult.statusText,
@@ -104,7 +105,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
         }
       };
     } else {
-      console.log('⚠️ No usage_limits record, counting from all tables and creating record');
+      log.info('⚠️ No usage_limits record, counting from all tables and creating record');
 
       // Get actual counts from all tables
       const [ideasResult, validatedIdeasResult, contentResult] = await Promise.all([
@@ -148,7 +149,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
         .select()
         .single();
 
-      console.log('✅ Created usage_limits record:', {
+      log.info('✅ Created usage_limits record:', {
         error: insertResult.error,
         data: insertResult.data,
         values: {
@@ -168,7 +169,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       };
     }
   } catch (error) {
-    console.error('💥 Error in getUserPlanAndUsage:', error);
+    log.error('💥 Error in getUserPlanAndUsage:', error);
     return null;
   }
 }
@@ -203,7 +204,7 @@ export async function incrementUsage(type: 'ideas' | 'validations' | 'content'):
 
     return true;
   } catch (error) {
-    console.error('Error incrementing usage:', error);
+    log.error('Error incrementing usage:', error);
     return false;
   }
 }

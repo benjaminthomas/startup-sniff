@@ -4,6 +4,7 @@ import { RedditApiClient } from '@/lib/reddit/api-client'
 import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase/server'
 import { randomBytes } from 'crypto'
+import { log } from '@/lib/logger'
 
 /**
  * Epic 2, Story 2.2: Reddit OAuth Integration
@@ -43,7 +44,7 @@ export async function connectRedditAccountAction(): Promise<ConnectRedditAccount
       .eq('id', session.userId)
 
     if (updateError) {
-      console.error('[connect-account] Failed to prepare OAuth state:', updateError)
+      log.error('[connect-account] Failed to prepare OAuth state:', updateError)
       return {
         success: false,
         error: 'Failed to prepare OAuth flow'
@@ -61,14 +62,14 @@ export async function connectRedditAccountAction(): Promise<ConnectRedditAccount
       scope: ['identity', 'privatemessages', 'read', 'submit']
     })
 
-    console.log(`[connect-account] Generated OAuth URL for user ${session.userId}`)
+    log.info(`[connect-account] Generated OAuth URL for user ${session.userId}`)
 
     return {
       success: true,
       authUrl
     }
   } catch (error) {
-    console.error('[connect-account] Unexpected error:', error)
+    log.error('[connect-account] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

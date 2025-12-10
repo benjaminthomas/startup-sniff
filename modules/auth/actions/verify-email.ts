@@ -4,6 +4,7 @@ import { UserDatabase } from '../services/database'
 import { verifyEmailToken } from '../services/email-mailgun-official'
 import { sendWelcomeEmail } from '@/modules/notifications/services/email-notifications'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Verify email action - Confirms email address with token
@@ -59,7 +60,7 @@ export async function verifyEmailAction(token: string): Promise<AuthResponse> {
         name: user.full_name || undefined,
       })
     } catch (error) {
-      console.error('Failed to send welcome email:', error)
+      log.error('Failed to send welcome email:', error)
       // Don't fail verification if email fails
     }
 
@@ -69,7 +70,7 @@ export async function verifyEmailAction(token: string): Promise<AuthResponse> {
       redirectTo: '/auth/signin',
     }
   } catch (error) {
-    console.error('Email verification error:', error)
+    log.error('Email verification error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

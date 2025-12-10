@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { StartupIdea } from '@/types/global';
+import { log } from '@/lib/logger/client'
 
 interface IdeaActionButtonsProps {
   idea: StartupIdea;
@@ -30,7 +31,7 @@ export function IdeaActionButtons({ idea }: IdeaActionButtonsProps) {
       setIsFavorite(result.is_favorite);
       toast.success(result.is_favorite ? 'Added to favorites!' : 'Removed from favorites');
     } catch (error) {
-      console.error('Toggle favorite error:', error);
+      log.error('Toggle favorite error:', error);
       toast.error('Failed to update favorite status');
     } finally {
       setIsTogglingFavorite(false);

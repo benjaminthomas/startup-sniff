@@ -6,6 +6,7 @@
 import FormData from 'form-data'
 import Mailgun from 'mailgun.js'
 import { MailgunMessageData } from 'mailgun.js/definitions'
+import { log } from '@/lib/logger'
 
 // Mailgun configuration from environment
 const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
@@ -136,13 +137,13 @@ Reply directly to this email to respond to ${formData.name}.
     }
 
     const supportResult = await mg.messages.create(MAILGUN_DOMAIN as string, supportEmailData)
-    console.log('Contact form email sent to support:', supportResult.id)
+    log.info('Contact form email sent to support', { messageId: supportResult.id })
 
     // Send confirmation email to user
     await sendContactConfirmationEmail(formData)
 
   } catch (error) {
-    console.error('Failed to send contact form email:', error)
+    log.error('Failed to send contact form email', error)
     throw new Error('Failed to send contact form email. Please try again.')
   }
 }
@@ -254,10 +255,10 @@ https://startupsniff.com
     }
 
     const confirmationResult = await mg.messages.create(MAILGUN_DOMAIN as string, confirmationEmailData)
-    console.log('Contact confirmation email sent to user:', confirmationResult.id)
+    log.info('Contact confirmation email sent to user', { messageId: confirmationResult.id })
 
   } catch (error) {
-    console.error('Failed to send contact confirmation email:', error)
+    log.error('Failed to send contact confirmation email', error)
     // Don't throw error for confirmation email failure - the main email was sent
   }
 }
@@ -281,7 +282,7 @@ export async function verifyContactEmailConfiguration(): Promise<{ success: bool
     
     return { success: true }
   } catch (error) {
-    console.error('Mailgun configuration verification failed:', error)
+    log.error('Mailgun configuration verification failed:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

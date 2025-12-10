@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { formatRupees, type ProrationCalculation } from '@/lib/proration';
 import { useRouter } from 'next/navigation';
+import { log } from '@/lib/logger/client'
 
 interface PricingCardsProps {
   currentPlanId: string;
@@ -141,7 +142,7 @@ export function PricingCards({ currentPlanId, userEmail, hasActiveSubscription }
               setIsUpgrading(false);
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
+            log.error('Payment verification error:', error);
             toast.error('Payment verification failed. Please contact support.');
             setIsUpgrading(false);
           }
@@ -173,7 +174,7 @@ export function PricingCards({ currentPlanId, userEmail, hasActiveSubscription }
         setIsUpgrading(false);
       }
     } catch (error) {
-      console.error('Upgrade error:', error);
+      log.error('Upgrade error:', error);
       toast.error('Failed to process upgrade. Please try again.');
       setIsUpgrading(false);
     }
@@ -248,7 +249,7 @@ export function PricingCards({ currentPlanId, userEmail, hasActiveSubscription }
               setSelectedPlan(null);
             }
           } catch (error) {
-            console.error('Payment verification error:', error);
+            log.error('Payment verification error:', error);
             toast.error('Payment verification failed. Please contact support.');
             setSelectedPlan(null);
           }

@@ -7,6 +7,7 @@ import FormData from 'form-data'
 import Mailgun from 'mailgun.js'
 import { MailgunMessageData } from 'mailgun.js/definitions'
 import { SignJWT, jwtVerify } from 'jose'
+import { log } from '@/lib/logger'
 
 // Mailgun configuration from environment
 const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
@@ -48,7 +49,7 @@ function createMailgunClient() {
     })
   })
 
-  console.log('📧 Creating official Mailgun.js client:', {
+  log.info('📧 Creating official Mailgun.js client:', {
     domain,
     host: MAILGUN_HOST,
     hasApiKey: !!apiKey,
@@ -73,11 +74,11 @@ export async function verifyMailgunConfiguration(): Promise<{ success: boolean; 
     const { client: mg, domain } = createMailgunClient()
 
     // Verify domain exists and is accessible
-    console.log('🔍 Verifying Mailgun domain configuration...')
+    log.info('🔍 Verifying Mailgun domain configuration...')
     const domainInfo = await mg.domains.get(domain)
 
     if (domainInfo) {
-      console.log('✅ Mailgun domain verified:', {
+      log.info('✅ Mailgun domain verified:', {
         name: domainInfo.name,
         state: domainInfo.state,
         type: domainInfo.type
@@ -88,7 +89,7 @@ export async function verifyMailgunConfiguration(): Promise<{ success: boolean; 
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
-    console.error('❌ Mailgun verification failed:', errorMessage)
+    log.error('❌ Mailgun verification failed:', errorMessage)
     return { success: false, error: errorMessage }
   }
 }
@@ -148,7 +149,7 @@ export async function verifyEmailToken(token: string, expectedType: 'email_verif
     const { payload } = await jwtVerify(token, EMAIL_JWT_SECRET)
 
     if (payload.type !== expectedType) {
-      console.warn('Token type mismatch:', { expected: expectedType, actual: payload.type })
+      log.warn('Token type mismatch:', { expected: expectedType, actual: payload.type })
       return null
     }
 
@@ -157,7 +158,8 @@ export async function verifyEmailToken(token: string, expectedType: 'email_verif
       email: payload.email as string
     }
   } catch (error) {
-    console.warn('Token verification failed:', error)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    log.warn('Token verification failed', { error: errorMessage })
     return null
   }
 }
@@ -268,18 +270,18 @@ Sent via Official Mailgun.js API
   }
 
   try {
-    console.log(`📧 Sending email verification to ${email} via Mailgun.js API...`)
+    log.info(`📧 Sending email verification to ${email} via Mailgun.js API...`)
 
     // Official Mailgun.js send method from Context7 docs
     const result = await mg.messages.create(domain, messageData)
 
-    console.log('✅ Email verification sent successfully:', {
+    log.info('✅ Email verification sent successfully:', {
       id: result.id,
       message: result.message,
       to: email
     })
   } catch (error) {
-    console.error('❌ Failed to send email verification via Mailgun.js:', error)
+    log.error('❌ Failed to send email verification via Mailgun.js:', error)
     throw new Error('Failed to send verification email')
   }
 }
@@ -366,18 +368,18 @@ Sent via Official Mailgun.js API
   }
 
   try {
-    console.log(`📧 Sending password reset to ${email} via Mailgun.js API...`)
+    log.info(`📧 Sending password reset to ${email} via Mailgun.js API...`)
 
     // Official Mailgun.js send method
     const result = await mg.messages.create(domain, messageData)
 
-    console.log('✅ Password reset email sent successfully:', {
+    log.info('✅ Password reset email sent successfully:', {
       id: result.id,
       message: result.message,
       to: email
     })
   } catch (error) {
-    console.error('❌ Failed to send password reset email via Mailgun.js:', error)
+    log.error('❌ Failed to send password reset email via Mailgun.js:', error)
     throw new Error('Failed to send password reset email')
   }
 }
@@ -445,15 +447,15 @@ Based on Context7 MCP official Mailgun.js documentation
   }
 
   try {
-    console.log(`📧 Sending test email to ${toEmail} via official Mailgun.js API...`)
+    log.info(`📧 Sending test email to ${toEmail} via official Mailgun.js API...`)
 
     const result = await mg.messages.create(domain, messageData)
 
-    console.log('✅ Test email sent successfully!')
-    console.log('📬 Message ID:', result.id)
-    console.log('📮 Message:', result.message)
+    log.info('Test email sent successfully!')
+    log.info('Message ID received', { messageId: result.id })
+    log.info('Message received', { message: result.message })
   } catch (error) {
-    console.error('❌ Failed to send test email via Mailgun.js:', error)
+    log.error('Failed to send test email via Mailgun.js', error)
     throw new Error('Failed to send test email')
   }
 }

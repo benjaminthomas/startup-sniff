@@ -12,6 +12,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { type NextRequest, NextResponse } from 'next/server'
 import type { Database } from '@/types/supabase'
+import { log } from '@/lib/logger'
 
 // Server client for SSR/API routes
 export const createServerSupabaseClient = async () => {
@@ -124,7 +125,7 @@ export const checkRateLimit = async (
 
     return { allowed: true, remaining: limit - currentCount - 1 }
   } catch (error) {
-    console.error('Rate limiting error:', error)
+    log.error('Rate limiting error:', error)
     // Fail open for rate limiting errors
     return { allowed: true, remaining: limit }
   }

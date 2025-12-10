@@ -1,4 +1,5 @@
 import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import { log } from '@/lib/logger'
 
 /**
  * Robust navigation helper:
@@ -26,7 +27,8 @@ export const redirectToAuth = async (
   } catch (err) {
     // router.push rejected (network or internal). Fall back to full navigation.
     // This avoids "Failed to fetch" bubbling up to the console as a TypeError.
-    console.warn("router.push failed, falling back to full navigation:", err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    log.warn("router.push failed, falling back to full navigation", { error: errorMessage });
     if (isFree) {
       window.location.href = `/auth/signup?next=${encodeURIComponent(
         `/dashboard?plan=${planId}`

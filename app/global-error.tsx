@@ -10,6 +10,7 @@
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
+import { log } from '@/lib/logger/client'
 
 // Force dynamic rendering to avoid prerendering issues
 export const dynamic = 'force-dynamic'
@@ -24,7 +25,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     // Log error to Sentry would happen here when configured
-    console.error('[GlobalError]', error)
+    log.error('[GlobalError]', error)
   }, [error])
 
   return (

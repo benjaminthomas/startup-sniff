@@ -7,6 +7,7 @@
 
 import { createServerAdminClient } from '@/modules/supabase/server'
 import type { Json } from '@/types/supabase'
+import { log } from '@/lib/logger'
 
 // Temporary: Analytics types until migration is applied
 // TODO: Run migration and regenerate Supabase types
@@ -53,7 +54,7 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
     })
   } catch (error) {
     // Don't throw errors from analytics tracking
-    console.error('[analytics] Failed to track event:', error)
+    log.error('[analytics] Failed to track event:', error)
   }
 }
 
@@ -82,7 +83,7 @@ export async function startSession(
       filters_applied: 0,
     })
   } catch (error) {
-    console.error('[analytics] Failed to start session:', error)
+    log.error('[analytics] Failed to start session:', error)
   }
 }
 
@@ -114,7 +115,7 @@ export async function endSession(sessionId: string): Promise<void> {
         .eq('session_id', sessionId)
     }
   } catch (error) {
-    console.error('[analytics] Failed to end session:', error)
+    log.error('[analytics] Failed to end session:', error)
   }
 }
 

@@ -70,9 +70,9 @@ export function ResetPasswordForm({ csrfToken, recoveryToken }: ResetPasswordFor
   //     setSessionChecked(true)
       
   //     if (session?.user) {
-  //       console.log('Client-side session found for user: [REDACTED]')
+  //       log.info('Client-side session found for user: [REDACTED]')
   //     } else {
-  //       console.log('No client-side session found')
+  //       log.info('No client-side session found')
   //     }
   //   }
 

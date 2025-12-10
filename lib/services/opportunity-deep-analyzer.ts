@@ -15,6 +15,7 @@
 import OpenAI from 'openai'
 import type { RedditPost } from '@/types/supabase'
 import { retry, retryPresets } from '@/lib/utils/retry'
+import { log } from '@/lib/logger'
 
 export interface DeepAnalysis {
   viability_explanation: string
@@ -107,13 +108,13 @@ Provide concise, actionable analysis focused on commercial viability.`
 
           // Don't retry on auth errors (401, 403)
           if (message.includes('401') || message.includes('403') || message.includes('invalid api key')) {
-            console.error('[OpenAI] Authentication error - not retrying:', error.message)
+            log.error('[OpenAI] Authentication error - not retrying', error, { errorMessage: error.message })
             return false
           }
 
           // Don't retry on invalid requests (400)
           if (message.includes('400') || message.includes('invalid_request')) {
-            console.error('[OpenAI] Invalid request - not retrying:', error.message)
+            log.error('[OpenAI] Invalid request - not retrying', error, { errorMessage: error.message })
             return false
           }
 
@@ -128,14 +129,14 @@ Provide concise, actionable analysis focused on commercial viability.`
             message.includes('network') ||
             message.includes('fetch')
           ) {
-            console.warn('[OpenAI] Retryable error:', error.message)
+            log.warn('[OpenAI] Retryable error', { errorMessage: error.message })
             return true
           }
 
           return false
         },
         onRetry: (error: Error, attempt: number) => {
-          console.warn(`[OpenAI] Retry attempt ${attempt} after error:`, error.message)
+          log.warn(`[OpenAI] Retry attempt ${attempt} after error`, { errorMessage: error.message, attempt })
 
           // Log to Sentry if available
           if (typeof window !== 'undefined') {
@@ -236,7 +237,7 @@ Focus on actionable insights that help evaluate if this is a viable business opp
         // Rate limiting: wait 1 second between requests
         await new Promise(resolve => setTimeout(resolve, 1000))
       } catch (error) {
-        console.error(`Failed to analyze post ${post.reddit_id}:`, error)
+        log.error(`Failed to analyze post ${post.reddit_id}:`, error)
         // Continue with other posts even if one fails
       }
     }

@@ -2,6 +2,7 @@
 
 import { getCurrentSession } from '../services/jwt'
 import { UserDatabase } from '../services/database'
+import { log } from '@/lib/logger'
 
 /**
  * Get current authenticated user
@@ -16,7 +17,11 @@ export async function getCurrentUser() {
     const user = await UserDatabase.findById(session.userId)
     if (!user || !user.email_verified) {
       // User not found or not verified, return null
-      console.warn(`User ${session.userId} not found or not verified in database`)
+      log.warn('User not found or not verified', {
+        userId: session.userId,
+        userExists: !!user,
+        emailVerified: user?.email_verified || false
+      })
       return null
     }
 
@@ -32,7 +37,7 @@ export async function getCurrentUser() {
       last_login_at: user.last_login_at,
     }
   } catch (error) {
-    console.error('Get current user error:', error)
+    log.error('Failed to get current user', error)
     return null
   }
 }

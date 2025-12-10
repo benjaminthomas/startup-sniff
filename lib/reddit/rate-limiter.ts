@@ -1,4 +1,5 @@
 import type { Redis } from 'ioredis'
+import { log } from '@/lib/logger'
 
 export interface RateLimitResult {
   allowed: boolean
@@ -119,7 +120,7 @@ export class RedditRateLimiter {
         priority
       }
     } catch (error) {
-      console.error('Rate limiter error:', error)
+      log.error('Rate limiter error:', error)
       
       // Fail open - allow request when Redis is unavailable
       return {
@@ -145,7 +146,7 @@ export class RedditRateLimiter {
       
       return position
     } catch (error) {
-      console.error('Queue request error:', error)
+      log.error('Queue request error:', error)
       return 1
     }
   }
@@ -174,7 +175,7 @@ export class RedditRateLimiter {
                 priority: parsed.priority
               })
             } catch (parseError) {
-              console.error('Failed to parse queued item:', parseError)
+              log.error('Failed to parse queued item:', parseError)
             }
           }
         }
@@ -183,7 +184,7 @@ export class RedditRateLimiter {
           break
         }
       } catch (error) {
-        console.error(`Failed to process ${priority} priority queue:`, error)
+        log.error(`Failed to process ${priority} priority queue:`, error)
       }
     }
     
@@ -236,7 +237,7 @@ export class RedditRateLimiter {
         try {
           await this.redis.set(fullKey, used, 'EX', ttlSeconds)
         } catch (error) {
-          console.error('Failed to update rate limit from headers:', error)
+          log.error('Failed to update rate limit from headers:', error)
         }
       }
     }
@@ -269,7 +270,7 @@ export class RedditRateLimiter {
         peakUsage: usageCount // Simplified - would track actual peak
       }
     } catch (error) {
-      console.error('Failed to get rate limit metrics:', error)
+      log.error('Failed to get rate limit metrics:', error)
       return {
         totalRequests: 0,
         currentUsage: 0,
@@ -312,7 +313,7 @@ export class RedditRateLimiter {
         rejectionRate: totalRequests > 0 ? (totalRejections / totalRequests) * 100 : 0
       }
     } catch (error) {
-      console.error('Failed to get efficiency metrics:', error)
+      log.error('Failed to get efficiency metrics:', error)
       return {
         averageUtilization: 0,
         peakUsage: 0,
@@ -357,7 +358,7 @@ export class RedditRateLimiter {
         description: 'Normal usage pattern'
       }
     } catch (error) {
-      console.error('Failed to detect anomaly:', error)
+      log.error('Failed to detect anomaly:', error)
       return {
         detected: false,
         type: 'usage_spike',
@@ -392,7 +393,7 @@ export class RedditRateLimiter {
       
       return cleanedUp
     } catch (error) {
-      console.error('Rate limiter cleanup error:', error)
+      log.error('Rate limiter cleanup error:', error)
       return 0
     }
   }

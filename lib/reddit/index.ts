@@ -73,6 +73,7 @@ import { RedditScheduler, type JobConfig } from './scheduler'
 import { RedditMonitor, type MonitoringConfig } from './monitoring'
 import { RedditFallbackManager, type FallbackConfig } from './fallback-manager'
 import type { Redis } from 'ioredis'
+import { log } from '@/lib/logger'
 
 export interface RedditEngineConfig {
   reddit: RedditApiConfig
@@ -124,13 +125,13 @@ export class RedditTrendEngine {
       this.monitor = new RedditMonitor(this.redis, config.monitoring)
       this.logger = this.monitor.createLogger('reddit-engine')
     } else {
-      // Fallback console logger
+      // Fallback to structured logger
       this.logger = {
-        debug: console.debug,
-        info: console.info,
-        warn: console.warn,
-        error: console.error,
-        fatal: console.error
+        debug: (msg: string, ...args: unknown[]) => log.debug(msg, { component: 'reddit-engine', args }),
+        info: (msg: string, ...args: unknown[]) => log.info(msg, { component: 'reddit-engine', args }),
+        warn: (msg: string, ...args: unknown[]) => log.warn(msg, { component: 'reddit-engine', args }),
+        error: (msg: string, ...args: unknown[]) => log.error(msg, args[0] instanceof Error ? args[0] : undefined, { component: 'reddit-engine', args: args.slice(1) }),
+        fatal: (msg: string, ...args: unknown[]) => log.error(msg, args[0] instanceof Error ? args[0] : undefined, { component: 'reddit-engine', fatal: true, args: args.slice(1) })
       }
     }
 

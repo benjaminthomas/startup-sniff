@@ -2,6 +2,7 @@
 
 import { createServerAdminClient } from '@/modules/supabase/server'
 import type { RedditContact, RedditContactInsert } from '@/types/supabase'
+import { log } from '@/lib/logger'
 
 /**
  * Epic 2, Story 2.1: Human Discovery
@@ -21,12 +22,12 @@ interface DiscoverContactsResult {
 
 // Simple console logger for server actions
 const logger = {
-  info: (msg: string, ...args: unknown[]) => console.log(`[discover-contacts] ${msg}`, ...args),
-  warn: (msg: string, ...args: unknown[]) => console.warn(`[discover-contacts] ${msg}`, ...args),
-  error: (msg: string, ...args: unknown[]) => console.error(`[discover-contacts] ${msg}`, ...args),
-  debug: (msg: string, ...args: unknown[]) => {
+  info: (msg: string, context?: Record<string, unknown>) => log.info(`[discover-contacts] ${msg}`, context),
+  warn: (msg: string, context?: Record<string, unknown>) => log.warn(`[discover-contacts] ${msg}`, context),
+  error: (msg: string, error?: Error | unknown, context?: Record<string, unknown>) => log.error(`[discover-contacts] ${msg}`, error, context),
+  debug: (msg: string, context?: Record<string, unknown>) => {
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[discover-contacts] ${msg}`, ...args)
+      log.info(`[discover-contacts] ${msg}`, context)
     }
   }
 }
@@ -54,14 +55,14 @@ async function getRedditAccessToken(): Promise<string | null> {
     })
 
     if (!response.ok) {
-      logger.error('Failed to get Reddit access token:', response.statusText)
+      logger.error('Failed to get Reddit access token', undefined, { statusText: response.statusText })
       return null
     }
 
     const data = await response.json()
     return data.access_token
   } catch (error) {
-    logger.error('Error getting Reddit access token:', error)
+    logger.error('Error getting Reddit access token', error)
     return null
   }
 }
@@ -87,7 +88,7 @@ async function fetchUserProfile(
     })
 
     if (!response.ok) {
-      logger.warn(`Failed to fetch profile for u/${username}:`, response.statusText)
+      logger.warn(`Failed to fetch profile for u/${username}`, { statusText: response.statusText })
       return null
     }
 
@@ -105,7 +106,7 @@ async function fetchUserProfile(
       total_karma: data.data.link_karma + data.data.comment_karma
     }
   } catch (error) {
-    logger.warn(`Error fetching profile for u/${username}:`, error)
+    logger.error(`Error fetching profile for u/${username}`, error)
     return null
   }
 }
@@ -162,7 +163,7 @@ export async function discoverContactsAction(
       .single()
 
     if (painPointError || !painPoint) {
-      logger.error('Pain point not found:', painPointId)
+      logger.error('Pain point not found', painPointError, { painPointId })
       return {
         success: false,
         contacts: [],
@@ -224,7 +225,7 @@ export async function discoverContactsAction(
       .limit(20) // Get more than 5 to allow for filtering
 
     if (postsError) {
-      logger.error('Error fetching similar posts:', postsError)
+      logger.error('Failed to fetch similar posts', postsError)
       return {
         success: false,
         contacts: [],
@@ -358,12 +359,7 @@ export async function discoverContactsAction(
       .select()
 
     if (insertError) {
-      logger.error('Error inserting contacts:', {
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        code: insertError.code
-      })
+      logger.error('Failed to cache contacts in database', insertError)
       // Return paginated contacts anyway (even if not cached)
       const totalPages = Math.ceil(sortedContacts.length / limit)
       const offset = (page - 1) * limit
@@ -394,7 +390,7 @@ export async function discoverContactsAction(
       currentPage: page
     }
   } catch (error) {
-    logger.error('Unexpected error in discoverContactsAction:', error)
+    logger.error('Unexpected error in discoverContactsAction', error)
     return {
       success: false,
       contacts: [],

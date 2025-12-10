@@ -9,6 +9,7 @@ import { verifyCSRFToken } from '../utils/csrf'
 import { getClientIP, checkRateLimit } from '../utils/rate-limit'
 import { signInSchema } from '../schemas/auth-schemas'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Sign in action - Authenticates user and creates session
@@ -135,7 +136,7 @@ export async function signInAction(formData: FormData): Promise<AuthResponse> {
       },
     }
   } catch (error) {
-    console.error('Sign in error:', error)
+    log.error('Sign in error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

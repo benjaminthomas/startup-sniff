@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateFormCSRFToken } from '@/modules/auth/utils/csrf'
 import { createMiddlewareSupabaseClient } from '@/modules/supabase'
+import { log } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
@@ -18,7 +19,7 @@ export async function GET(request: NextRequest) {
   const next = searchParams.get('next') ?? '/dashboard'
 
   // Debug logging
-  console.log('Callback params:', { code: code ? 'exists' : 'missing', type, next })
+  log.info('Callback params:', { code: code ? 'exists' : 'missing', type, next })
 
   // Validate redirect URL to prevent open redirects
   const isValidRedirect = (url: string): boolean => {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
   const redirectTo = isValidRedirect(next) ? next : '/dashboard'
 
   if (!code) {
-    console.error('No authorization code provided in callback')
+    log.error('No authorization code provided in callback')
     return NextResponse.redirect(
       `${origin}/auth/signin?error=Authorization failed. Please try again.`
     )
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
 
     if (tokenHash && flowType === 'recovery') {
       // Use verifyOtp for password recovery tokens (PKCE flow)
-      console.log('Processing password recovery token (PKCE)')
+      log.info('Processing password recovery token (PKCE)')
       const result = await supabase.auth.verifyOtp({
         token_hash: tokenHash,
         type: 'recovery',
@@ -59,14 +60,14 @@ export async function GET(request: NextRequest) {
       error = result.error
     } else {
       // Exchange code for session with PKCE validation (includes traditional recovery)
-      console.log('Processing auth code (traditional or PKCE)')
+      log.info('Processing auth code (traditional or PKCE)')
       const result = await supabase.auth.exchangeCodeForSession(code)
       data = result.data
       error = result.error
     }
 
     if (error) {
-      console.error('Session exchange failed:', error)
+      log.error('Session exchange failed:', error)
       
       // Handle specific error types
       let errorMessage = 'Authentication failed. Please try again.'
@@ -82,14 +83,14 @@ export async function GET(request: NextRequest) {
     }
 
     if (!data.session || !data.user) {
-      console.error('No session or user data after exchange')
+      log.error('No session or user data after exchange')
       return NextResponse.redirect(
         `${origin}/auth/signin?error=Authentication failed. Please try again.`
       )
     }
 
     // Log successful authentication
-    console.log(`User authenticated: [REDACTED] (${data.user.id})`)
+    log.info(`User authenticated: [REDACTED] (${data.user.id})`)
 
     // Create or update user profile
     const { error: profileError } = await supabase
@@ -106,7 +107,7 @@ export async function GET(request: NextRequest) {
       })
 
     if (profileError) {
-      console.error('Failed to create/update user profile:', profileError)
+      log.error('Failed to create/update user profile:', profileError)
       // Don't block authentication for profile errors
     }
 
@@ -126,20 +127,20 @@ export async function GET(request: NextRequest) {
     //   })
 
     // if (usageLimitsError) {
-    //   console.error('Failed to create/update usage limits:', usageLimitsError)
+    //   log.error('Failed to create/update usage limits:', usageLimitsError)
     // }
 
     // Generate CSRF token for authenticated session
     try {
       await generateFormCSRFToken()
     } catch (csrfError) {
-      console.error('Failed to generate CSRF token:', csrfError)
+      log.error('Failed to generate CSRF token:', csrfError)
       // Don't block authentication for CSRF token errors
     }
 
     // Handle password recovery flow - use token-based approach
     if (type === 'recovery' || next === '/auth/reset-password') {
-      console.log('Detected reset password flow by next parameter, setting recovery data')
+      log.info('Detected reset password flow by next parameter, setting recovery data')
       
       // Instead of relying on session persistence, create a secure token for the password update
       // Generate a temporary access token that can be used for password updates
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
         code: code // Store the original recovery code
       })).toString('base64')
       
-      console.log(`Generated recovery token for user [REDACTED] (${data.user.id})`)
+      log.info(`Generated recovery token for user [REDACTED] (${data.user.id})`)
       
       // Create redirect with recovery token in URL (more reliable than cookies)
       return NextResponse.redirect(`${origin}/auth/reset-password?token=${recoveryToken}`)
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(finalRedirect)
 
   } catch (error) {
-    console.error('Callback handler error:', error)
+    log.error('Callback handler error:', error)
     
     return NextResponse.redirect(
       `${origin}/auth/signin?error=An unexpected error occurred. Please try again.`

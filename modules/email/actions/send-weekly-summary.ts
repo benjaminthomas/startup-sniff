@@ -14,6 +14,7 @@ import { renderEmailToHtml } from '@/lib/email/render'
 import { WeeklySummaryEmail } from '@/lib/email/templates/weekly-summary'
 import { createServerSupabaseClient as createClient } from '@/modules/supabase/server'
 import { createElement } from 'react'
+import { log } from '@/lib/logger'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://startupsniff.com'
 
@@ -52,14 +53,14 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .single()
 
     if (userError || !user) {
-      console.error('[weekly-summary] User not found:', userError)
+      log.error('[weekly-summary] User not found', userError)
       return { success: false, error: 'User not found' }
     }
 
     // Check if user has opted out of weekly summaries
     const emailPrefs = user.email_preferences as { weekly_summary?: boolean } | null
     if (emailPrefs && emailPrefs.weekly_summary === false) {
-      console.log('[weekly-summary] User opted out:', user.email)
+      log.info('[weekly-summary] User opted out', { email: user.email })
       return { success: true, skipped: true, reason: 'User opted out' }
     }
 
@@ -182,12 +183,12 @@ export async function sendWeeklySummaryEmail(userId: string) {
         mailgun_id: result.messageId
       })
 
-      console.log('[weekly-summary] Email sent successfully:', user.email)
+      log.info('[weekly-summary] Email sent successfully', { email: user.email })
     }
 
     return result
   } catch (error) {
-    console.error('[weekly-summary] Failed to send email:', error)
+    log.error('[weekly-summary] Failed to send email', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -213,11 +214,11 @@ export async function sendWeeklySummaryToAllUsers() {
       .gte('last_login_at', thirtyDaysAgo.toISOString())
 
     if (error || !users) {
-      console.error('[weekly-summary-all] Failed to fetch users:', error)
+      log.error('[weekly-summary-all] Failed to fetch users', error)
       return { success: false, error: 'Failed to fetch users' }
     }
 
-    console.log(`[weekly-summary-all] Sending to ${users.length} users...`)
+    log.info(`[weekly-summary-all] Sending to ${users.length} users...`)
 
     const results = {
       sent: 0,
@@ -246,14 +247,14 @@ export async function sendWeeklySummaryToAllUsers() {
       await new Promise(resolve => setTimeout(resolve, 10))
     }
 
-    console.log('[weekly-summary-all] Batch send complete:', results)
+    log.info('[weekly-summary-all] Batch send complete', { results })
 
     return {
       success: true,
       ...results
     }
   } catch (error) {
-    console.error('[weekly-summary-all] Failed to send batch:', error)
+    log.error('[weekly-summary-all] Failed to send batch', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

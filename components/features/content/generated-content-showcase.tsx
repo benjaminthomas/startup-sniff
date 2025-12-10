@@ -18,6 +18,7 @@ import {
   Clock
 } from "lucide-react";
 import { toast } from 'sonner';
+import { log } from '@/lib/logger/client'
 
 interface GeneratedContent {
   id: string;
@@ -97,7 +98,7 @@ export function GeneratedContentShowcase({ content }: GeneratedContentShowcasePr
   };
 
   // Debug logging
-  console.log('Modal state:', { 
+  log.info('Modal state:', { 
     viewDialogOpen, 
     selectedContent: selectedContent ? {
       id: selectedContent.id,

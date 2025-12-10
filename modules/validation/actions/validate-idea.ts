@@ -6,6 +6,7 @@ import { createServerAdminClient } from '@/modules/supabase'
 import { validateWithAI } from '../services/ai-validator'
 import { checkValidationLimits, updateValidationUsage } from '../services/usage-checker'
 import { validationSchema } from '../schemas/validation-schemas'
+import { log } from '@/lib/logger'
 
 interface ValidationResult {
   success: boolean
@@ -19,13 +20,13 @@ interface ValidationResult {
  */
 export async function validateIdea(formData: FormData): Promise<ValidationResult> {
   try {
-    console.log('🚀 Starting idea validation...')
+    log.info('🚀 Starting idea validation...')
 
     // Get user session and validate authentication
     const session = await getCurrentSession()
 
     if (!session) {
-      console.error('❌ Authentication required')
+      log.error('❌ Authentication required')
       return { success: false, error: 'Authentication required' }
     }
 
@@ -38,7 +39,7 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
       targetMarket: formData.get('targetMarket') as string
     }
 
-    console.log('📝 Form data received:', {
+    log.info('Form data received', {
       ...rawData,
       ideaDescription: rawData.ideaDescription ? rawData.ideaDescription.substring(0, 50) + '...' : 'No description'
     })
@@ -86,16 +87,16 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
       .single()
 
     if (ideaError) {
-      console.error('❌ Database error:', ideaError)
+      log.error('Database error', ideaError)
       throw new Error('Failed to save validated idea')
     }
 
-    console.log('✅ Idea saved to database:', ideaData.id)
+    log.info('Idea saved to database', { ideaId: ideaData.id })
 
     // Update usage limits
     await updateValidationUsage(session.userId)
 
-    console.log('✅ Usage limits updated')
+    log.info('✅ Usage limits updated')
 
     // Revalidate relevant pages
     revalidatePath('/dashboard')
@@ -106,7 +107,7 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
     return { success: true, ideaId: ideaData.id }
 
   } catch (error) {
-    console.error('💥 Validation error:', error)
+    log.error('Validation error', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Validation failed'

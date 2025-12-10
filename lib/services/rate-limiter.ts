@@ -6,6 +6,7 @@
  */
 
 import { getCache } from './redis-cache';
+import { log } from '@/lib/logger'
 
 export interface RateLimitConfig {
   dailyLimit: number; // Maximum messages per day
@@ -93,7 +94,7 @@ export class MessageRateLimiter {
         resetInSeconds: this.getSecondsUntilMidnightUTC()
       };
     } catch (error) {
-      console.error('[RateLimiter] Error checking limit:', error);
+      log.error('[RateLimiter] Error checking limit:', error);
 
       // Graceful degradation: If Redis fails, allow the action but log the error
       // In production, you might want to be more conservative
@@ -137,7 +138,7 @@ export class MessageRateLimiter {
         resetInSeconds: this.getSecondsUntilMidnightUTC()
       };
     } catch (error) {
-      console.error('[RateLimiter] Error incrementing:', error);
+      log.error('[RateLimiter] Error incrementing:', error);
 
       return {
         allowed: false,

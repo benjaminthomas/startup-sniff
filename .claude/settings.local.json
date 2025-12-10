@@ -69,7 +69,11 @@
       "Bash(npx supabase:*)",
       "Bash(while read file)",
       "Bash(while read f)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(head:*)",
+      "Bash(grep:*)",
+      "Bash(xargs -I {} sh -c \"head -n 2 {} | grep -q \"\"''use client''\"\" && echo {}\")",
+      "Bash(do head -n 2 \"$f\")"
     ],
     "deny": [],
     "ask": []

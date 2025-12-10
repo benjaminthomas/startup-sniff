@@ -5,6 +5,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { User, UserInsert, UserUpdate, UserSession, UserSessionInsert, AuthRateLimit, AuthRateLimitInsert } from '@/types/database'
+import { log } from '@/lib/logger'
 
 // Create Supabase client for database operations (not auth)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -37,7 +38,7 @@ export class UserDatabase {
 
     if (error) {
       if (error.code === 'PGRST116') return null // No rows found
-      console.error('Database error finding user by email:', error)
+      log.error('Database error finding user by email', error, { email: email.substring(0, 3) + '***' })
       throw new Error('Failed to find user')
     }
 
@@ -56,10 +57,10 @@ export class UserDatabase {
 
     if (error) {
       if (error.code === 'PGRST116') {
-        console.warn(`User not found in database for ID: ${id}`)
+        log.warn('User not found in database', { userId: id })
         return null // No rows found
       }
-      console.error('Database error finding user by ID:', error)
+      log.error('Database error finding user by ID', error, { userId: id })
       throw new Error('Failed to find user')
     }
 
@@ -83,7 +84,7 @@ export class UserDatabase {
       .single()
 
     if (error) {
-      console.error('Database error creating user:', error)
+      log.error('Database error creating user', error, { email: userData.email.substring(0, 3) + '***' })
       if (error.code === '23505') { // Unique constraint violation
         throw new Error('User with this email already exists')
       }
@@ -108,7 +109,7 @@ export class UserDatabase {
       .single()
 
     if (error) {
-      console.error('Database error updating user:', error)
+      log.error('Database error updating user', error, { userId: id })
       throw new Error('Failed to update user')
     }
 
@@ -130,7 +131,7 @@ export class UserDatabase {
       .eq('id', id)
 
     if (error) {
-      console.error('Database error updating login attempts:', error)
+      log.error('Database error updating login attempts', error, { userId: id, attempts })
       throw new Error('Failed to update login attempts')
     }
   }
@@ -149,7 +150,7 @@ export class UserDatabase {
       .eq('id', id)
 
     if (error) {
-      console.error('Database error updating last login:', error)
+      log.error('Database error updating last login', error, { userId: id })
       throw new Error('Failed to update last login')
     }
   }
@@ -175,7 +176,7 @@ export class SessionDatabase {
       .single()
 
     if (error) {
-      console.error('Database error creating session:', error)
+      log.error('Database error creating session', error, { userId: sessionData.user_id })
       throw new Error('Failed to create session')
     }
 
@@ -194,7 +195,7 @@ export class SessionDatabase {
 
     if (error) {
       if (error.code === 'PGRST116') return null // No rows found
-      console.error('Database error finding session:', error)
+      log.error('Database error finding session', error)
       throw new Error('Failed to find session')
     }
 
@@ -211,7 +212,7 @@ export class SessionDatabase {
       .eq('session_token', token)
 
     if (error) {
-      console.error('Database error deleting session:', error)
+      log.error('Database error deleting session', error)
       throw new Error('Failed to delete session')
     }
   }
@@ -226,7 +227,7 @@ export class SessionDatabase {
       .eq('user_id', userId)
 
     if (error) {
-      console.error('Database error deleting user sessions:', error)
+      log.error('Database error deleting user sessions', error, { userId })
       throw new Error('Failed to delete user sessions')
     }
   }
@@ -241,7 +242,7 @@ export class SessionDatabase {
       .lt('expires_at', new Date().toISOString())
 
     if (error) {
-      console.error('Database error cleaning up sessions:', error)
+      log.error('Database error cleaning up sessions', error)
       throw new Error('Failed to cleanup expired sessions')
     }
   }
@@ -264,7 +265,7 @@ export class RateLimitDatabase {
 
     if (error) {
       if (error.code === 'PGRST116') return null // No rows found
-      console.error('Database error getting rate limit:', error)
+      log.error('Database error getting rate limit', error, { identifier, endpoint })
       throw new Error('Failed to get rate limit')
     }
 
@@ -288,7 +289,10 @@ export class RateLimitDatabase {
       .single()
 
     if (error) {
-      console.error('Database error upserting rate limit:', error)
+      log.error('Database error upserting rate limit', error, {
+        identifier: rateLimitData.identifier,
+        endpoint: rateLimitData.endpoint
+      })
       throw new Error('Failed to upsert rate limit')
     }
 
@@ -306,7 +310,7 @@ export class RateLimitDatabase {
       .eq('endpoint', endpoint)
 
     if (error) {
-      console.error('Database error resetting rate limit:', error)
+      log.error('Database error resetting rate limit', error, { identifier, endpoint })
       throw new Error('Failed to reset rate limit')
     }
   }
@@ -323,7 +327,7 @@ export class RateLimitDatabase {
       .lt('created_at', oneDayAgo)
 
     if (error) {
-      console.error('Database error cleaning up rate limits:', error)
+      log.error('Database error cleaning up rate limits', error)
       throw new Error('Failed to cleanup rate limits')
     }
   }
@@ -340,7 +344,7 @@ export class DatabaseUtils {
     const { error } = await supabase.rpc('cleanup_expired_auth_data')
 
     if (error) {
-      console.error('Database error running cleanup:', error)
+      log.error('Database error running cleanup', error)
       throw new Error('Failed to run cleanup')
     }
   }

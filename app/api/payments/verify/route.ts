@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { validateRequestBody, verifyPaymentSchema } from '@/lib/validation/api-schemas';
+import { log } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!isValid) {
-      console.error('Payment signature verification failed', {
+      log.error('Payment signature verification failed', {
         paymentId: razorpay_payment_id,
         subscriptionId: razorpay_subscription_id,
         userId: session.userId,
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Log successful verification
-    console.log('Payment verified successfully', {
+    log.info('Payment verified successfully', {
       paymentId: razorpay_payment_id,
       subscriptionId: razorpay_subscription_id,
       userId: session.userId,
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
     //     });
     // } catch (dbError) {
     //   // Log but don't fail verification if DB insert fails
-    //   console.warn('Failed to log payment verification:', dbError);
+    //   log.warn('Failed to log payment verification:', dbError);
     // }
 
     return NextResponse.json({
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       message: 'Payment verified successfully',
     });
   } catch (error) {
-    console.error('Payment verification error:', error);
+    log.error('Payment verification error:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(

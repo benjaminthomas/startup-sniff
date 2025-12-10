@@ -9,6 +9,7 @@ import { generateStartupIdea, validateIdeaWithAI, type IdeaGenerationParams } fr
 import { generateIdeasFromPainPoints } from '@/modules/reddit';
 import { getCurrentUserUsage, getUserPlanAndUsage } from '@/modules/usage';
 import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator';
+import { log } from '@/lib/logger'
 
 const generateIdeaSchema = z.object({
   industry: z.string().optional(),
@@ -106,7 +107,7 @@ export async function toggleFavorite(ideaId: string) {
       is_favorite: newFavoriteStatus
     };
   } catch (error) {
-    console.error('Toggle favorite error:', error);
+    log.error('Toggle favorite error:', error);
     throw new Error('Failed to toggle favorite');
   }
 }
@@ -149,7 +150,7 @@ export async function generateIdea(formData: FormData) {
     }
 
     // Generate the startup idea using Reddit-powered system
-    console.log('🧠 Using Reddit-powered idea generation...');
+    log.info('🧠 Using Reddit-powered idea generation...');
 
     // Map user selections to Reddit generation options
     const redditOptions: IdeaGenerationOptions = {
@@ -163,7 +164,7 @@ export async function generateIdea(formData: FormData) {
       targetAudience: validationResult.data.targetAudience || undefined
     };
 
-    console.log('🔍 Reddit generation options:', redditOptions);
+    log.info('Reddit generation options', { options: redditOptions as Record<string, unknown> });
 
     // Generate ideas from Reddit pain points
     const redditIdeaResult = await generateIdeasFromPainPoints(redditOptions);
@@ -171,7 +172,7 @@ export async function generateIdea(formData: FormData) {
     let isFromReddit = false;
 
     if (!redditIdeaResult.success || redditIdeaResult.ideas.length === 0) {
-      console.log('⚠️ Reddit generation failed, falling back to OpenAI...');
+      log.info('⚠️ Reddit generation failed, falling back to OpenAI...');
       // Fallback to old system if Reddit fails
       const ideaParams: IdeaGenerationParams = {
         ...validationResult.data,
@@ -180,7 +181,7 @@ export async function generateIdea(formData: FormData) {
       generatedIdea = await generateStartupIdea(ideaParams);
       isFromReddit = false;
     } else {
-      console.log(`✅ Generated ${redditIdeaResult.ideas.length} ideas from Reddit pain points`);
+      log.info(`✅ Generated ${redditIdeaResult.ideas.length} ideas from Reddit pain points`);
       // Use the first (best) Reddit-generated idea
       const redditIdea = redditIdeaResult.ideas[0];
       generatedIdea = {
@@ -264,16 +265,16 @@ export async function generateIdea(formData: FormData) {
       .single();
 
     if (saveError) {
-      console.error('Error saving idea:', saveError);
+      log.error('Error saving idea:', saveError);
       throw new Error('Failed to save generated idea');
     }
 
-    console.log('✅ Idea saved successfully');
+    log.info('✅ Idea saved successfully');
 
     // Trigger usage reconciliation to update ideas_generated counter
     // This counts actual records in startup_ideas table and syncs to usage_limits
     const reconciliationResult = await getUserPlanAndUsage();
-    console.log('✅ Usage counters reconciled:', {
+    log.info('✅ Usage counters reconciled:', {
       ideas_used: reconciliationResult?.usage.ideas_used,
       validations_used: reconciliationResult?.usage.validations_used,
       planType: reconciliationResult?.planType
@@ -285,7 +286,7 @@ export async function generateIdea(formData: FormData) {
 
     return { success: true, idea: savedIdea };
   } catch (error) {
-    console.error('Error generating idea:', error);
+    log.error('Error generating idea:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to generate idea');
   }
 }
@@ -341,7 +342,7 @@ export async function validateIdea(ideaId: string) {
     revalidatePath('/dashboard/ideas');
     return { success: true, validation };
   } catch (error) {
-    console.error('Error validating idea:', error);
+    log.error('Error validating idea:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to validate idea');
   }
 }
@@ -352,11 +353,11 @@ export async function getUserIdeas(limit: number = 10) {
   // Use JWT session instead of Supabase auth
   const session = await getCurrentSession();
   if (!session) {
-    console.log('❌ getUserIdeas: No authenticated user');
+    log.info('❌ getUserIdeas: No authenticated user');
     return [];
   }
 
-  console.log('🔍 getUserIdeas called for user:', {
+  log.info('🔍 getUserIdeas called for user:', {
     userId: session.userId,
     userEmail: session.email
   });
@@ -369,16 +370,16 @@ export async function getUserIdeas(limit: number = 10) {
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    console.log(`📋 Found ${ideas?.length || 0} ideas for user ${session.userId}`);
+    log.info(`📋 Found ${ideas?.length || 0} ideas for user ${session.userId}`);
 
     if (error) {
-      console.error('Error fetching ideas:', error);
+      log.error('Error fetching ideas:', error);
       return [];
     }
 
     return ideas || [];
   } catch (error) {
-    console.error('Error getting user ideas:', error);
+    log.error('Error getting user ideas:', error);
     return [];
   }
 }
@@ -418,18 +419,18 @@ export async function getIdeaWithRedditSources(ideaId: string) {
       .in('reddit_id', painPointSources);
 
     if (redditError) {
-      console.error('Error fetching Reddit sources:', redditError);
+      log.error('Error fetching Reddit sources:', redditError);
       return { idea, redditSources: [] };
     }
 
-    console.log(`📰 Found ${redditPosts?.length || 0} Reddit sources for idea ${ideaId}`);
+    log.info(`📰 Found ${redditPosts?.length || 0} Reddit sources for idea ${ideaId}`);
 
     return {
       idea,
       redditSources: redditPosts || []
     };
   } catch (error) {
-    console.error('Error getting idea with Reddit sources:', error);
+    log.error('Error getting idea with Reddit sources:', error);
     throw error;
   }
 }

@@ -21,6 +21,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { log } from '@/lib/logger/client'
 
 interface SupportContactFormProps {
   /**
@@ -69,7 +70,7 @@ export function SupportContactForm({
     try {
       // TODO: Implement actual support ticket submission
       // For now, we'll just log it and send to Sentry
-      console.log('Support form submitted:', formData)
+      log.info('Support form submitted:', formData)
 
       // Send to Sentry as feedback
       if (typeof window !== 'undefined') {
@@ -87,7 +88,7 @@ export function SupportContactForm({
             },
           })
         } catch (e) {
-          console.error('Failed to send to Sentry:', e)
+          log.error('Failed to send to Sentry:', e)
         }
       }
 
@@ -104,7 +105,7 @@ export function SupportContactForm({
         setFormData({ subject: '', message: '', email: '' })
       }, 3000)
     } catch (error) {
-      console.error('Failed to submit support form:', error)
+      log.error('Failed to submit support form:', error)
       // TODO: Show error message
     } finally {
       setIsSubmitting(false)

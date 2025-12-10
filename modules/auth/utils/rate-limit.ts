@@ -1,5 +1,6 @@
 import { headers } from 'next/headers'
 import { RateLimitDatabase } from '../services/database'
+import { log } from '@/lib/logger'
 
 /**
  * Rate limiting utilities for authentication endpoints
@@ -79,7 +80,7 @@ export async function checkRateLimit(
 
     return true
   } catch (error) {
-    console.error('Rate limiting error:', error)
+    log.error('Rate limiting error:', error)
     return true // Fail open for availability
   }
 }

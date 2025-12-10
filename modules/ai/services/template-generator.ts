@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import type { RedditContact } from '@/types/supabase'
+import { log } from '@/lib/logger'
 import {
   type TemplateVariant,
   TEMPLATE_VARIANT_CONFIGS,
@@ -106,7 +107,7 @@ Write a personalized Reddit DM for this user. Reference their specific post exce
       tokensUsed: completion.usage?.total_tokens || 0
     }
   } catch (error) {
-    console.error('[template-generator] Error generating template:', error)
+    log.error('[template-generator] Error generating template:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error generating template'

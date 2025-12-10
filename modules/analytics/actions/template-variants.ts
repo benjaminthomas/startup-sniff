@@ -9,6 +9,7 @@
 
 import { createServerSupabaseClient } from '@/modules/supabase/server'
 import type { TemplateVariant } from '@/lib/constants/template-variants'
+import { log } from '@/lib/logger'
 
 export interface VariantPerformance {
   variantName: TemplateVariant
@@ -43,7 +44,7 @@ export async function getTemplateVariantPerformance(): Promise<{
       .order('response_rate', { ascending: false })
 
     if (error) {
-      console.error('[template-variants] Error fetching performance:', error)
+      log.error('[template-variants] Error fetching performance:', error)
       return {
         success: false,
         error: error.message,
@@ -70,7 +71,7 @@ export async function getTemplateVariantPerformance(): Promise<{
       variants,
     }
   } catch (error) {
-    console.error('[template-variants] Unexpected error:', error)
+    log.error('[template-variants] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -93,20 +94,20 @@ export async function updateTemplateVariantMetrics(): Promise<{
     const { error } = await (supabase as any).rpc('update_template_variant_metrics')
 
     if (error) {
-      console.error('[template-variants] Error updating metrics:', error)
+      log.error('[template-variants] Error updating metrics:', error)
       return {
         success: false,
         error: error.message,
       }
     }
 
-    console.log('[template-variants] Successfully updated variant metrics')
+    log.info('[template-variants] Successfully updated variant metrics')
 
     return {
       success: true,
     }
   } catch (error) {
-    console.error('[template-variants] Unexpected error:', error)
+    log.error('[template-variants] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -149,7 +150,7 @@ export async function getWinningVariant(): Promise<{
       winner,
     }
   } catch (error) {
-    console.error('[template-variants] Error getting winner:', error)
+    log.error('[template-variants] Error getting winner:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -182,7 +183,7 @@ export async function getUserVariantPerformance(
       .eq('send_status', 'sent')
 
     if (error) {
-      console.error('[template-variants] Error fetching user performance:', error)
+      log.error('[template-variants] Error fetching user performance:', error)
       return {
         success: false,
         error: error.message,
@@ -218,7 +219,7 @@ export async function getUserVariantPerformance(
       variants: variants as any,
     }
   } catch (error) {
-    console.error('[template-variants] Unexpected error:', error)
+    log.error('[template-variants] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { log } from '@/lib/logger/client'
 import { 
   TrendingUp, 
   MessageCircle, 
@@ -94,7 +95,7 @@ export function RedditTrends() {
       }
     } catch (err) {
       setError('Unable to connect to the trends service. Please check your internet connection and try again.');
-      console.error('Error loading trends:', err);
+      log.error('Error loading trends:', err);
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { Button, ButtonProps } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { log } from '@/lib/logger/client'
 
 interface LoadingButtonProps extends Omit<ButtonProps, 'onClick'> {
   onClick?: () => Promise<void> | void;
@@ -55,7 +56,7 @@ export function LoadingButton({
         toast.error(message, { id: loadingToast });
       }
       
-      console.error('LoadingButton error:', error);
+      log.error('LoadingButton error:', error);
     } finally {
       setIsLoading(false);
     }

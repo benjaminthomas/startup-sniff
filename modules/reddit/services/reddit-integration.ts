@@ -8,6 +8,7 @@ import Redis from 'ioredis'
 
 import type { Database } from '@/types/supabase'
 import { createRedditEngine, RedditEngineConfig, RedditTrendEngine } from '@/lib/reddit'
+import { log } from '@/lib/logger'
 
 export interface RedditPost {
   id: string
@@ -67,7 +68,7 @@ class RedditIntegrationService {
       // Initialize Redis connection
       if (process.env.REDIS_URL) {
         this.redis = new Redis(process.env.REDIS_URL)
-        console.log('✅ Redis connected for Reddit integration')
+        log.info('✅ Redis connected for Reddit integration')
       } else {
         throw new Error('Redis URL is required for production. Please configure REDIS_URL environment variable.')
       }
@@ -97,14 +98,14 @@ class RedditIntegrationService {
           enableMonitoring: false, // Disable monitoring to avoid Redis rate limit checks
           enableFallbacks: true
         })
-        console.log('✅ Reddit Trend Engine initialized (development mode)')
+        log.info('✅ Reddit Trend Engine initialized (development mode)')
       } else {
-        console.warn('⚠️  Reddit API credentials not configured, using fallback mode')
+        log.warn('⚠️  Reddit API credentials not configured, using fallback mode')
       }
 
       this.initialized = true
     } catch (error) {
-      console.error('❌ Failed to initialize Reddit integration:', error)
+      log.error('❌ Failed to initialize Reddit integration:', error)
       this.initialized = true // Prevent infinite retries
     }
   }
@@ -129,7 +130,7 @@ class RedditIntegrationService {
         'business', 'digitalnomad', 'indiehackers', 'webdev'
       ]
 
-      console.log(`🔄 Collecting Reddit data from ${targetSubreddits.length} subreddits...`)
+      log.info(`🔄 Collecting Reddit data from ${targetSubreddits.length} subreddits...`)
 
       const result = await this.engine!.collectPosts(targetSubreddits, {
         limit: 25,
@@ -138,20 +139,20 @@ class RedditIntegrationService {
       })
 
       if ((result as Record<string, unknown>).success) {
-        console.log(`✅ Successfully collected ${(result as Record<string, unknown>).inserted} Reddit posts`)
+        log.info(`✅ Successfully collected ${(result as Record<string, unknown>).inserted} Reddit posts`)
         return {
           success: true,
           message: `Collected ${(result as Record<string, unknown>).inserted} posts from ${targetSubreddits.length} subreddits`
         }
       } else {
-        console.error('❌ Reddit collection failed:', (result as Record<string, unknown>).errors)
+        log.error('❌ Reddit collection failed:', (result as Record<string, unknown>).errors)
         return {
           success: false,
           message: 'Failed to collect Reddit data. Check logs for details.'
         }
       }
     } catch (error) {
-      console.error('❌ Reddit data collection error:', error)
+      log.error('❌ Reddit data collection error:', error)
       return {
         success: false,
         message: 'Reddit data collection encountered an error'
@@ -177,7 +178,7 @@ class RedditIntegrationService {
       const { data, error } = await query
 
       if (error) {
-        console.error('Error fetching Reddit posts:', error)
+        log.error('Error fetching Reddit posts:', error)
         return []
       }
 
@@ -192,7 +193,7 @@ class RedditIntegrationService {
         url: post.url || `https://reddit.com/r/${post.subreddit}/comments/${post.reddit_id}`
       })) || []
     } catch (error) {
-      console.error('Error accessing Reddit posts:', error)
+      log.error('Error accessing Reddit posts:', error)
       return []
     }
   }
@@ -216,7 +217,7 @@ class RedditIntegrationService {
         return this.generateTrendAnalysis(updatedPosts)
       } else {
         // No fallback data in production - return empty analysis
-        console.warn('⚠️  No Reddit data available')
+        log.warn('⚠️  No Reddit data available')
         return []
       }
     }
@@ -236,13 +237,13 @@ class RedditIntegrationService {
         .limit(200) // Get top 200 posts from last 24 hours
 
       if (error) {
-        console.error('Error fetching recent posts:', error)
+        log.error('Error fetching recent posts:', error)
         return []
       }
 
       return data || []
     } catch (error) {
-      console.error('Database query error:', error)
+      log.error('Database query error:', error)
       return []
     }
   }
@@ -439,7 +440,7 @@ class RedditIntegrationService {
       health.recent_data = recentPosts.length > 0
 
     } catch (error) {
-      console.error('Health check error:', error)
+      log.error('Health check error:', error)
     }
 
     return health

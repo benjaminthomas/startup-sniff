@@ -6,6 +6,7 @@
 
 // Using Web Crypto API for Edge Runtime compatibility
 import { cookies } from 'next/headers'
+import { log } from '@/lib/logger'
 
 const CSRF_TOKEN_NAME = 'csrf-token'
 const CSRF_HEADER_NAME = 'x-csrf-token'
@@ -95,7 +96,7 @@ export const verifyCSRFToken = async (providedToken: string): Promise<boolean> =
     // Both tokens should have same value but may have different generation times
     return result === 0
   } catch (error) {
-    console.error('CSRF token verification error:', error)
+    log.error('CSRF token verification error:', error)
     return false
   }
 }
@@ -220,7 +221,7 @@ export const verifyCSRFTokenWithCookieStore = async (providedToken: string, requ
     // Double-submit pattern: only compare token values
     return result === 0
   } catch (error) {
-    console.error('CSRF token verification error:', error)
+    log.error('CSRF token verification error:', error)
     return false
   }
 }

@@ -4,6 +4,7 @@
  */
 
 import * as argon2 from 'argon2'
+import { log } from '@/lib/logger'
 
 // OWASP 2025 recommended Argon2id configuration
 const ARGON2_OPTIONS: argon2.Options = {
@@ -22,7 +23,7 @@ export async function hashPassword(password: string): Promise<string> {
     const hash = await argon2.hash(password, ARGON2_OPTIONS)
     return hash
   } catch (error) {
-    console.error('Password hashing error:', error)
+    log.error('Password hashing error:', error)
     throw new Error('Failed to hash password')
   }
 }
@@ -34,7 +35,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   try {
     return await argon2.verify(hash, password)
   } catch (error) {
-    console.error('Password verification error:', error)
+    log.error('Password verification error:', error)
     return false
   }
 }

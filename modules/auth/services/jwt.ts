@@ -6,6 +6,7 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { cookies } from 'next/headers'
 import { SessionPayload } from '@/types/database'
+import { log } from '@/lib/logger'
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-super-secret-jwt-secret-key-min-32-chars'
@@ -44,7 +45,7 @@ export async function createSessionToken(payload: {
 
     return token
   } catch (error) {
-    console.error('JWT creation error:', error)
+    log.error('JWT creation error:', error)
     throw new Error('Failed to create session token')
   }
 }
@@ -69,7 +70,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
   } catch (error) {
     // Don't log every invalid token attempt to avoid spam
     if (error instanceof Error && !error.message.includes('expired')) {
-      console.error('JWT verification error:', error.message)
+      log.error('JWT verification error:', error.message)
     }
     return null
   }

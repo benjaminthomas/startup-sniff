@@ -9,6 +9,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { updateMessageOutcomeAction } from '@/modules/conversations/actions/update-message-outcome'
+import { log } from '@/lib/logger'
 
 type OutcomeType = 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
 
@@ -53,13 +54,13 @@ export function MessageCard({ message }: MessageCardProps) {
         // Celebratory animation for positive outcomes
         if (['replied', 'call_scheduled', 'customer_acquired'].includes(newOutcome || '')) {
           // Trigger confetti or celebration animation here
-          console.log('🎉 Celebration for outcome:', newOutcome)
+          log.info('Celebration for outcome', { outcome: newOutcome })
         }
       } else {
         alert(result.error || 'Failed to update outcome')
       }
     } catch (error) {
-      console.error('Error updating outcome:', error)
+      log.error('Error updating outcome:', error)
       alert('Failed to update outcome')
     } finally {
       setIsUpdating(false)

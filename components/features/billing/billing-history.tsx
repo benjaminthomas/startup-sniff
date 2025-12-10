@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getBillingHistory } from '@/modules/billing/actions/billing-history';
 import { Loader2, Download } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { log } from '@/lib/logger/client'
 
 interface Transaction {
   id: string;
@@ -67,7 +68,7 @@ export function BillingHistory({ userId }: { userId: string }) {
         alert(data.error || 'Failed to download invoice');
       }
     } catch (error) {
-      console.error('Invoice download error:', error);
+      log.error('Invoice download error:', error);
       alert('Failed to download invoice');
     } finally {
       setDownloadingInvoice(null);

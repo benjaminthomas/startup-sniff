@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header"
 import { OpportunitiesContent } from "./opportunities-content"
 import { createServerAdminClient } from '@/modules/supabase/server'
+import { log } from '@/lib/logger'
 
 export const metadata = {
   title: 'Opportunities | StartupSniff',
@@ -69,7 +70,7 @@ export default async function OpportunitiesPage({
   const { data: opportunities, error } = await query
 
   if (error) {
-    console.error('Error fetching opportunities:', error)
+    log.error('Error fetching opportunities:', error)
   }
 
   // Get filter options

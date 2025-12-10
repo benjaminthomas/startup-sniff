@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyAdminAuth, isAuthError } from '@/lib/middleware/admin-auth';
 import { validateRequestBody, clearDatabaseSchema } from '@/lib/validation/api-schemas';
+import { log } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   // ✅ SECURITY: Verify admin authentication
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`⚠️  WARNING: Admin ${user.email} is clearing database...`);
+    log.info(`⚠️  WARNING: Admin ${user.email} is clearing database...`);
 
     // Create Supabase admin client
     const supabase = createClient(
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
     const results: Record<string, { success: boolean; error?: string; rowsDeleted?: number }> = {};
 
     for (const table of tablesToClear) {
-      console.log(`🗑️  Clearing ${table}...`);
+      log.info(`🗑️  Clearing ${table}...`);
 
       const { error, count } = await supabase
         .from(table)
@@ -67,10 +68,10 @@ export async function POST(request: NextRequest) {
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
 
       if (error) {
-        console.error(`❌ Error clearing ${table}:`, error.message);
+        log.error(`❌ Error clearing ${table}:`, error.message);
         results[table] = { success: false, error: error.message };
       } else {
-        console.log(`✅ Cleared ${table} (${count || 0} rows deleted)`);
+        log.info(`✅ Cleared ${table} (${count || 0} rows deleted)`);
         results[table] = { success: true, rowsDeleted: count || 0 };
       }
     }
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
     const allSuccess = Object.values(results).every(r => r.success);
 
     // Log admin action
-    console.log(`✅ Database clearing completed by admin: ${user.email}`, {
+    log.info(`✅ Database clearing completed by admin: ${user.email}`, {
       tables: tablesToClear,
       results
     });
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('❌ Database clearing failed:', errorMessage);
+    log.error('❌ Database clearing failed:', errorMessage);
     return NextResponse.json(
       { error: 'Database clearing failed: ' + errorMessage },
       { status: 500 }

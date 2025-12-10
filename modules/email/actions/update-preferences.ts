@@ -8,6 +8,7 @@
 'use server'
 
 import { createServerSupabaseClient as createClient } from '@/modules/supabase/server'
+import { log } from '@/lib/logger'
 
 export interface EmailPreferences {
   onboarding?: boolean
@@ -33,18 +34,18 @@ export async function updateEmailPreferences(
       .eq('id', userId)
 
     if (error) {
-      console.error('[update-preferences] Failed to update:', error)
+      log.error('[update-preferences] Failed to update', error)
       return {
         success: false,
         error: 'Failed to update preferences'
       }
     }
 
-    console.log('[update-preferences] Preferences updated successfully:', userId)
+    log.info('[update-preferences] Preferences updated successfully', { userId })
 
     return { success: true }
   } catch (error) {
-    console.error('[update-preferences] Unexpected error:', error)
+    log.error('[update-preferences] Unexpected error', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'
@@ -66,7 +67,7 @@ export async function getEmailPreferences(userId: string) {
       .single()
 
     if (error) {
-      console.error('[get-preferences] Failed to fetch:', error)
+      log.error('[get-preferences] Failed to fetch', error)
       return {
         success: false,
         error: 'Failed to fetch preferences',
@@ -85,7 +86,7 @@ export async function getEmailPreferences(userId: string) {
       }
     }
   } catch (error) {
-    console.error('[get-preferences] Unexpected error:', error)
+    log.error('[get-preferences] Unexpected error', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

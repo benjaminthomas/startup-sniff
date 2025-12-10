@@ -10,6 +10,7 @@ import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";
 import { QuickActions } from "@/components/features/dashboard/quick-actions";
 import { UsageTracker } from "@/components/ui/usage-tracker";
 import { getCurrentUserUsage } from "@/modules/usage";
+import { log } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: "Dashboard | StartupSniff",
@@ -111,7 +112,7 @@ export default async function DashboardPage() {
         .limit(10);
 
       if (ideaError) {
-        console.error("Failed to fetch startup ideas:", ideaError);
+        log.error("Failed to fetch startup ideas:", ideaError);
       } else if (ideaRows) {
         ideas = ideaRows.map((ideaRaw: Record<string, unknown>) => {
           return {
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
       }
     }
   } catch (error) {
-    console.error("Database query failed:", error);
+    log.error("Database query failed:", error);
     // Continue with default values
   }
 

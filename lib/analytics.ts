@@ -10,6 +10,7 @@
  */
 
 import { track } from '@vercel/analytics'
+import { log } from '@/lib/logger'
 
 // Event types for Epic 1 validation
 export type AnalyticsEvent =
@@ -36,7 +37,7 @@ export function trackEvent(event: AnalyticsEvent, properties?: EventProperties) 
   try {
     track(event, properties)
   } catch (error) {
-    console.error('Analytics tracking error:', error)
+    log.error('Analytics tracking error:', error)
   }
 }
 

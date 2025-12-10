@@ -11,6 +11,7 @@ import { createServerAdminClient } from '@/modules/supabase'
 import { ResetPasswordForm } from '@/components/auth/reset-password-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { log } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: 'Reset Password | StartupSniff',
@@ -50,11 +51,13 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const { data: { user }, error: userError } = await supabase.auth.getUser()
   
   // Debug logging
-  console.log('Reset password page - Recovery session:', recoverySession ? 'exists' : 'missing')
-  console.log('Reset password page - Code param:', code ? 'exists' : 'missing')
-  console.log('Reset password page - Recovery param:', recoveryParam ? 'true' : 'false')
-  console.log('Reset password page - Direct user check:', user ? 'authenticated' : 'not authenticated')
-  console.log('Reset password page - User error:', userError ? userError.message : 'none')
+  log.info('Reset password page', {
+    recoverySession: recoverySession ? 'exists' : 'missing',
+    codeParam: code ? 'exists' : 'missing',
+    recoveryParam: recoveryParam ? 'true' : 'false',
+    userStatus: user ? 'authenticated' : 'not authenticated',
+    userError: userError ? userError.message : 'none'
+  })
   
   // Handle password reset code if present
   if (code) {
@@ -65,12 +68,12 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
       
       if (exchangeError) {
-        console.error('Password reset code exchange failed:', exchangeError)
+        log.error('Password reset code exchange failed:', exchangeError)
         redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
       }
       
       if (!data.session || !data.user) {
-        console.error('No session data after password reset code exchange')
+        log.error('No session data after password reset code exchange')
         redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
       }
       
@@ -87,7 +90,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
       // Redirect to the same page without the code parameter to clean the URL
       redirect('/auth/reset-password')
     } catch (error) {
-      console.error('Password reset code handling error:', error)
+      log.error('Password reset code handling error:', error)
       redirect('/auth/forgot-password?error=An error occurred processing your reset link. Please request a new one.')
     }
   }
@@ -100,11 +103,19 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   const hasAccess = recoverySession || user || recoveryParam || recoveryToken
   
   if (!hasAccess) {
-    console.log('Access denied - Recovery cookie:', recoverySession ? 'exists' : 'missing', 'User:', user ? 'authenticated' : 'not authenticated', 'Recovery param:', recoveryParam)
+    log.info('Access denied', {
+      recoverySession: recoverySession ? 'exists' : 'missing',
+      userStatus: user ? 'authenticated' : 'not authenticated',
+      recoveryParam
+    })
     redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
   }
 
-  console.log('Reset password access granted - Recovery cookie:', recoverySession ? 'exists' : 'missing', 'User:', user ? 'authenticated' : 'not authenticated', 'Recovery param:', recoveryParam)
+  log.info('Reset password access granted', {
+    recoverySession: recoverySession ? 'exists' : 'missing',
+    userStatus: user ? 'authenticated' : 'not authenticated',
+    recoveryParam
+  })
 
   // Get CSRF token for the form
   const csrfToken = await getOrGenerateCSRFToken()

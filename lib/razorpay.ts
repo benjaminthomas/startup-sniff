@@ -1,5 +1,6 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import { log } from '@/lib/logger'
 
 // Handle missing environment variables gracefully during build time
 const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
@@ -98,7 +99,7 @@ export const createOrGetCustomer = async (email: string, name?: string) => {
       razorpayError.error?.description?.includes('Customer already exists')
     ) {
       // Customer exists, fetch and return it
-      console.log('[Razorpay] Customer already exists, fetching existing customer');
+      log.info('[Razorpay] Customer already exists, fetching existing customer');
       try {
         const customers = await razorpay.customers.all({
           count: 100 // Get up to 100 customers
@@ -110,22 +111,22 @@ export const createOrGetCustomer = async (email: string, name?: string) => {
         );
 
         if (existingCustomer) {
-          console.log('[Razorpay] Found existing customer:', existingCustomer.id);
+          log.info('[Razorpay] Found existing customer', { customerId: existingCustomer.id });
           return existingCustomer;
         }
 
         // If not found in list, the customer might exist but we can't fetch it
         // This shouldn't happen, but log it for debugging
-        console.error('[Razorpay] Customer exists but could not be found in list');
+        log.error('[Razorpay] Customer exists but could not be found in list');
         throw new Error('Customer exists but could not be retrieved. Please contact support.');
       } catch (fetchError) {
-        console.error('[Razorpay] Failed to fetch existing customer:', fetchError);
+        log.error('[Razorpay] Failed to fetch existing customer:', fetchError);
         throw new Error('Failed to retrieve existing customer');
       }
     }
 
     // For other errors, throw with details
-    console.error('[Razorpay] Customer creation failed:', error);
+    log.error('[Razorpay] Customer creation failed:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     throw new Error(`Failed to create customer: ${errorMessage}`);
   }

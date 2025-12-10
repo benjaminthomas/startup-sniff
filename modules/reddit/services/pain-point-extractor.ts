@@ -6,6 +6,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import type { Database, RedditPost } from '@/types/supabase'
 import { fallbackPainPoints } from '@/modules/reddit/data/fallback-pain-points'
+import { log } from '@/lib/logger'
 
 export interface PainPoint {
   id: string
@@ -66,7 +67,7 @@ class PainPointExtractor {
       const error = response.error
 
       if (error) {
-        console.error('Error fetching Reddit posts:', error)
+        log.error('Error fetching Reddit posts:', error)
       }
 
       const painPoints: PainPoint[] = []
@@ -86,14 +87,14 @@ class PainPointExtractor {
         return sortedPainPoints
       }
 
-      console.warn(
+      log.warn(
         '[PainPointExtractor] No live Reddit pain points available, falling back to curated dataset.'
       )
       return fallbackPainPoints
     } catch (error) {
-      console.error('Error extracting pain points:', error)
+      log.error('Error extracting pain points:', error)
 
-      console.warn(
+      log.warn(
         '[PainPointExtractor] Returning curated fallback pain points because live extraction failed.'
       )
       return fallbackPainPoints

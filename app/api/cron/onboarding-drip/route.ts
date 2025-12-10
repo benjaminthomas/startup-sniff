@@ -14,6 +14,7 @@ import {
   sendOnboardingDay7,
 } from '@/modules/notifications/services/email-notifications'
 import { type EmailPreferences } from '@/modules/notifications/actions/email-preferences'
+import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -25,14 +26,14 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error('[onboarding-drip] Unauthorized cron request')
+      log.error('[onboarding-drip] Unauthorized cron request')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = createServerAdminClient()
     const now = new Date()
 
-    console.log(`[onboarding-drip] Running onboarding drip campaign at ${now.toISOString()}`)
+    log.info(`[onboarding-drip] Running onboarding drip campaign at ${now.toISOString()}`)
 
     let day1Count = 0
     let day3Count = 0
@@ -75,9 +76,9 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id)
 
           day1Count++
-          console.log(`[onboarding-drip] Day 1 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 1 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 1 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 1 failed for ${user.email}:`, error)
           failCount++
         }
       }
@@ -120,9 +121,9 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id)
 
           day3Count++
-          console.log(`[onboarding-drip] Day 3 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 3 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 3 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 3 failed for ${user.email}:`, error)
           failCount++
         }
       }
@@ -165,15 +166,15 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id)
 
           day7Count++
-          console.log(`[onboarding-drip] Day 7 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 7 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 7 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 7 failed for ${user.email}:`, error)
           failCount++
         }
       }
     }
 
-    console.log(
+    log.info(
       `[onboarding-drip] Completed: Day 1: ${day1Count}, Day 3: ${day3Count}, Day 7: ${day7Count}, Failed: ${failCount}`
     )
 
@@ -185,7 +186,7 @@ export async function GET(request: NextRequest) {
       failed: failCount,
     })
   } catch (error) {
-    console.error('[onboarding-drip] Unexpected error:', error)
+    log.error('[onboarding-drip] Unexpected error:', error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Unknown error',

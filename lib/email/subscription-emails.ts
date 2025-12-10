@@ -6,6 +6,7 @@
 import { sendEmail } from './mailgun-client';
 import { renderEmailToHtml } from './render';
 import { SubscriptionNotificationEmail } from './templates/subscription-notification';
+import { log } from '@/lib/logger'
 
 export interface SubscriptionEmailData {
   to: string;
@@ -47,7 +48,7 @@ export async function sendSubscriptionActivatedEmail(
 
     return result;
   } catch (error) {
-    console.error('Failed to send subscription activated email:', error);
+    log.error('Failed to send subscription activated email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -85,7 +86,7 @@ export async function sendSubscriptionUpgradedEmail(
 
     return result;
   } catch (error) {
-    console.error('Failed to send subscription upgraded email:', error);
+    log.error('Failed to send subscription upgraded email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -119,7 +120,7 @@ export async function sendSubscriptionCancelledEmail(
 
     return result;
   } catch (error) {
-    console.error('Failed to send subscription cancelled email:', error);
+    log.error('Failed to send subscription cancelled email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -154,7 +155,7 @@ export async function sendPaymentFailedEmail(
 
     return result;
   } catch (error) {
-    console.error('Failed to send payment failed email:', error);
+    log.error('Failed to send payment failed email:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

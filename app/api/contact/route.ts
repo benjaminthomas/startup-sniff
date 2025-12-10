@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendContactFormEmail, type ContactFormData } from '@/modules/contact';
+import { log } from '@/lib/logger'
 
 // Rate limiting storage (in production, use Redis or similar)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
     const hasSpamKeywords = spamKeywords.some(keyword => messageText.includes(keyword));
     
     if (hasSpamKeywords) {
-      console.warn('Potential spam detected in contact form:', {
+      log.warn('Potential spam detected in contact form:', {
         email: formData!.email,
         message: formData!.message.substring(0, 100)
       });
@@ -158,7 +159,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Contact form API error:', error);
+    log.error('Contact form API error:', error);
     
     return NextResponse.json(
       { 

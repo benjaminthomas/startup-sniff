@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { UserDatabase } from '@/modules/auth/services/database';
 import type { User } from '@/types/database';
 import type { SessionPayload } from '@/types/database';
+import { log } from '@/lib/logger'
 
 /**
  * Verifies that the request is from an authenticated admin user
@@ -38,7 +39,7 @@ export async function verifyAdminAuth() {
 
     return { user, session };
   } catch (error) {
-    console.error('Admin auth verification failed:', error);
+    log.error('Admin auth verification failed:', error);
     return NextResponse.json(
       { error: 'Authentication failed' },
       { status: 401 }

@@ -1,4 +1,5 @@
 import type { Redis } from 'ioredis'
+import { log } from '@/lib/logger'
 
 export interface LogLevel {
   level: 'debug' | 'info' | 'warn' | 'error' | 'fatal'
@@ -124,17 +125,17 @@ export class RedditMonitor {
 
     switch (level) {
       case 'debug':
-        console.debug(consoleMessage, metadata || '')
+        log.debug(consoleMessage, metadata && typeof metadata === 'object' ? metadata as Record<string, unknown> : undefined)
         break
       case 'info':
-        console.info(consoleMessage, metadata || '')
+        log.info(consoleMessage, metadata && typeof metadata === 'object' ? metadata as Record<string, unknown> : undefined)
         break
       case 'warn':
-        console.warn(consoleMessage, metadata || '')
+        log.warn(consoleMessage, metadata && typeof metadata === 'object' ? metadata as Record<string, unknown> : undefined)
         break
       case 'error':
       case 'fatal':
-        console.error(consoleMessage, metadata || '')
+        log.error(consoleMessage, undefined, metadata && typeof metadata === 'object' ? metadata as Record<string, unknown> : undefined)
         break
     }
 
@@ -320,7 +321,7 @@ export class RedditMonitor {
         }
       }
     } catch (error) {
-      console.error('Error checking error rate:', error)
+      log.error('Error checking error rate:', error)
     }
   }
 
@@ -404,7 +405,7 @@ export class RedditMonitor {
         }
       }
     } catch (error) {
-      console.error('Error getting health status:', error)
+      log.error('Error getting health status:', error)
       return {
         status: 'unhealthy',
         components: {},
@@ -447,7 +448,7 @@ export class RedditMonitor {
 
       return logs.reverse() // Most recent first
     } catch (error) {
-      console.error('Error getting logs:', error)
+      log.error('Error getting logs:', error)
       return []
     }
   }
@@ -472,7 +473,7 @@ export class RedditMonitor {
 
       return metricsData.map(data => JSON.parse(data) as MetricValue)
     } catch (error) {
-      console.error('Error getting metrics:', error)
+      log.error('Error getting metrics:', error)
       return []
     }
   }
@@ -530,7 +531,7 @@ export class RedditMonitor {
       this.metricBuffer.length = 0
 
     } catch (error) {
-      console.error('Error flushing logs and metrics:', error)
+      log.error('Error flushing logs and metrics:', error)
     }
   }
 
@@ -555,7 +556,7 @@ export class RedditMonitor {
     // Flush any remaining logs/metrics
     await this.flush()
 
-    console.info('Reddit monitoring shut down complete')
+    log.info('Reddit monitoring shut down complete')
   }
 
   /**
@@ -570,6 +571,6 @@ export class RedditMonitor {
       this.startPeriodicFlush()
     }
 
-    console.info('Reddit monitoring configuration updated')
+    log.info('Reddit monitoring configuration updated')
   }
 }

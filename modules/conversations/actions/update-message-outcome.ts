@@ -10,6 +10,7 @@
 import { createServerAdminClient } from '@/modules/supabase/server'
 import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { revalidatePath } from 'next/cache'
+import { log } from '@/lib/logger'
 
 type OutcomeType = 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
 
@@ -23,7 +24,7 @@ export async function updateMessageOutcomeAction(
   outcome: OutcomeType
 ): Promise<UpdateOutcomeResult> {
   try {
-    console.log('[update-outcome] Updating message:', messageId, 'to outcome:', outcome)
+    log.info('[update-outcome] Updating message to outcome', { messageId, outcome })
 
     // Authenticate user
     const session = await getCurrentSession()
@@ -44,7 +45,7 @@ export async function updateMessageOutcomeAction(
       .single()
 
     if (fetchError || !message) {
-      console.error('[update-outcome] Message not found:', fetchError)
+      log.error('[update-outcome] Message not found:', fetchError)
       return {
         success: false,
         error: 'Message not found'
@@ -52,7 +53,7 @@ export async function updateMessageOutcomeAction(
     }
 
     if (message.user_id !== session.userId) {
-      console.error('[update-outcome] Unauthorized access attempt')
+      log.error('[update-outcome] Unauthorized access attempt')
       return {
         success: false,
         error: 'Unauthorized'
@@ -91,14 +92,14 @@ export async function updateMessageOutcomeAction(
       .eq('id', messageId)
 
     if (updateError) {
-      console.error('[update-outcome] Update failed:', updateError)
+      log.error('[update-outcome] Update failed:', updateError)
       return {
         success: false,
         error: 'Failed to update outcome'
       }
     }
 
-    console.log('[update-outcome] Successfully updated outcome')
+    log.info('[update-outcome] Successfully updated outcome')
 
     // Revalidate the conversations page to show updated data
     revalidatePath('/dashboard/conversations')
@@ -107,7 +108,7 @@ export async function updateMessageOutcomeAction(
       success: true
     }
   } catch (error) {
-    console.error('[update-outcome] Unexpected error:', error)
+    log.error('[update-outcome] Unexpected error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred'

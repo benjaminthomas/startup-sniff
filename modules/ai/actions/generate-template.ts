@@ -4,6 +4,7 @@ import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { createServerAdminClient } from '@/modules/supabase/server'
 import { generateMessageTemplate } from '../services/template-generator'
 import type { TemplateVariant } from '@/lib/constants/template-variants'
+import { log } from '@/lib/logger'
 
 /**
  * Epic 2, Story 2.3: AI Message Templates
@@ -43,7 +44,7 @@ export async function generateTemplateAction(
       .single()
 
     if (contactError || !contact) {
-      console.error('[generate-template] Contact not found:', contactId)
+      log.error('[generate-template] Contact not found:', contactId)
       return {
         success: false,
         error: 'Contact not found'
@@ -58,14 +59,14 @@ export async function generateTemplateAction(
       .single()
 
     if (painPointError || !painPoint) {
-      console.error('[generate-template] Pain point not found:', contact.pain_point_id)
+      log.error('[generate-template] Pain point not found:', contact.pain_point_id)
       return {
         success: false,
         error: 'Pain point not found'
       }
     }
 
-    console.log(`[generate-template] Generating ${variant} template for contact ${contactId}`)
+    log.info(`[generate-template] Generating ${variant} template for contact ${contactId}`)
 
     // Check if template already exists for this contact + variant (within last hour)
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
@@ -82,7 +83,7 @@ export async function generateTemplateAction(
       .single()
 
     if (existingMessage) {
-      console.log('[generate-template] Returning cached template from last hour')
+      log.info('[generate-template] Returning cached template from last hour')
       return {
         success: true,
         messageId: existingMessage.id,
@@ -122,7 +123,7 @@ export async function generateTemplateAction(
       .single()
 
     if (insertError || !message) {
-      console.error('[generate-template] Failed to save template:', insertError)
+      log.error('[generate-template] Failed to save template:', insertError)
       // Still return the template even if save failed
       return {
         success: true,
@@ -132,7 +133,7 @@ export async function generateTemplateAction(
       }
     }
 
-    console.log(`[generate-template] Successfully generated and saved template ${message.id}`)
+    log.info(`[generate-template] Successfully generated and saved template ${message.id}`)
 
     return {
       success: true,
@@ -141,7 +142,7 @@ export async function generateTemplateAction(
       tokensUsed: generationResult.tokensUsed
     }
   } catch (error) {
-    console.error('[generate-template] Unexpected error:', error)
+    log.error('[generate-template] Unexpected error:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error'

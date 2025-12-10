@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getCurrentUserUsage, type UsageData } from '@/modules/usage';
+import { log } from '@/lib/logger/client'
 
 export function useServerPlanLimits() {
   const [data, setData] = useState<UsageData | null>(null);
@@ -15,11 +16,11 @@ export function useServerPlanLimits() {
         setError(null);
         
         const usageData = await getCurrentUserUsage();
-        console.log('🔄 Server-side usage data received:', usageData);
+        log.info('Server-side usage data received', usageData ? { usageData } : undefined);
         
         setData(usageData);
       } catch (err) {
-        console.error('❌ Error fetching usage data:', err);
+        log.error('Error fetching usage data', err);
         setError(err instanceof Error ? err.message : 'Failed to fetch usage data');
       } finally {
         setIsLoading(false);
@@ -48,7 +49,7 @@ export function useServerPlanLimits() {
     const used = data.usage?.[usageKey] ?? 0;
     const remaining = Math.max(0, limit - Number(used));
     
-    console.log(`getRemainingLimit(${type}):`, {
+    log.info(`getRemainingLimit(${type}):`, {
       planType: data.planType,
       limit,
       used,
@@ -84,7 +85,7 @@ export function useServerPlanLimits() {
       setData(usageData);
       return usageData;
     } catch (err) {
-      console.error('Error refreshing usage:', err);
+      log.error('Error refreshing usage', err);
       throw err;
     }
   };

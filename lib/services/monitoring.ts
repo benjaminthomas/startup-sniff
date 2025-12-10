@@ -1,3 +1,5 @@
+import { log } from '@/lib/logger'
+
 /**
  * Monitoring and Logging Service
  *
@@ -64,20 +66,19 @@ export class JobMonitor {
 
     // Also output to console
     const prefix = `[${this.jobName}]`
-    const meta = metadata ? JSON.stringify(metadata) : ''
 
     switch (level) {
       case 'info':
-        console.log(`${prefix} ${message}`, meta)
+        log.info(`${prefix} ${message}`, metadata)
         break
       case 'warn':
-        console.warn(`${prefix} ${message}`, meta)
+        log.warn(`${prefix} ${message}`, metadata)
         break
       case 'error':
-        console.error(`${prefix} ${message}`, meta)
+        log.error(`${prefix} ${message}`, undefined, metadata)
         break
       case 'debug':
-        console.log(`${prefix} [DEBUG] ${message}`, meta)
+        log.info(`${prefix} [DEBUG] ${message}`, metadata)
         break
     }
   }
@@ -225,7 +226,7 @@ export class PerformanceTracker {
     try {
       const result = await fn()
       const duration = this.end(name)
-      console.log(`[Performance] ${name}: ${(duration / 1000).toFixed(2)}s`)
+      log.info(`[Performance] ${name}: ${(duration / 1000).toFixed(2)}s`)
       return result
     } catch (error) {
       this.marks.delete(name)

@@ -13,6 +13,7 @@
  */
 
 import { Redis } from '@upstash/redis'
+import { log } from '@/lib/logger'
 
 export interface CacheOptions {
   ttlSeconds?: number // Time to live in seconds (default: 3600 = 1 hour)
@@ -57,13 +58,13 @@ export class RedisCache {
         })
 
         this.enabled = true
-        console.log('[RedisCache] Upstash Redis initialized')
+        log.info('[RedisCache] Upstash Redis initialized')
       } else {
-        console.warn('[RedisCache] No Upstash Redis credentials found - caching disabled')
+        log.warn('[RedisCache] No Upstash Redis credentials found - caching disabled')
         this.enabled = false
       }
     } catch (error) {
-      console.error('[RedisCache] Failed to initialize Redis:', error)
+      log.error('[RedisCache] Failed to initialize Redis:', error)
       this.enabled = false
     }
   }
@@ -105,7 +106,7 @@ export class RedisCache {
       return value
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Get error:', error)
+      log.error('[RedisCache] Get error:', error)
       return null
     }
   }
@@ -133,7 +134,7 @@ export class RedisCache {
       return true
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Set error:', error)
+      log.error('[RedisCache] Set error:', error)
       return false
     }
   }
@@ -154,7 +155,7 @@ export class RedisCache {
       return true
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Delete error:', error)
+      log.error('[RedisCache] Delete error:', error)
       return false
     }
   }
@@ -173,7 +174,7 @@ export class RedisCache {
       return exists === 1
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Exists error:', error)
+      log.error('[RedisCache] Exists error:', error)
       return false
     }
   }
@@ -191,7 +192,7 @@ export class RedisCache {
       return await this.redis!.ttl(fullKey)
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] TTL error:', error)
+      log.error('[RedisCache] TTL error:', error)
       return -1
     }
   }
@@ -217,7 +218,7 @@ export class RedisCache {
       return keys.length
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Delete pattern error:', error)
+      log.error('[RedisCache] Delete pattern error:', error)
       return 0
     }
   }
@@ -264,7 +265,7 @@ export class RedisCache {
       return await this.redis!.incrby(fullKey, amount)
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Increment error:', error)
+      log.error('[RedisCache] Increment error:', error)
       return 0
     }
   }
@@ -293,7 +294,7 @@ export class RedisCache {
       })
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Mget error:', error)
+      log.error('[RedisCache] Mget error:', error)
       return keys.map(() => null)
     }
   }
@@ -321,7 +322,7 @@ export class RedisCache {
       return true
     } catch (error) {
       this.stats.errors++
-      console.error('[RedisCache] Mset error:', error)
+      log.error('[RedisCache] Mset error:', error)
       return false
     }
   }

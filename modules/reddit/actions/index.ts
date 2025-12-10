@@ -6,6 +6,7 @@ import { aiIdeaGenerator } from '@/modules/ai'
 import type { RedditTrendAnalysis, TrendsSummary } from '@/modules/reddit/services/reddit-integration'
 import type { PainPoint, StartupIdea } from '@/modules/reddit/services/pain-point-extractor'
 import type { IdeaGenerationOptions } from '@/modules/ai/services/idea-generator'
+import { log } from '@/lib/logger'
 
 interface TrendAnalysisResult {
   success: boolean;
@@ -19,7 +20,7 @@ interface TrendAnalysisResult {
 
 export async function analyzeRedditTrends(forceRefresh = false): Promise<TrendAnalysisResult> {
   try {
-    console.log('🔍 Analyzing Reddit trends with real data...')
+    log.info('🔍 Analyzing Reddit trends with real data...')
 
     const analyses = await redditIntegrationService.analyzeTrends(forceRefresh)
 
@@ -29,7 +30,7 @@ export async function analyzeRedditTrends(forceRefresh = false): Promise<TrendAn
     }
 
   } catch (error) {
-    console.error('Reddit trend analysis failed:', error)
+    log.error('Reddit trend analysis failed:', error)
     return {
       success: false,
       error: 'Failed to analyze Reddit trends. Please try again.'
@@ -39,7 +40,7 @@ export async function analyzeRedditTrends(forceRefresh = false): Promise<TrendAn
 
 export async function getRedditTrendsSummary(forceRefresh = false): Promise<TrendsSummary> {
   try {
-    console.log('📊 Getting Reddit trends summary...')
+    log.info('📊 Getting Reddit trends summary...')
 
     // Use our API route that fetches fresh Reddit data
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -59,7 +60,7 @@ export async function getRedditTrendsSummary(forceRefresh = false): Promise<Tren
     return summary
 
   } catch (error) {
-    console.error('Failed to get Reddit trends summary:', error)
+    log.error('Failed to get Reddit trends summary:', error)
     return {
       totalTopics: 0,
       activeCommunities: 0,
@@ -74,13 +75,13 @@ export async function getRedditTrendsSummary(forceRefresh = false): Promise<Tren
  */
 export async function collectRedditData(subreddits?: string[]): Promise<{ success: boolean; message: string }> {
   try {
-    console.log('🚀 Manually triggering Reddit data collection...')
+    log.info('🚀 Manually triggering Reddit data collection...')
 
     const result = await redditIntegrationService.collectFreshData(subreddits)
     return result
 
   } catch (error) {
-    console.error('Manual Reddit data collection failed:', error)
+    log.error('Manual Reddit data collection failed:', error)
     return {
       success: false,
       message: 'Failed to collect Reddit data'
@@ -97,7 +98,7 @@ export async function getRedditHealthStatus() {
     return health
 
   } catch (error) {
-    console.error('Failed to get Reddit health status:', error)
+    log.error('Failed to get Reddit health status:', error)
     return {
       database: false,
       reddit_api: false,
@@ -114,15 +115,15 @@ export async function getRedditHealthStatus() {
  */
 export async function getTrendingPainPoints(limit = 20): Promise<PainPoint[]> {
   try {
-    console.log('🔍 Extracting pain points from Reddit data...')
+    log.info('🔍 Extracting pain points from Reddit data...')
 
     const painPoints = await painPointExtractor.getTrendingPainPoints(limit)
-    console.log(`✅ Found ${painPoints.length} pain points`)
+    log.info(`✅ Found ${painPoints.length} pain points`)
 
     return painPoints
 
   } catch (error) {
-    console.error('Failed to get trending pain points:', error)
+    log.error('Failed to get trending pain points:', error)
     return []
   }
 }
@@ -134,11 +135,11 @@ export async function generateIdeasFromPainPoints(
   options: IdeaGenerationOptions = {}
 ): Promise<{ success: boolean; ideas: StartupIdea[]; error?: string }> {
   try {
-    console.log('🚀 Generating startup ideas from pain points...')
+    log.info('🚀 Generating startup ideas from pain points...')
 
     const ideas = await aiIdeaGenerator.generateIdeasFromPainPoints(options)
 
-    console.log(`✅ Generated ${ideas.length} startup ideas`)
+    log.info(`✅ Generated ${ideas.length} startup ideas`)
 
     return {
       success: true,
@@ -146,7 +147,7 @@ export async function generateIdeasFromPainPoints(
     }
 
   } catch (error) {
-    console.error('Failed to generate ideas from pain points:', error)
+    log.error('Failed to generate ideas from pain points:', error)
     return {
       success: false,
       ideas: [],
@@ -162,7 +163,7 @@ export async function generateQuickIdea(
   painPointId: string
 ): Promise<{ success: boolean; idea?: Partial<StartupIdea>; error?: string }> {
   try {
-    console.log(`🔍 Generating quick idea for pain point: ${painPointId}`)
+    log.info(`🔍 Generating quick idea for pain point: ${painPointId}`)
 
     const idea = await aiIdeaGenerator.generateQuickIdea(painPointId)
 
@@ -173,7 +174,7 @@ export async function generateQuickIdea(
       }
     }
 
-    console.log(`✅ Generated quick idea: ${idea.title}`)
+    log.info(`✅ Generated quick idea: ${idea.title}`)
 
     return {
       success: true,
@@ -181,7 +182,7 @@ export async function generateQuickIdea(
     }
 
   } catch (error) {
-    console.error('Failed to generate quick idea:', error)
+    log.error('Failed to generate quick idea:', error)
     return {
       success: false,
       error: 'Failed to generate idea. Please try again.'
@@ -194,15 +195,15 @@ export async function generateQuickIdea(
  */
 export async function getPainPointsByCategory(category: string): Promise<PainPoint[]> {
   try {
-    console.log(`🔍 Getting pain points for category: ${category}`)
+    log.info(`🔍 Getting pain points for category: ${category}`)
 
     const painPoints = await painPointExtractor.getPainPointsByCategory(category)
-    console.log(`✅ Found ${painPoints.length} pain points in ${category}`)
+    log.info(`✅ Found ${painPoints.length} pain points in ${category}`)
 
     return painPoints
 
   } catch (error) {
-    console.error(`Failed to get pain points for category ${category}:`, error)
+    log.error(`Failed to get pain points for category ${category}:`, error)
     return []
   }
 }
@@ -227,7 +228,7 @@ export async function getStartupIntelligence(
   error?: string
 }> {
   try {
-    console.log('🧠 Gathering comprehensive startup intelligence...')
+    log.info('🧠 Gathering comprehensive startup intelligence...')
 
     const {
       includePainPoints = true,
@@ -256,7 +257,7 @@ export async function getStartupIntelligence(
       topOpportunities: []
     }
 
-    console.log(`✅ Intelligence gathered: ${painPoints.length} pain points, ${ideas.length} ideas`)
+    log.info(`✅ Intelligence gathered: ${painPoints.length} pain points, ${ideas.length} ideas`)
 
     return {
       success: true,
@@ -268,7 +269,7 @@ export async function getStartupIntelligence(
     }
 
   } catch (error) {
-    console.error('Failed to gather startup intelligence:', error)
+    log.error('Failed to gather startup intelligence:', error)
     return {
       success: false,
       error: 'Failed to gather startup intelligence. Please try again.'

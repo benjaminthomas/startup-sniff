@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
+import { log } from '@/lib/logger'
 
 /**
  * Server-side Supabase client with proper environment validation
@@ -120,7 +121,7 @@ export async function getServerUser(request: Request) {
 
     return user
   } catch (error) {
-    console.error('Error getting server user:', error)
+    log.error('Error getting server user:', error)
     return null
   }
 }
@@ -144,7 +145,7 @@ export class DatabaseOperations {
       const result = await operation()
 
       if (result.error) {
-        console.error('Database operation error:', result.error)
+        log.error('Database operation error:', result.error)
         return {
           data: null,
           error: (result.error as Record<string, unknown>)?.message as string || 'Database operation failed',
@@ -158,7 +159,7 @@ export class DatabaseOperations {
         success: true
       }
     } catch (error) {
-      console.error('Unexpected database error:', error)
+      log.error('Unexpected database error:', error)
       return {
         data: null,
         error: error instanceof Error ? error.message : 'Unexpected error occurred',

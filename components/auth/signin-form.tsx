@@ -23,6 +23,7 @@ import { signInAction } from '@/modules/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { log } from '@/lib/logger/client'
 import {
   Form,
   FormControl,
@@ -95,7 +96,7 @@ export function SignInForm({ csrfToken, redirectTo }: SignInFormProps) {
           }
         }
       } catch (err) {
-        console.error('Signin error:', err)
+        log.error('Signin error:', err)
         setError('An unexpected error occurred. Please try again.')
         toast.error('An unexpected error occurred. Please try again.')
       }

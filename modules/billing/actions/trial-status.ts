@@ -2,6 +2,7 @@
 
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerSupabaseClient } from '@/modules/supabase/server';
+import { log } from '@/lib/logger'
 
 export type TrialStatus = {
   planType: string | null;
@@ -28,7 +29,7 @@ export async function getTrialStatus(): Promise<TrialStatus> {
     .single();
 
   if (error || !profile) {
-    console.error('Failed to fetch trial status:', error);
+    log.error('Failed to fetch trial status:', error);
     return null;
   }
 

@@ -7,6 +7,7 @@
 
 import formData from 'form-data'
 import Mailgun from 'mailgun.js'
+import { log } from '@/lib/logger'
 
 // Initialize Mailgun client
 const mailgun = new Mailgun(formData)
@@ -65,7 +66,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{
     // Validate configuration
     const config = validateMailgunConfig()
     if (!config.valid) {
-      console.error('[mailgun] Configuration errors:', config.errors)
+      log.error('[mailgun] Configuration errors:', config.errors)
       return {
         success: false,
         error: `Mailgun not configured: ${config.errors.join(', ')}`,
@@ -83,7 +84,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{
       'v:variables': params.variables ? JSON.stringify(params.variables) : undefined,
     })
 
-    console.log('[mailgun] Email sent successfully:', {
+    log.info('[mailgun] Email sent successfully:', {
       to: params.to,
       subject: params.subject,
       messageId: result.id,
@@ -94,7 +95,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{
       messageId: result.id,
     }
   } catch (error) {
-    console.error('[mailgun] Failed to send email:', error)
+    log.error('[mailgun] Failed to send email:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -208,7 +209,7 @@ export async function getEmailStats(): Promise<{
       stats: aggregated,
     }
   } catch (error) {
-    console.error('[mailgun] Failed to get stats:', error)
+    log.error('[mailgun] Failed to get stats:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

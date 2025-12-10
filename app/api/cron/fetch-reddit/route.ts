@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { createServerAdminClient } from '@/modules/supabase';
+import { log } from '@/lib/logger'
 
 const FALLBACK_USER_AGENT = 'startup-sniff-cron/1.0 (https://startupsniff.com)';
 let cachedToken: { token: string; expiresAt: number } | null = null;
@@ -69,7 +70,7 @@ async function getRedditAccessToken() {
 
     if (!response.ok) {
       const text = await response.text();
-      console.error('❌ Failed to obtain Reddit token:', response.status, text);
+      log.error('Failed to obtain Reddit token', undefined, { status: response.status, response: text });
       return null;
     }
 
@@ -81,7 +82,7 @@ async function getRedditAccessToken() {
 
     return cachedToken.token;
   } catch (error) {
-    console.error('❌ Error fetching Reddit token:', error);
+    log.error('❌ Error fetching Reddit token:', error);
     return null;
   }
 }
@@ -94,13 +95,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    console.log('🔄 Cron job: Fetching Reddit trends data...');
+    log.info('🔄 Cron job: Fetching Reddit trends data...');
 
     const userAgent = process.env.REDDIT_USER_AGENT || FALLBACK_USER_AGENT;
     const accessToken = await getRedditAccessToken();
     const apiBase = accessToken ? REDDIT_API_BASE : 'https://www.reddit.com';
     if (!accessToken) {
-      console.warn('⚠️  Reddit access token unavailable – falling back to public endpoints (may be rate limited).');
+      log.warn('⚠️  Reddit access token unavailable – falling back to public endpoints (may be rate limited).');
     }
 
     // Fetch data from multiple subreddits
@@ -121,7 +122,7 @@ export async function GET(request: NextRequest) {
           clearTimeout(timeoutId);
 
           if (!response.ok) {
-            console.error(`Failed to fetch r/${subreddit}: ${response.status}`);
+            log.error(`Failed to fetch r/${subreddit}: ${response.status}`);
             return null;
           }
 
@@ -130,14 +131,14 @@ export async function GET(request: NextRequest) {
           };
           return { subreddit, posts: data.data.children.map((child) => child.data) };
         } catch (error) {
-          console.error(`Error fetching r/${subreddit}:`, error);
+          log.error(`Error fetching r/${subreddit}:`, error);
           return null;
         }
       })
     );
 
     const validResults = results.filter(result => result !== null) as Array<{ subreddit: string; posts: RedditAPIPost[] }>;
-    console.log(`✅ Cron job: Successfully fetched ${validResults.length} subreddits`);
+    log.info(`✅ Cron job: Successfully fetched ${validResults.length} subreddits`);
 
     if (validResults.length > 0) {
       const supabase = createServerAdminClient();
@@ -178,9 +179,9 @@ export async function GET(request: NextRequest) {
           .upsert(rows, { onConflict: 'reddit_id' });
 
         if (error) {
-          console.error('❌ Failed to store Reddit posts:', error);
+          log.error('❌ Failed to store Reddit posts:', error);
         } else {
-          console.log(`🗄️  Stored ${rows.length} Reddit posts`);
+          log.info(`🗄️  Stored ${rows.length} Reddit posts`);
         }
       }
     }
@@ -192,7 +193,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Cron job error:', error);
+    log.error('Cron job error:', error);
     return NextResponse.json({ error: 'Failed to fetch Reddit data' }, { status: 500 });
   }
 }

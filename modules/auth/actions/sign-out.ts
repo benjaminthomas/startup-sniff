@@ -6,6 +6,7 @@ import { getCurrentSession } from '../services/jwt'
 import { SessionDatabase } from '../services/database'
 import { clearSessionCookie } from '../services/jwt'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Sign out action - Clears session and redirects to sign in
@@ -25,7 +26,7 @@ export async function signOutAction(): Promise<AuthResponse> {
     revalidatePath('/')
     redirect('/auth/signin')
   } catch (error) {
-    console.error('Sign out error:', error)
+    log.error('Sign out error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred during sign out.',

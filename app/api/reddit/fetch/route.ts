@@ -20,6 +20,7 @@ import { RedisCache } from '@/lib/services/redis-cache'
 import { getHighPrioritySubreddits, getAllSubredditNames } from '@/lib/reddit/subreddit-config'
 import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/lib/services/monitoring'
 import type { Database } from '@/types/supabase'
+import { log } from '@/lib/logger'
 
 // Environment validation
 function validateEnvironment() {
@@ -40,10 +41,10 @@ function validateEnvironment() {
 
 // Simple logger for API routes
 const logger = {
-  info: (msg: string, ...args: unknown[]) => console.log(`[Reddit Fetch] ${msg}`, ...args),
-  warn: (msg: string, ...args: unknown[]) => console.warn(`[Reddit Fetch] ${msg}`, ...args),
-  error: (msg: string, ...args: unknown[]) => console.error(`[Reddit Fetch] ${msg}`, ...args),
-  debug: (msg: string, ...args: unknown[]) => console.log(`[Reddit Fetch DEBUG] ${msg}`, ...args)
+  info: (msg: string, context?: Record<string, unknown>) => log.info(`[Reddit Fetch] ${msg}`, context),
+  warn: (msg: string, context?: Record<string, unknown>) => log.warn(`[Reddit Fetch] ${msg}`, context),
+  error: (msg: string, error?: Error | unknown, context?: Record<string, unknown>) => log.error(`[Reddit Fetch] ${msg}`, error, context),
+  debug: (msg: string, context?: Record<string, unknown>) => log.info(`[Reddit Fetch DEBUG] ${msg}`, context)
 }
 
 /**

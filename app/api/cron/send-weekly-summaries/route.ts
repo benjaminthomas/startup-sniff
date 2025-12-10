@@ -14,6 +14,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { sendWeeklySummaryToAllUsers } from '@/modules/email/actions/send-weekly-summary'
+import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -26,16 +27,16 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      console.error('[cron-weekly-summaries] Unauthorized access attempt')
+      log.error('[cron-weekly-summaries] Unauthorized access attempt')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log('[cron-weekly-summaries] Starting weekly summary batch send...')
+    log.info('[cron-weekly-summaries] Starting weekly summary batch send...')
 
     const result = await sendWeeklySummaryToAllUsers()
 
     if (!result.success || !('sent' in result)) {
-      console.error('[cron-weekly-summaries] Batch send failed:', 'error' in result ? result.error : 'Unknown error')
+      log.error('[cron-weekly-summaries] Batch send failed:', 'error' in result ? result.error : 'Unknown error')
       return NextResponse.json(
         {
           success: false,
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log('[cron-weekly-summaries] Batch send complete:', {
+    log.info('[cron-weekly-summaries] Batch send complete:', {
       sent: result.sent,
       failed: result.failed,
       skipped: result.skipped
@@ -60,7 +61,7 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString()
     })
   } catch (error) {
-    console.error('[cron-weekly-summaries] Fatal error:', error)
+    log.error('[cron-weekly-summaries] Fatal error:', error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Unknown error'

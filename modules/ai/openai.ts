@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { log } from '@/lib/logger'
 
 // Check if we have a real OpenAI API key (not placeholder)
 const hasValidApiKey = process.env.OPENAI_API_KEY && 
@@ -202,7 +203,7 @@ Return a JSON object with these exact fields:
   try {
     // Use mock data if OpenAI API key is not configured
     if (!openai) {
-      console.log('Using mock data - OpenAI API key not configured');
+      log.info('Using mock data - OpenAI API key not configured');
       // Add small delay to simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       return generateMockIdea(params);
@@ -229,7 +230,7 @@ Return a JSON object with these exact fields:
     try {
       parsedIdea = JSON.parse(response) as GeneratedIdea;
     } catch {
-      console.error('Failed to parse OpenAI response as JSON:', response);
+      log.error('Failed to parse OpenAI response as JSON:', response);
       throw new Error('Invalid JSON response from AI');
     }
 
@@ -243,12 +244,12 @@ Return a JSON object with these exact fields:
 
     return parsedIdea;
   } catch (error) {
-    console.error('Error generating startup idea:', error);
+    log.error('Error generating startup idea:', error);
     
     if (error instanceof Error) {
       if (error.message.includes('API key')) {
         // Fallback to mock data if API key issues
-        console.log('Falling back to mock data due to API key issues');
+        log.info('Falling back to mock data due to API key issues');
         return generateMockIdea(params);
       }
       if (error.message.includes('quota')) {
@@ -305,7 +306,7 @@ Provide:
 
     return JSON.parse(response);
   } catch (error) {
-    console.error('Error validating idea:', error);
+    log.error('Error validating idea:', error);
     throw new Error('Failed to validate startup idea');
   }
 }

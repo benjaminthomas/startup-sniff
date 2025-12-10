@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { log } from '@/lib/logger'
 import {
   generateDynamicIdeaQuestions,
   type QuestionContext
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ questions });
   } catch (error) {
-    console.error('Dynamic prompt route error', error);
+    log.error('Dynamic prompt route error', error);
     return NextResponse.json(
       { error: 'Failed to generate dynamic prompts' },
       { status: 500 }

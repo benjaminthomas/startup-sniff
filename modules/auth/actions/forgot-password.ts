@@ -6,6 +6,7 @@ import { verifyCSRFToken } from '../utils/csrf'
 import { getClientIP, checkRateLimit } from '../utils/rate-limit'
 import { forgotPasswordSchema } from '../schemas/auth-schemas'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Forgot password action - Sends password reset email
@@ -73,7 +74,7 @@ export async function forgotPasswordAction(formData: FormData): Promise<AuthResp
       message: 'If an account with that email exists, you will receive a password reset link.',
     }
   } catch (error) {
-    console.error('Forgot password error:', error)
+    log.error('Forgot password error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',

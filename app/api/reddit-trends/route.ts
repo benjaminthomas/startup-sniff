@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { log } from '@/lib/logger'
 
 // Reddit OAuth API configuration
 const REDDIT_OAUTH_BASE = 'https://oauth.reddit.com';
@@ -86,7 +87,7 @@ async function getRedditAccessToken(): Promise<string> {
 
   if (!response.ok) {
     const error = await response.text();
-    console.error('Failed to get Reddit access token:', response.status, error);
+    log.error('Failed to get Reddit access token', undefined, { status: response.status, response: error });
     throw new Error('Failed to authenticate with Reddit API');
   }
 
@@ -98,7 +99,7 @@ async function getRedditAccessToken(): Promise<string> {
     expiresAt: Date.now() + (55 * 60 * 1000), // 55 minutes
   };
 
-  console.log('✅ Successfully obtained Reddit OAuth token');
+  log.info('✅ Successfully obtained Reddit OAuth token');
   return data.access_token;
 }
 
@@ -107,16 +108,16 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const session = await getCurrentSession();
     if (!session) {
-      console.error('Reddit trends: No valid session found');
+      log.error('Reddit trends: No valid session found');
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    console.log(`Reddit trends: Request from user ${session.userId}`);
+    log.info(`Reddit trends: Request from user ${session.userId}`);
 
     const searchParams = request.nextUrl.searchParams;
     const forceRefresh = searchParams.get('refresh') === 'true';
 
-    console.log('🔍 Fetching Reddit trends data with OAuth...');
+    log.info('🔍 Fetching Reddit trends data with OAuth...');
 
     // Get OAuth access token
     const accessToken = await getRedditAccessToken();
@@ -142,7 +143,7 @@ export async function GET(request: NextRequest) {
 
         if (!response.ok) {
           const errorText = await response.text();
-          console.error(`Failed to fetch r/${subreddit}: ${response.status} ${response.statusText}`, errorText);
+          log.error(`Failed to fetch r/${subreddit}: ${response.status} ${response.statusText}`, errorText);
           return null;
         }
 
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
         return { subreddit, posts: data.data.children.map(child => child.data) };
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        console.error(`Error fetching r/${subreddit}:`, errorMessage);
+        log.error(`Error fetching r/${subreddit}:`, errorMessage);
         return null;
       }
     });
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
     const validResults = results.filter(result => result !== null);
 
     if (validResults.length === 0) {
-      console.error('All Reddit requests failed - likely being blocked (403)');
+      log.error('All Reddit requests failed - likely being blocked (403)');
 
       // Return helpful error message suggesting alternative solutions
       return NextResponse.json({
@@ -257,16 +258,13 @@ export async function GET(request: NextRequest) {
       fullAnalysis: analyses
     };
 
-    console.log(`✅ Successfully analyzed ${validResults.length} subreddits, found ${totalTopics} topics`);
+    log.info(`✅ Successfully analyzed ${validResults.length} subreddits, found ${totalTopics} topics`);
 
     return NextResponse.json(summary);
 
   } catch (error) {
-    console.error('Error in Reddit trends API:', error);
+    log.error('Error in Reddit trends API', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorStack = error instanceof Error ? error.stack : undefined;
-
-    console.error('Error details:', { message: errorMessage, stack: errorStack });
 
     return NextResponse.json(
       {

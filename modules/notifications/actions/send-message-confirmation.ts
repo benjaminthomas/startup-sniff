@@ -7,6 +7,7 @@
  */
 
 import { sendMessageConfirmation, type MessageConfirmationData } from '../services/email-notifications'
+import { log } from '@/lib/logger'
 
 export async function sendMessageConfirmationAction(
   data: MessageConfirmationData
@@ -15,7 +16,7 @@ export async function sendMessageConfirmationAction(
     await sendMessageConfirmation(data)
     return { success: true }
   } catch (error) {
-    console.error('Failed to send message confirmation:', error)
+    log.error('Failed to send message confirmation:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send confirmation email'

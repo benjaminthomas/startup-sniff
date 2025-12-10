@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
 import { createServerAdminClient } from '@/modules/supabase';
 import { fetchInvoice, fetchInvoicesByPayment, createInvoice } from '@/lib/razorpay';
+import { log } from '@/lib/logger'
 
 export async function GET(
   req: NextRequest,
@@ -42,7 +43,7 @@ export async function GET(
       try {
         invoice = await fetchInvoice(transaction.razorpay_invoice_id);
       } catch (fetchError) {
-        console.error('Failed to fetch invoice by ID:', fetchError);
+        log.error('Failed to fetch invoice by ID:', fetchError);
         // Fall through to payment_id lookup
       }
     }
@@ -66,7 +67,7 @@ export async function GET(
             .eq('id', params.payment_id);
         }
       } catch (queryError) {
-        console.error('Failed to query invoices by payment ID:', queryError);
+        log.error('Failed to query invoices by payment ID:', queryError);
       }
     }
 
@@ -107,9 +108,9 @@ export async function GET(
           })
           .eq('id', params.payment_id);
 
-        console.log(`Generated new invoice ${invoice.id} for payment ${transaction.razorpay_payment_id}`);
+        log.info(`Generated new invoice ${invoice.id} for payment ${transaction.razorpay_payment_id}`);
       } catch (createError) {
-        console.error('Failed to create invoice:', createError);
+        log.error('Failed to create invoice:', createError);
         return NextResponse.json({
           error: 'Failed to generate invoice'
         }, { status: 500 });
@@ -125,7 +126,7 @@ export async function GET(
       status: invoice.status,
     });
   } catch (error) {
-    console.error('Invoice fetch error:', error);
+    log.error('Invoice fetch error:', error);
     return NextResponse.json({
       error: 'Failed to fetch invoice'
     }, { status: 500 });

@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { verifyWebhookSignature } from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
+import { log } from '@/lib/logger'
 
 // Create Supabase admin client for webhook operations
 const supabaseAdmin = createClient(
@@ -63,7 +64,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
   } catch (error) {
-    console.error('Webhook signature verification failed:', error);
+    log.error('Webhook signature verification failed:', error);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -74,11 +75,11 @@ export async function POST(req: NextRequest) {
   const eventId = (payload as unknown as { event_id?: string }).event_id;
 
   if (!eventId) {
-    console.error('No event_id in webhook payload');
+    log.error('No event_id in webhook payload');
     return NextResponse.json({ error: 'No event_id in payload' }, { status: 400 });
   }
 
-  console.log('[WEBHOOK] Received Razorpay webhook:', {
+  log.info('[WEBHOOK] Received Razorpay webhook:', {
     eventType,
     eventId,
     timestamp: new Date().toISOString()
@@ -93,10 +94,10 @@ export async function POST(req: NextRequest) {
 
   if (existingEvent) {
     if (existingEvent.processed) {
-      console.log(`Event ${eventId} already processed, returning success (idempotent)`);
+      log.info(`Event ${eventId} already processed, returning success (idempotent)`);
       return NextResponse.json({ received: true, idempotent: true });
     } else {
-      console.log(`Event ${eventId} found but not processed, will retry`);
+      log.info(`Event ${eventId} found but not processed, will retry`);
     }
   } else {
     // Store new event for idempotency tracking
@@ -145,7 +146,7 @@ export async function POST(req: NextRequest) {
         break;
 
       default:
-        console.log(`Unhandled event type: ${eventType}`);
+        log.info(`Unhandled event type: ${eventType}`);
     }
 
     // Mark event as successfully processed
@@ -158,10 +159,10 @@ export async function POST(req: NextRequest) {
       })
       .eq('event_id', eventId);
 
-    console.log(`Event ${eventId} processed successfully`);
+    log.info(`Event ${eventId} processed successfully`);
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook handler error:', error);
+    log.error('Webhook handler error:', error);
 
     // Mark event as failed for retry
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -189,7 +190,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
-  console.log('[WEBHOOK] Processing subscription.activated:', {
+  log.info('[WEBHOOK] Processing subscription.activated:', {
     subscriptionId: subscription.id,
     planId: subscription.plan_id,
     status: subscription.status,
@@ -199,21 +200,21 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   const userId = subscription.notes.user_id;
 
   if (!userId) {
-    console.error('[WEBHOOK] ❌ User ID not found in subscription notes');
+    log.error('[WEBHOOK] ❌ User ID not found in subscription notes');
     throw new Error('User ID not found in subscription notes');
   }
 
-  console.log('[WEBHOOK] User ID from notes:', userId);
+  log.info('[WEBHOOK] User ID from notes', { userId });
 
   // Find the plan type based on plan ID
   const plan = PRICING_PLANS.find(p => p.priceId === subscription.plan_id);
 
   if (!plan) {
-    console.error('[WEBHOOK] ❌ Plan not found for plan ID:', subscription.plan_id);
+    log.error('[WEBHOOK] ❌ Plan not found for plan ID:', subscription.plan_id);
     throw new Error(`Plan not found for plan ID: ${subscription.plan_id}`);
   }
 
-  console.log('[WEBHOOK] Mapped to plan:', plan.id, '(' + plan.name + ')');
+  log.info('[WEBHOOK] Mapped to plan', { planId: plan.id, planName: plan.name });
 
   // Check if subscription already exists
   const { data: existingSub } = await supabaseAdmin
@@ -259,7 +260,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   }
 
   // Update user's plan and subscription status
-  console.log('[WEBHOOK] Updating user plan:', { userId, planType: plan.id });
+  log.info('[WEBHOOK] Updating user plan:', { userId, planType: plan.id });
 
   const { error: userUpdateError } = await supabaseAdmin
     .from('users')
@@ -270,14 +271,14 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
     .eq('id', userId);
 
   if (userUpdateError) {
-    console.error('[WEBHOOK] ❌ Failed to update user:', userUpdateError);
+    log.error('[WEBHOOK] ❌ Failed to update user:', userUpdateError);
     throw new Error(`Failed to update user: ${userUpdateError.message}`);
   }
 
-  console.log('[WEBHOOK] ✅ User updated successfully');
+  log.info('[WEBHOOK] ✅ User updated successfully');
 
   // Update usage limits
-  console.log('[WEBHOOK] Updating usage limits:', {
+  log.info('[WEBHOOK] Updating usage limits:', {
     userId,
     planType: plan.id,
     ideas: plan.limits.ideas === -1 ? 'unlimited' : plan.limits.ideas,
@@ -294,10 +295,10 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
     .eq('user_id', userId);
 
   if (limitsError) {
-    console.error('[WEBHOOK] ⚠️  Failed to update usage limits:', limitsError);
+    log.error('[WEBHOOK] ⚠️  Failed to update usage limits:', limitsError);
     // Don't throw - this is not critical
   } else {
-    console.log('[WEBHOOK] ✅ Usage limits updated');
+    log.info('[WEBHOOK] ✅ Usage limits updated');
   }
 
   // Send activation/upgrade email
@@ -340,14 +341,14 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
           : undefined,
       });
 
-      console.log(`${isUpgrade ? 'Upgrade' : 'Activation'} email sent to ${user.email}`);
+      log.info(`${isUpgrade ? 'Upgrade' : 'Activation'} email sent to ${user.email}`);
     }
   } catch (emailError) {
-    console.error('Email notification failed:', emailError);
+    log.error('Email notification failed:', emailError);
     // Don't throw - email failure shouldn't block activation
   }
 
-  console.log('[WEBHOOK] ✅ Subscription activation complete:', {
+  log.info('[WEBHOOK] ✅ Subscription activation complete:', {
     userId,
     subscriptionId: subscription.id,
     planType: plan.id,
@@ -370,7 +371,7 @@ async function handleSubscriptionCharged(subscription: RazorpayWebhookPayload['p
     })
     .eq('razorpay_subscription_id', subscription.id);
 
-  console.log(`Subscription charged: ${subscription.id}`);
+  log.info(`Subscription charged: ${subscription.id}`);
 }
 
 async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
@@ -419,16 +420,16 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
               : null,
           });
 
-          console.log(`Cancellation email sent to ${user.email}`);
+          log.info(`Cancellation email sent to ${user.email}`);
         }
       }
     } catch (emailError) {
-      console.error('Cancellation email failed:', emailError);
+      log.error('Cancellation email failed:', emailError);
       // Don't throw - email failure shouldn't block cancellation
     }
   }
 
-  console.log(`Subscription cancelled: ${subscription.id}`);
+  log.info(`Subscription cancelled: ${subscription.id}`);
 }
 
 async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
@@ -468,7 +469,7 @@ async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload[
     }
   }
 
-  console.log(`Subscription completed: ${subscription.id}`);
+  log.info(`Subscription completed: ${subscription.id}`);
 }
 
 async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
@@ -490,7 +491,7 @@ async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['pa
       .eq('id', userId);
   }
 
-  console.log(`Subscription paused: ${subscription.id}`);
+  log.info(`Subscription paused: ${subscription.id}`);
 }
 
 async function handleSubscriptionResumed(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
@@ -512,7 +513,7 @@ async function handleSubscriptionResumed(subscription: RazorpayWebhookPayload['p
       .eq('id', userId);
   }
 
-  console.log(`Subscription resumed: ${subscription.id}`);
+  log.info(`Subscription resumed: ${subscription.id}`);
 }
 
 async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload']['payment']['entity']) {
@@ -579,7 +580,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
           const invoice = existingInvoices.items[0];
           invoiceId = invoice.id;
           invoiceUrl = invoice.short_url ?? null;
-          console.log(`Found existing invoice ${invoiceId} for payment ${payment.id}`);
+          log.info(`Found existing invoice ${invoiceId} for payment ${payment.id}`);
         } else {
           // Get user details for invoice generation
           const { data: user } = await supabaseAdmin
@@ -602,7 +603,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
 
             invoiceId = newInvoice.id;
             invoiceUrl = newInvoice.short_url ?? null;
-            console.log(`Generated new invoice ${invoiceId} for payment ${payment.id}`);
+            log.info(`Generated new invoice ${invoiceId} for payment ${payment.id}`);
           }
         }
 
@@ -618,12 +619,12 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
             .eq('razorpay_payment_id', payment.id);
         }
       } catch (invoiceError) {
-        console.error('Invoice generation failed:', invoiceError);
+        log.error('Invoice generation failed:', invoiceError);
         // Continue - non-critical for payment processing
       }
     }
 
-    console.log(`Payment captured for subscription: ${payment.subscription_id}, amount: ${payment.amount}`);
+    log.info(`Payment captured for subscription: ${payment.subscription_id}, amount: ${payment.amount}`);
   }
 }
 
@@ -664,15 +665,15 @@ async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['p
               currency: 'INR',
             });
 
-            console.log(`Payment failed email sent to ${user.email}`);
+            log.info(`Payment failed email sent to ${user.email}`);
           }
         }
       }
     } catch (emailError) {
-      console.error('Payment failed email error:', emailError);
+      log.error('Payment failed email error:', emailError);
       // Don't throw - email failure shouldn't block webhook processing
     }
 
-    console.log(`Payment failed for subscription: ${payment.subscription_id}`);
+    log.info(`Payment failed for subscription: ${payment.subscription_id}`);
   }
 }

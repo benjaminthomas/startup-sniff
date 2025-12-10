@@ -10,6 +10,7 @@ import {
   createOrGetCustomer,
 } from '@/lib/razorpay';
 import { PRICING_PLANS } from '@/constants';
+import { log } from '@/lib/logger'
 
 export async function createSubscription(planId: string) {
   const session = await getCurrentSession();
@@ -86,7 +87,7 @@ export async function createSubscription(planId: string) {
       planId: plan.priceId
     };
   } catch (error) {
-    console.error('Error creating subscription:', error);
+    log.error('Error creating subscription:', error);
     let errorMessage = 'Unable to create subscription. Please try again or contact support.';
 
     if (typeof error === 'object' && error !== null && 'error' in error) {
@@ -178,7 +179,7 @@ export async function cancelSubscription(subscriptionId: string) {
       message: 'Subscription cancelled. You will retain access until the end of your current billing period.'
     };
   } catch (error) {
-    console.error('Error cancelling subscription:', error);
+    log.error('Error cancelling subscription:', error);
     return { error: 'Failed to cancel subscription' };
   }
 }
@@ -246,7 +247,7 @@ export async function updateSubscription(newPlanId: string) {
 
     return { success: true, message: 'Subscription updated successfully' };
   } catch (error) {
-    console.error('Error updating subscription:', error);
+    log.error('Error updating subscription:', error);
     return { error: 'Failed to update subscription' };
   }
 }

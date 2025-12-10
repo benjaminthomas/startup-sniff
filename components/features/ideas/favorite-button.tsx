@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toggleFavorite } from '@/modules/ideas';
 import { toast } from 'sonner';
+import { log } from '@/lib/logger/client'
 
 interface FavoriteButtonProps {
   ideaId: string;
@@ -41,7 +42,7 @@ export function FavoriteButton({
         );
       } catch (error) {
         toast.error('Failed to update favorite status');
-        console.error('Error toggling favorite:', error);
+        log.error('Error toggling favorite:', error);
       }
     });
   };

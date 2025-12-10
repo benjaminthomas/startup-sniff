@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import jsPDF from 'jspdf';
 import { TargetMarket, Solution } from '@/types/startup-ideas';
+import { log } from '@/lib/logger/client'
 
 interface ExportPDFButtonProps {
   ideaId: string;
@@ -39,7 +40,7 @@ export function ExportPDFButton({
       });
     } catch (error) {
       toast.error('Failed to export PDF');
-      console.error('Error exporting PDF:', error);
+      log.error('Error exporting PDF:', error);
     } finally {
       setIsExporting(false);
     }

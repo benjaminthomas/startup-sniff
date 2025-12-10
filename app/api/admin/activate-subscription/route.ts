@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { verifyAdminAuth, isAuthError } from '@/lib/middleware/admin-auth';
 import { validateRequestBody, activateSubscriptionSchema } from '@/lib/validation/api-schemas';
+import { log } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
   // ✅ SECURITY: Verify admin authentication
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
     // ✅ VALIDATION: Validate and parse request body
     const { email, planType } = await validateRequestBody(request, activateSubscriptionSchema);
 
-    console.log(`Admin ${adminUser.email} activating ${planType} for ${email}`);
+    log.info(`Admin ${adminUser.email} activating ${planType} for ${email}`);
 
     // Create Supabase admin client (bypasses RLS)
     const supabase = createClient(
@@ -191,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log admin action
-    console.log(`✅ Admin ${adminUser.email} activated ${planType} for ${email}`, {
+    log.info(`✅ Admin ${adminUser.email} activated ${planType} for ${email}`, {
       userId: user.id,
       periodStart: periodStart.toISOString(),
       periodEnd: periodEnd.toISOString()
@@ -210,7 +211,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: unknown) {
-    console.error('Error activating subscription:', error);
+    log.error('Error activating subscription:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
       { error: 'Internal server error: ' + errorMessage },

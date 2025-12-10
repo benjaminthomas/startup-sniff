@@ -13,6 +13,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { verifySessionToken } from '@/modules/auth/services/jwt'
 import { UserDatabase } from '@/modules/auth/services/database'
 import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/modules/auth/utils/csrf'
+import { log } from '@/lib/logger'
 
 // Define route groups
 const AUTH_ROUTES = [
@@ -48,7 +49,7 @@ export async function middleware(request: NextRequest) {
       const { allowed, remaining } = await checkRateLimit(identifier, limit, windowMs)
 
       if (!allowed) {
-        console.warn(`Rate limit exceeded for ${identifier} on ${pathname}`)
+        log.warn(`Rate limit exceeded for ${identifier} on ${pathname}`)
         return NextResponse.json(
           { error: 'Too many attempts. Please try again later.' },
           {
@@ -80,12 +81,12 @@ export async function middleware(request: NextRequest) {
 
       if (isServerAction) {
         // For Server Actions, we rely on Next.js built-in CSRF protection
-        console.log(`🔒 Server Action protected by Next.js: ${pathname}`)
+        log.info(`🔒 Server Action protected by Next.js: ${pathname}`)
       } else {
         // For regular API routes and form submissions, enforce CSRF
         const csrfValid = await extractAndVerifyCSRFToken(request)
         if (!csrfValid) {
-          console.warn(`CSRF token validation failed for ${pathname}`)
+          log.warn(`CSRF token validation failed for ${pathname}`)
           return NextResponse.json(
             { error: 'Invalid or missing CSRF token' },
             { status: 403 }
@@ -111,13 +112,13 @@ export async function middleware(request: NextRequest) {
             }
           } else {
             // User not found or not verified, clear invalid session
-            console.warn(`Invalid session: User ${sessionPayload.userId} not found or not verified`)
+            log.warn(`Invalid session: User ${sessionPayload.userId} not found or not verified`)
             response.cookies.delete('session-token')
           }
         }
       } catch (error) {
         // Invalid token, clear it
-        console.error('Session verification error:', error)
+        log.error('Session verification error:', error)
         response.cookies.delete('session-token')
       }
     }
@@ -128,7 +129,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect unauthenticated users from protected routes to signin
     if (isProtectedRoute && !isAuthenticated) {
-      console.log(`🔒 Redirecting unauthenticated user from ${pathname} to /auth/signin`)
+      log.info(`🔒 Redirecting unauthenticated user from ${pathname} to /auth/signin`)
       const redirectUrl = new URL('/auth/signin', request.url)
       redirectUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(redirectUrl)
@@ -136,7 +137,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated users away from auth pages to dashboard
     if (isAuthenticated && isAuthRoute) {
-      console.log(`✅ Redirecting authenticated user from ${pathname} to /dashboard`)
+      log.info(`✅ Redirecting authenticated user from ${pathname} to /dashboard`)
       const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard'
       return NextResponse.redirect(new URL(redirectTo, request.url))
     }
@@ -213,7 +214,7 @@ export async function middleware(request: NextRequest) {
     return response
 
   } catch (error) {
-    console.error('Middleware error:', error)
+    log.error('Middleware error:', error)
     
     // Fail securely - redirect to signin on errors for protected routes
     const isProtectedRoute = PROTECTED_ROUTES.some(route =>
@@ -221,12 +222,12 @@ export async function middleware(request: NextRequest) {
     )
     
     if (isProtectedRoute) {
-      console.error(`🔒 Error on protected route ${pathname}, redirecting to signin`)
+      log.error(`🔒 Error on protected route ${pathname}, redirecting to signin`)
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
     
     // For public routes, allow through but log error
-    console.error(`⚠️ Error on public route ${pathname}, allowing through`)
+    log.error(`⚠️ Error on public route ${pathname}, allowing through`)
     return response
   }
 }

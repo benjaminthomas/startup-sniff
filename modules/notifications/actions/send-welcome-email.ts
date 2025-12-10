@@ -7,6 +7,7 @@
  */
 
 import { sendWelcomeEmail, type WelcomeEmailData } from '../services/email-notifications'
+import { log } from '@/lib/logger'
 
 export async function sendWelcomeEmailAction(
   data: WelcomeEmailData
@@ -15,7 +16,7 @@ export async function sendWelcomeEmailAction(
     await sendWelcomeEmail(data)
     return { success: true }
   } catch (error) {
-    console.error('Failed to send welcome email:', error)
+    log.error('Failed to send welcome email:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to send welcome email'

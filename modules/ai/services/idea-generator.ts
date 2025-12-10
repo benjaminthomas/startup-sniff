@@ -5,6 +5,7 @@
 
 import OpenAI from 'openai'
 import { painPointExtractor, type PainPoint, type StartupIdea } from '@/modules/reddit/services/pain-point-extractor'
+import { log } from '@/lib/logger'
 
 const FOCUS_AREA_SUBREDDITS: Record<string, string[]> = {
   saas: ['saas', 'startups', 'entrepreneur', 'indiehackers', 'webdev', 'programming'],
@@ -123,7 +124,7 @@ class AIIdeaGenerator {
       })
 
       if (filteredPainPoints.length === 0) {
-        console.warn('No pain points found matching criteria')
+        log.warn('No pain points found matching criteria')
         filteredPainPoints = painPoints
       }
 
@@ -145,7 +146,7 @@ class AIIdeaGenerator {
             generatedIdeas.push(idea)
           }
         } catch (error) {
-          console.error('Error generating idea for group:', error)
+          log.error('Error generating idea for group:', error)
           continue
         }
       }
@@ -153,7 +154,7 @@ class AIIdeaGenerator {
       return generatedIdeas.sort((a, b) => b.confidence_score - a.confidence_score)
 
     } catch (error) {
-      console.error('Error generating ideas from pain points:', error)
+      log.error('Error generating ideas from pain points:', error)
       return []
     }
   }
@@ -228,7 +229,7 @@ class AIIdeaGenerator {
     options: Pick<IdeaGenerationOptions, 'focusArea' | 'complexityLevel' | 'budgetRange'>
   ): Promise<GeneratedIdea | null> {
     if (!this.openai) {
-      console.warn('OpenAI API not configured, returning fallback idea')
+      log.warn('OpenAI API not configured, returning fallback idea')
       return this.generateFallbackIdea(painPoints)
     }
 
@@ -265,7 +266,7 @@ class AIIdeaGenerator {
       return this.parseAIResponse(response, painPoints)
 
     } catch (error) {
-      console.error('OpenAI API error:', error)
+      log.error('OpenAI API error:', error)
       return this.generateFallbackIdea(painPoints)
     }
   }
@@ -383,7 +384,7 @@ Focus on creating a practical, actionable solution that directly addresses the p
       return generatedIdea
 
     } catch (error) {
-      console.error('Error parsing AI response:', error)
+      log.error('Error parsing AI response:', error)
       return null
     }
   }
@@ -569,7 +570,7 @@ Respond with a JSON object containing: title, problem_statement, solution_approa
       }
 
     } catch (error) {
-      console.error('Error generating quick idea:', error)
+      log.error('Error generating quick idea:', error)
       return null
     }
   }

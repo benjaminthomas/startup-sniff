@@ -9,6 +9,7 @@ import { getClientIP, checkRateLimit } from '../utils/rate-limit'
 import { signUpSchema } from '../schemas/auth-schemas'
 import { sendWelcomeEmail } from '@/modules/notifications/services/email-notifications'
 import type { AuthResponse } from '@/types/database'
+import { log } from '@/lib/logger'
 
 /**
  * Sign up action - Creates new user account
@@ -96,20 +97,21 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
       try {
         await sendEmailVerification(email, verificationToken)
       } catch (error) {
-        console.warn('📧 Email sending failed, auto-verifying user in development:', error)
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        log.warn('Email sending failed, auto-verifying user in development', { error: errorMessage })
         if (process.env.NODE_ENV === 'development') {
           await UserDatabase.update(userId, {
             email_verified: true,
             email_verification_token: null,
             email_verification_expires_at: null,
           })
-          console.log('🧪 Development Mode: Auto-verified user due to email failure')
+          log.info('🧪 Development Mode: Auto-verified user due to email failure')
         } else {
           throw error // Re-throw in production
         }
       }
     } else {
-      console.log('🧪 Development Mode: Auto-verifying user (Email service not configured)')
+      log.info('🧪 Development Mode: Auto-verifying user (Email service not configured)')
       // Auto-verify in development when email service is not configured
       await UserDatabase.update(userId, {
         email_verified: true,
@@ -124,7 +126,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
           name: fullName,
         })
       } catch (error) {
-        console.error('Failed to send welcome email:', error)
+        log.error('Failed to send welcome email:', error)
         // Don't fail signup if email fails
       }
     }
@@ -148,7 +150,7 @@ export async function signUpAction(formData: FormData): Promise<AuthResponse> {
       },
     }
   } catch (error) {
-    console.error('Sign up error:', error)
+    log.error('Sign up error:', error)
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',
