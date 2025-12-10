@@ -7,43 +7,14 @@
  * - Weekly summaries
  * - Onboarding drip campaign
  *
- * Uses existing Mailgun setup from modules/auth/services/email-mailgun-official.ts
+ * Uses shared Mailgun client from ./mailgun-client.ts
  */
 
-import FormData from 'form-data'
-import Mailgun from 'mailgun.js'
 import { MailgunMessageData } from 'mailgun.js/definitions'
+import { createMailgunClient, EMAIL_CONFIG } from './mailgun-client'
 
-// Mailgun configuration from environment
-const MAILGUN_API_KEY = process.env.MAILGUN_API_KEY
-const MAILGUN_DOMAIN = process.env.MAILGUN_DOMAIN
-const MAILGUN_HOST = process.env.MAILGUN_HOST || 'api.mailgun.net'
-
-// Email configuration
-const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@startupsniff.com'
-const EMAIL_FROM_NAME = process.env.EMAIL_FROM_NAME || 'StartupSniff'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-const IS_PRODUCTION = process.env.NODE_ENV === 'production'
-
-/**
- * Create Mailgun client
- */
-function createMailgunClient() {
-  if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
-    throw new Error('Mailgun credentials not configured')
-  }
-
-  const mailgun = new Mailgun(FormData)
-  return {
-    client: mailgun.client({
-      username: 'api',
-      key: MAILGUN_API_KEY as string,
-      url: `https://${MAILGUN_HOST}`,
-      ...(IS_PRODUCTION && { timeout: 60000 })
-    }),
-    domain: MAILGUN_DOMAIN as string
-  }
-}
+// Re-export for convenience
+const { from: EMAIL_FROM, fromName: EMAIL_FROM_NAME, appUrl: APP_URL } = EMAIL_CONFIG
 
 // ==================== WELCOME EMAIL ====================
 
