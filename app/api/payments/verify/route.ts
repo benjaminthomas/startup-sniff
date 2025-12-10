@@ -1,12 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaymentSignature } from '@/lib/razorpay';
 import { getCurrentSession } from '@/modules/auth/services/jwt';
-
-interface VerifyPaymentRequest {
-  razorpay_payment_id: string;
-  razorpay_subscription_id: string;
-  razorpay_signature: string;
-}
+import { validateRequestBody, verifyPaymentSchema } from '@/lib/validation/api-schemas';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,16 +14,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const body: VerifyPaymentRequest = await req.json();
+    // ✅ VALIDATION: Validate request body with Zod
+    const body = await validateRequestBody(req, verifyPaymentSchema);
     const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = body;
-
-    // Validate required fields
-    if (!razorpay_payment_id || !razorpay_subscription_id || !razorpay_signature) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
 
     // Verify payment signature
     // For subscriptions, Razorpay signs: payment_id|subscription_id
@@ -86,7 +74,7 @@ export async function POST(req: NextRequest) {
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: 'Payment verification failed', details: errorMessage, verified: false },
+      { error: 'Payment verification failed: ' + errorMessage, verified: false },
       { status: 500 }
     );
   }

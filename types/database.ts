@@ -28,6 +28,7 @@ export interface User {
   onboarding_day3_sent_at: string | null
   onboarding_day7_sent_at: string | null
   last_weekly_summary_sent_at: string | null
+  role: 'user' | 'admin'
   created_at: string
   updated_at: string
 }
@@ -57,6 +58,7 @@ export interface UserInsert {
   onboarding_day3_sent_at?: string | null
   onboarding_day7_sent_at?: string | null
   last_weekly_summary_sent_at?: string | null
+  role?: 'user' | 'admin'
   created_at?: string
   updated_at?: string
 }
@@ -85,6 +87,7 @@ export interface UserUpdate {
   onboarding_day3_sent_at?: string | null
   onboarding_day7_sent_at?: string | null
   last_weekly_summary_sent_at?: string | null
+  role?: 'user' | 'admin'
   updated_at?: string
 }
 
