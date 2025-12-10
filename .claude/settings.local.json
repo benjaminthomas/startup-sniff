@@ -68,7 +68,8 @@
       "Bash(npm run db:start:*)",
       "Bash(npx supabase:*)",
       "Bash(while read file)",
-      "Bash(while read f)"
+      "Bash(while read f)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []
