@@ -1,8 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/ui/page-header';
-import { IdeaGenerationForm } from '@/components/features/dashboard/idea-generation-form';
-import { RecentIdeas } from '@/components/features/dashboard/recent-ideas';
-import { getUserIdeas } from '@/modules/ideas';
+import { IdeaGenerationForm } from '@/features/dashboard/components/idea-generation-form';
+import { RecentIdeas } from '@/features/dashboard/components/recent-ideas';
+import { getUserIdeas } from '@/features/ideas';
 import { StartupIdea } from '@/types/global';
 import { log } from '@/lib/logger'
 

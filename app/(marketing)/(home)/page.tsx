@@ -12,7 +12,7 @@ import {
   PricingSection,
   CTASection,
   Footer
-} from "@/modules/marketing";
+} from "@/components/marketing";
 import { redirectToAuth } from "@/lib/utils/navigation";
 
 export default function HomePage() {

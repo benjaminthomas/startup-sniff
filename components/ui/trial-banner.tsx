@@ -1,4 +1,4 @@
-import { getTrialStatus } from '@/modules/billing/actions/trial-status';
+import { getTrialStatus } from '@/features/billing/actions/trial-status';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Clock, Zap } from 'lucide-react';

@@ -7,8 +7,8 @@
 
 import { Suspense } from 'react'
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/modules/auth/actions'
-import { EmailPreferencesForm } from '@/components/features/settings/email-preferences-form'
+import { getCurrentUser } from '@/features/auth/actions'
+import { EmailPreferencesForm } from '@/features/settings/components/email-preferences-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata = {

@@ -14,9 +14,9 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import type { Route } from 'next'
-import { getCurrentUser } from '@/modules/auth/actions'
-import { getOrGenerateCSRFToken } from '@/modules/auth/utils/csrf'
-import { SignInForm } from '@/components/auth/signin-form'
+import { getCurrentUser } from '@/features/auth/actions'
+import { getOrGenerateCSRFToken } from '@/features/auth/utils/csrf'
+import { SignInForm } from '@/features/auth/components/signin-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const metadata: Metadata = {

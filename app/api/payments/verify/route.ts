@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyPaymentSignature } from '@/lib/razorpay';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { verifyPaymentSignature } from '@/services/payments/razorpay';
+import { getCurrentSession } from '@/features/auth/services/jwt';
 import { validateRequestBody, verifyPaymentSchema } from '@/lib/validation/api-schemas';
 import { log } from '@/lib/logger'
 

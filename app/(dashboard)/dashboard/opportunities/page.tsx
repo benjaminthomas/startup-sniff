@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/ui/page-header"
 import { OpportunitiesContent } from "./opportunities-content"
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { log } from '@/lib/logger'
 
 export const metadata = {

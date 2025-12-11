@@ -1,15 +1,15 @@
 import { Metadata } from "next";
 import type { StartupIdea, User as AppUser } from "@/types/global";
 import type { PlanType } from "@/types/database";
-import { getCurrentSession } from "@/modules/auth/services/jwt";
-import { UserDatabase } from "@/modules/auth/services/database";
-import { createServerAdminClient } from "@/modules/supabase";
-import { DashboardShell } from "@/components/features/dashboard/dashboard-shell";
-import { StatsCards } from "@/components/features/dashboard/stats-cards";
-import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";
-import { QuickActions } from "@/components/features/dashboard/quick-actions";
+import { getCurrentSession } from "@/features/auth/services/jwt";
+import { UserDatabase } from "@/features/auth/services/database";
+import { createServerAdminClient } from "@/features/supabase";
+import { DashboardShell } from "@/features/dashboard/components/dashboard-shell";
+import { StatsCards } from "@/features/dashboard/components/stats-cards";
+import { RecentIdeas } from "@/features/dashboard/components/recent-ideas";
+import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { UsageTracker } from "@/components/ui/usage-tracker";
-import { getCurrentUserUsage } from "@/modules/usage";
+import { getCurrentUserUsage } from "@/features/usage";
 import { log } from '@/lib/logger'
 
 export const metadata: Metadata = {

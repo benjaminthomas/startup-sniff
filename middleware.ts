@@ -10,9 +10,9 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { verifySessionToken } from '@/modules/auth/services/jwt'
-import { UserDatabase } from '@/modules/auth/services/database'
-import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/modules/auth/utils/csrf'
+import { verifySessionToken } from '@/features/auth/services/jwt'
+import { UserDatabase } from '@/features/auth/services/database'
+import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/features/auth/utils/csrf'
 import { log } from '@/lib/logger'
 
 // Define route groups

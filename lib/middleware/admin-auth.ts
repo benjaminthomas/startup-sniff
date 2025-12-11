@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { UserDatabase } from '@/modules/auth/services/database';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { UserDatabase } from '@/features/auth/services/database';
 import type { User } from '@/types/database';
 import type { SessionPayload } from '@/types/database';
 import { log } from '@/lib/logger'

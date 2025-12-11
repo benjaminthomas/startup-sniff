@@ -1,11 +1,11 @@
 "use client";
 
 import React from "react";
-import { Navigation, Footer } from "@/modules/marketing";
+import { Navigation, Footer } from "@/components/marketing";
 import { PageHero } from "@/components/ui/page-hero";
-import { ContactInfo } from "@/components/features/contact/contact-info";
-import { ContactForm } from "@/components/features/contact/contact-form";
-import { ContactFAQ } from "@/components/features/contact/contact-faq";
+import { ContactInfo } from "@/features/contact/components/contact-info";
+import { ContactForm } from "@/features/contact/components/contact-form";
+import { ContactFAQ } from "@/features/contact/components/contact-faq";
 import { CONTACT_CONTENT } from "@/constants/contact";
 import { MessageCircle } from "lucide-react";
 

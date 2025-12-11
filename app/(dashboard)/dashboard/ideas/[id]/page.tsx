@@ -1,17 +1,17 @@
 import { notFound } from 'next/navigation';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
 import { mapDatabaseRowToStartupIdea, type ValidationData } from '@/types/startup-ideas';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { ValidationButton } from '@/components/features/validation/validation-button';
-import { ValidationStatusAlert } from '@/components/features/validation/validation-status-alert';
-import { RedditSources } from '@/components/features/ideas/reddit-sources';
-import { FavoriteButton } from '@/components/features/ideas/favorite-button';
-import { ExportPDFButton } from '@/components/features/ideas/export-pdf-button';
+import { ValidationButton } from '@/features/validation/components/validation-button';
+import { ValidationStatusAlert } from '@/features/validation/components/validation-status-alert';
+import { RedditSources } from '@/features/ideas/components/reddit-sources';
+import { FavoriteButton } from '@/features/ideas/components/favorite-button';
+import { ExportPDFButton } from '@/features/ideas/components/export-pdf-button';
 import {
   TrendingUp,
   Target,

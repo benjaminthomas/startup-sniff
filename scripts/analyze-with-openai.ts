@@ -8,7 +8,7 @@ import dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 
 import { createClient } from '@supabase/supabase-js'
-import { OpportunityDeepAnalyzer } from '../lib/services/opportunity-deep-analyzer'
+import { OpportunityDeepAnalyzer } from '../services/opportunities/analyzer'
 import type { Database } from '../types/supabase'
 
 async function main() {

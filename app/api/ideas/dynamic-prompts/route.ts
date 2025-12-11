@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { getCurrentSession } from '@/features/auth/services/jwt';
 import { log } from '@/lib/logger'
 import {
   generateDynamicIdeaQuestions,
   type QuestionContext
-} from '@/modules/ideas/services/question-engine';
+} from '@/features/ideas/services/question-engine';
 
 export const runtime = 'nodejs';
 

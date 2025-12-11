@@ -5,10 +5,10 @@
  * Dashboard showing A/B test results for message template variants
  */
 
-import { createServerSupabaseClient } from '@/modules/supabase/server'
+import { createServerSupabaseClient } from '@/features/supabase/server'
 import { redirect } from 'next/navigation'
-import { TemplateVariantDashboard } from '@/components/features/analytics/template-variant-dashboard'
-import { getTemplateVariantPerformance } from '@/modules/analytics/actions/template-variants'
+import { TemplateVariantDashboard } from '@/features/analytics/components/template-variant-dashboard'
+import { getTemplateVariantPerformance } from '@/features/analytics/actions/template-variants'
 
 export const metadata = {
   title: 'Template A/B Testing | StartupSniff',

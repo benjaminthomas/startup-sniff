@@ -1,9 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Target, Users, DollarSign, CheckCircle } from "lucide-react";
-import { ValidationForm } from "@/components/features/validation/validation-form";
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { ValidationForm } from "@/features/validation/components/validation-form";
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
 import { redirect } from 'next/navigation';
 
 export default async function ValidationPage() {

@@ -8,7 +8,7 @@ import dotenv from 'dotenv'
 dotenv.config({ path: '.env.local' })
 
 import { createClient } from '@supabase/supabase-js'
-import { TrendDetector } from '../lib/services/trend-detector'
+import { TrendDetector } from '../services/trends/detector'
 import type { Database } from '../types/supabase'
 
 async function main() {

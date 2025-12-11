@@ -8,8 +8,8 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { generateFormCSRFToken } from '@/modules/auth/utils/csrf'
-import { createMiddlewareSupabaseClient } from '@/modules/supabase'
+import { generateFormCSRFToken } from '@/features/auth/utils/csrf'
+import { createMiddlewareSupabaseClient } from '@/features/supabase'
 import { log } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {

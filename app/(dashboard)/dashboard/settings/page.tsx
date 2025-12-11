@@ -5,9 +5,9 @@
  * Allows users to manage email preferences
  */
 
-import { createServerSupabaseClient } from '@/modules/supabase/server'
+import { createServerSupabaseClient } from '@/features/supabase/server'
 import { redirect } from 'next/navigation'
-import { EmailPreferencesForm } from '@/components/features/settings/email-preferences-form'
+import { EmailPreferencesForm } from '@/features/settings/components/email-preferences-form'
 
 export const metadata = {
   title: 'Settings | StartupSniff',

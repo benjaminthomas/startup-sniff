@@ -9,7 +9,7 @@
  * - Churn rate
  */
 
-import { createServerAdminClient } from '@/modules/supabase/server';
+import { createServerAdminClient } from '@/features/supabase/server';
 
 export type MetricZone = 'GREEN' | 'YELLOW' | 'RED';
 

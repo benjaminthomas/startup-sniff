@@ -13,12 +13,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient as createClient } from '@/modules/supabase/server'
+import { createServerSupabaseClient as createClient } from '@/features/supabase/server'
 import { log } from '@/lib/logger'
 import {
   sendOnboardingDay3Email,
   sendOnboardingDay7Email
-} from '@/modules/email/actions/send-onboarding-emails'
+} from '@/features/email/actions/send-onboarding-emails'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'

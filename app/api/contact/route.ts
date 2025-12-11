@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendContactFormEmail, type ContactFormData } from '@/modules/contact';
+import { sendContactFormEmail, type ContactFormData } from '@/features/contact';
 import { log } from '@/lib/logger'
 
 // Rate limiting storage (in production, use Redis or similar)

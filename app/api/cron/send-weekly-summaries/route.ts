@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { sendWeeklySummaryToAllUsers } from '@/modules/email/actions/send-weekly-summary'
+import { sendWeeklySummaryToAllUsers } from '@/features/email/actions/send-weekly-summary'
 import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'

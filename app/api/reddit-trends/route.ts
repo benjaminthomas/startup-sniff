@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { getCurrentSession } from '@/features/auth/services/jwt';
 import { log } from '@/lib/logger'
 
 // Reddit OAuth API configuration

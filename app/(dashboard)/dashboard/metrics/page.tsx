@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/ui/page-header"
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { Check, AlertTriangle, XCircle, TrendingUp, Users, Target, Clock, BarChart3, ArrowRight } from 'lucide-react'
 
 export const metadata = {

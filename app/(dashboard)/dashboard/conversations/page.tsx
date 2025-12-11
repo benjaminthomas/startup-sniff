@@ -5,12 +5,12 @@
  * for all user conversations with Reddit contacts.
  */
 
-import { createServerAdminClient } from '@/modules/supabase/server'
-import { getCurrentSession } from '@/modules/auth/services/jwt'
+import { createServerAdminClient } from '@/features/supabase/server'
+import { getCurrentSession } from '@/features/auth/services/jwt'
 import { redirect } from 'next/navigation'
-import { enforcePaidAccess } from '@/lib/paywall'
-import { ConversationMetrics } from '@/components/features/conversations/conversation-metrics'
-import { MessageList } from '@/components/features/conversations/message-list'
+import { enforcePaidAccess } from '@/features/billing/utils/paywall'
+import { ConversationMetrics } from '@/features/conversations/components/conversation-metrics'
+import { MessageList } from '@/features/conversations/components/message-list'
 import Link from 'next/link'
 import { log } from '@/lib/logger'
 

@@ -14,11 +14,11 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { RedditApiClient } from '@/lib/reddit/api-client'
-import { RedditRateLimiter } from '@/lib/reddit/rate-limiter'
-import { RedisCache } from '@/lib/services/redis-cache'
-import { getHighPrioritySubreddits, getAllSubredditNames } from '@/lib/reddit/subreddit-config'
-import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/lib/services/monitoring'
+import { RedditApiClient } from '@/services/reddit/api-client'
+import { RedditRateLimiter } from '@/services/reddit/rate-limiter'
+import { RedisCache } from '@/services/cache/redis'
+import { getHighPrioritySubreddits, getAllSubredditNames } from '@/services/reddit/subreddit-config'
+import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
 import type { Database } from '@/types/supabase'
 import { log } from '@/lib/logger'
 

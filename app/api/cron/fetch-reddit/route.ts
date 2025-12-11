@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createHash } from 'crypto';
-import { createServerAdminClient } from '@/modules/supabase';
+import { createServerAdminClient } from '@/features/supabase';
 import { log } from '@/lib/logger'
 
 const FALLBACK_USER_AGENT = 'startup-sniff-cron/1.0 (https://startupsniff.com)';

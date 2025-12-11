@@ -7,13 +7,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import {
   sendOnboardingDay1,
   sendOnboardingDay3,
   sendOnboardingDay7,
-} from '@/modules/notifications/services/email-notifications'
-import { type EmailPreferences } from '@/modules/notifications/actions/email-preferences'
+} from '@/features/notifications/services/email-notifications'
+import { type EmailPreferences } from '@/features/notifications/actions/email-preferences'
 import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
 import { log } from '@/lib/logger'
 
 export async function GET(

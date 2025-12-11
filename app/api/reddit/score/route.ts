@@ -13,8 +13,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { OpportunityScorer } from '@/lib/services/opportunity-scorer'
-import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/lib/services/monitoring'
+import { OpportunityScorer } from '@/services/opportunities/scorer'
+import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
 import type { Database } from '@/types/supabase'
 
 /**

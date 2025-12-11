@@ -1,12 +1,12 @@
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ContactCard } from '@/components/features/contacts/contact-card'
-import { ContactsPagination } from '@/components/features/contacts/contacts-pagination'
-import { discoverContactsAction } from '@/modules/reddit/actions/discover-contacts'
-import { getCurrentSession } from '@/modules/auth/services/jwt'
-import { ConnectRedditButton } from '@/components/features/reddit/connect-reddit-button'
-import { enforcePaidAccess } from '@/lib/paywall'
+import { ContactCard } from '@/features/contacts/components/contact-card'
+import { ContactsPagination } from '@/features/contacts/components/contacts-pagination'
+import { discoverContactsAction } from '@/features/reddit/actions/discover-contacts'
+import { getCurrentSession } from '@/features/auth/services/jwt'
+import { ConnectRedditButton } from '@/features/reddit/components/connect-reddit-button'
+import { enforcePaidAccess } from '@/features/billing/utils/paywall'
 
 export async function generateMetadata({
   params

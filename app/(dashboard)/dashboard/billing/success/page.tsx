@@ -5,7 +5,7 @@ import { Route } from 'next';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
+import { DashboardShell } from '@/features/dashboard/components/dashboard-shell';
 
 export const metadata: Metadata = {
   title: 'Payment Successful | StartupSniff',

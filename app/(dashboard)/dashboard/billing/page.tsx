@@ -1,12 +1,12 @@
 import { Metadata } from 'next';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
 import { redirect } from 'next/navigation';
-import { DashboardShell } from '@/components/features/dashboard/dashboard-shell';
+import { DashboardShell } from '@/features/dashboard/components/dashboard-shell';
 import { PageHeader } from '@/components/ui/page-header';
-import { PricingCards } from '@/components/features/billing/pricing-cards';
-import { BillingHistory } from '@/components/features/billing/billing-history';
-import { CurrentPlan } from '@/components/features/billing/current-plan';
+import { PricingCards } from '@/features/billing/components/pricing-cards';
+import { BillingHistory } from '@/features/billing/components/billing-history';
+import { CurrentPlan } from '@/features/billing/components/current-plan';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { PRICING_PLANS } from '@/constants';

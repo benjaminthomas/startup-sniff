@@ -1,9 +1,9 @@
-import { AppSidebar } from "@/components/features/dashboard/app-sidebar";
-import { DynamicHeader } from "@/components/features/dashboard/dynamic-header";
+import { AppSidebar } from "@/features/dashboard/components/app-sidebar";
+import { DynamicHeader } from "@/features/dashboard/components/dynamic-header";
 import { TrialBanner } from "@/components/ui/trial-banner";
 import { SessionTracker } from "@/components/analytics/session-tracker";
-import { getCurrentSession } from "@/modules/auth/services/jwt";
-import { UserDatabase } from "@/modules/auth/services/database";
+import { getCurrentSession } from "@/features/auth/services/jwt";
+import { UserDatabase } from "@/features/auth/services/database";
 import { redirect } from "next/navigation";
 import {
   SidebarProvider,

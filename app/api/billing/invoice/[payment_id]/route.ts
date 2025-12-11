@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
-import { fetchInvoice, fetchInvoicesByPayment, createInvoice } from '@/lib/razorpay';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
+import { fetchInvoice, fetchInvoicesByPayment, createInvoice } from '@/services/payments/razorpay';
 import { log } from '@/lib/logger'
 
 export async function GET(

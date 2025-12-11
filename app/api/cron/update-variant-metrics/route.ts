@@ -13,7 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { updateTemplateVariantMetrics } from '@/modules/analytics/actions/template-variants'
+import { updateTemplateVariantMetrics } from '@/features/analytics/actions/template-variants'
 import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'

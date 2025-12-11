@@ -9,7 +9,7 @@
  * - Reddit link and engagement metrics
  */
 
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { OpportunityActions } from './opportunity-actions'

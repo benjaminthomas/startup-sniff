@@ -4,8 +4,8 @@ import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/c
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
-import { IdeaCard } from '@/components/features/dashboard/idea-card';
-import { getUserIdeas } from '@/modules/ideas';
+import { IdeaCard } from '@/features/dashboard/components/idea-card';
+import { getUserIdeas } from '@/features/ideas';
 import { StartupIdea } from '@/types/global';
 import { Plus, Lightbulb } from 'lucide-react';
 

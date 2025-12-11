@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { RedditApiClient } from '@/lib/reddit/api-client'
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { RedditApiClient } from '@/services/reddit/api-client'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { log } from '@/lib/logger'
 
 /**

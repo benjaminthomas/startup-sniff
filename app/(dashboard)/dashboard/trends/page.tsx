@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/ui/page-header";
-import { RedditTrends } from "@/components/features/trends/reddit-trends";
+import { RedditTrends } from "@/features/trends/components/reddit-trends";
 
 export default function TrendsPage() {
   return (

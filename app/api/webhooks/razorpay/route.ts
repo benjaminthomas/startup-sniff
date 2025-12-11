@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
-import { verifyWebhookSignature } from '@/lib/razorpay';
+import { verifyWebhookSignature } from '@/services/payments/razorpay';
 import { PRICING_PLANS } from '@/constants';
 import { log } from '@/lib/logger'
 
@@ -323,7 +323,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       const isUpgrade = subscription.notes.upgraded_from === 'pro_monthly';
 
       // Import appropriate email function
-      const { sendSubscriptionActivatedEmail, sendSubscriptionUpgradedEmail } = await import('@/lib/email/subscription-emails');
+      const { sendSubscriptionActivatedEmail, sendSubscriptionUpgradedEmail } = await import('@/services/email/subscription-emails');
       const emailFunction = isUpgrade ? sendSubscriptionUpgradedEmail : sendSubscriptionActivatedEmail;
 
       await emailFunction({
@@ -409,7 +409,7 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
         const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
 
         if (plan) {
-          const { sendSubscriptionCancelledEmail } = await import('@/lib/email/subscription-emails');
+          const { sendSubscriptionCancelledEmail } = await import('@/services/email/subscription-emails');
 
           await sendSubscriptionCancelledEmail({
             to: user.email,
@@ -571,7 +571,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
       let invoiceUrl: string | null = null;
 
       try {
-        const { createInvoice, fetchInvoicesByPayment } = await import('@/lib/razorpay');
+        const { createInvoice, fetchInvoicesByPayment } = await import('@/services/payments/razorpay');
 
         // Try fetching existing invoice first
         const existingInvoices = await fetchInvoicesByPayment(payment.id);
@@ -655,7 +655,7 @@ async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['p
           const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
 
           if (plan) {
-            const { sendPaymentFailedEmail } = await import('@/lib/email/subscription-emails');
+            const { sendPaymentFailedEmail } = await import('@/services/email/subscription-emails');
 
             await sendPaymentFailedEmail({
               to: user.email,

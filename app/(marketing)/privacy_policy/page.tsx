@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigation, PolicyHeader, PolicyContent, Footer } from "@/modules/marketing";
+import { Navigation, PolicyHeader, PolicyContent, Footer } from "@/components/marketing";
 import { POLICY_CONTENT } from "@/constants";
 
 export default function PrivacyPage() {
