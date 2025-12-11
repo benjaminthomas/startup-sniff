@@ -1,187 +1,35 @@
-import { notFound } from 'next/navigation';
-import { getCurrentSession } from '@/features/auth/services/jwt';
-import { createServerAdminClient } from '@/features/supabase';
-import { mapDatabaseRowToStartupIdea, type ValidationData } from '@/types/startup-ideas';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { ValidationButton } from '@/features/validation/components/validation-button';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { getIdeaWithDetails } from '@/features/ideas/data-access';
 import { ValidationStatusAlert } from '@/features/validation/components/validation-status-alert';
 import { RedditSources } from '@/features/ideas/components/reddit-sources';
 import { FavoriteButton } from '@/features/ideas/components/favorite-button';
 import { ExportPDFButton } from '@/features/ideas/components/export-pdf-button';
+import { Card, CardContent } from '@/components/ui/card';
 import {
-  TrendingUp,
-  Target,
-  Users,
-  DollarSign,
-  BarChart3,
-  CheckCircle,
-  ArrowLeft,
-  Lightbulb,
-  Zap,
-  Clock,
-  Star,
-  AlertCircle,
-  Lock,
-  Sparkles,
-  Shield,
-  Eye,
-  FileText,
-  ArrowRight
-} from 'lucide-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-
-function dedupeStrings(values: Array<string | null | undefined>) {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  values.forEach((value) => {
-    if (!value) return;
-    const cleaned = value.trim();
-    if (!cleaned) return;
-    if (!/[a-zA-Z]/.test(cleaned)) return;
-    if (!cleaned.includes(' ') && cleaned.length < 12) return;
-    const key = cleaned.replace(/\s+/g, ' ').toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    result.push(cleaned);
-  });
-  return result;
-}
-
-function cleanNarrative(value?: string | null) {
-  if (!value) return undefined;
-  const cleaned = value.replace(/\s+/g, ' ').trim();
-  if (!cleaned) return undefined;
-  if (!/[a-zA-Z]/.test(cleaned)) return undefined;
-  return cleaned;
-}
-
-function normalizeNarrative(value?: string | null) {
-  const cleaned = cleanNarrative(value);
-  return cleaned ? cleaned.toLowerCase() : null;
-}
-
-function pickDistinctText(
-  candidates: Array<string | null | undefined>,
-  used: string[]
-) {
-  const seen = new Set(
-    used
-      .map((entry) => normalizeNarrative(entry))
-      .filter((entry): entry is string => !!entry)
-  );
-
-  for (const candidate of candidates) {
-    const cleaned = cleanNarrative(candidate);
-    if (!cleaned) continue;
-    const normalized = normalizeNarrative(cleaned);
-    if (!normalized || seen.has(normalized)) continue;
-    return cleaned;
-  }
-
-  return undefined;
-}
-
-function extractSentences(value?: string | null) {
-  const cleaned = cleanNarrative(value);
-  if (!cleaned) return [];
-
-  const sentences = cleaned
-    .split(/(?<=[.?!])\s+/)
-    .map((sentence) => cleanNarrative(sentence))
-    .filter((sentence): sentence is string => !!sentence);
-
-  return sentences.length > 0 ? sentences : cleaned ? [cleaned] : [];
-}
-
-function extractFirstSentence(value?: string | null) {
-  const sentences = extractSentences(value);
-  return sentences[0];
-}
-
-function pickNarrative(
-  candidates: Array<string | null | undefined>,
-  used: string[],
-  fallback?: string
-) {
-  const picked = pickDistinctText(candidates, used);
-  if (picked) {
-    used.push(picked);
-    return picked;
-  }
-
-  const cleanedFallback = cleanNarrative(fallback);
-  if (cleanedFallback) {
-    const normalizedFallback = normalizeNarrative(cleanedFallback);
-    const seen = new Set(
-      used
-        .map((entry) => normalizeNarrative(entry))
-        .filter((entry): entry is string => !!entry)
-    );
-
-    if (!normalizedFallback || seen.has(normalizedFallback)) {
-      return undefined;
-    }
-
-    used.push(cleanedFallback);
-    return cleanedFallback;
-  }
-
-  return undefined;
-}
-
-// Helper functions for confidence level styling
-function getConfidenceLevel(score: number) {
-  if (score >= 80) return 'excellent';
-  if (score >= 65) return 'good';
-  if (score >= 50) return 'moderate';
-  return 'low';
-}
-
-function getConfidenceColors(level: string) {
-  const colors = {
-    excellent: {
-      bg: 'bg-emerald-50 dark:bg-emerald-950/20',
-      text: 'text-emerald-700 dark:text-emerald-300',
-      icon: 'text-emerald-600 dark:text-emerald-400',
-      progress: 'bg-gradient-to-r from-emerald-500 to-green-500',
-      border: 'border-emerald-200 dark:border-emerald-800',
-    },
-    good: {
-      bg: 'bg-blue-50 dark:bg-blue-950/20',
-      text: 'text-blue-700 dark:text-blue-300',
-      icon: 'text-blue-600 dark:text-blue-400',
-      progress: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-      border: 'border-blue-200 dark:border-blue-800',
-    },
-    moderate: {
-      bg: 'bg-amber-50 dark:bg-amber-950/20',
-      text: 'text-amber-700 dark:text-amber-300',
-      icon: 'text-amber-600 dark:text-amber-400',
-      progress: 'bg-gradient-to-r from-amber-500 to-orange-500',
-      border: 'border-amber-200 dark:border-amber-800',
-    },
-    low: {
-      bg: 'bg-red-50 dark:bg-red-950/20',
-      text: 'text-red-700 dark:text-red-300',
-      icon: 'text-red-600 dark:text-red-400',
-      progress: 'bg-gradient-to-r from-red-500 to-rose-500',
-      border: 'border-red-200 dark:border-red-800',
-    }
-  };
-  return colors[level as keyof typeof colors] || colors.moderate;
-}
-
-function getConfidenceLabel(score: number) {
-  if (score >= 80) return 'High Potential';
-  if (score >= 65) return 'Good Idea';
-  if (score >= 50) return 'Worth Exploring';
-  return 'Needs Work';
-}
+  IdeaHeader,
+  IdeaOverview,
+  TargetMarketSection,
+  SolutionDetails,
+  MarketAnalysis,
+  ImplementationRoadmap,
+  ValidationBadge,
+  KeyMetrics,
+  QuickActions,
+  IdeaTimeline,
+} from '@/features/ideas/components/detail';
+import {
+  dedupeStrings,
+  normalizeNarrative,
+  extractSentences,
+  extractFirstSentence,
+  pickNarrative,
+  getConfidenceLevel,
+  getConfidenceColors,
+  getConfidenceLabel,
+} from '@/lib/utils/narrative-processing';
+import type { ValidationData } from '@/types/startup-ideas';
 
 export default async function IdeaDetailPage({
   params,
@@ -190,28 +38,10 @@ export default async function IdeaDetailPage({
 }) {
   const { id } = await params;
 
-  // Use JWT session instead of Supabase auth
-  const session = await getCurrentSession();
-  if (!session) {
-    notFound();
-  }
+  // Fetch idea data
+  const idea = await getIdeaWithDetails(id);
 
-  const supabase = createServerAdminClient();
-
-  const { data: ideaRaw, error } = await supabase
-    .from('startup_ideas')
-    .select('*')
-    .eq('id', id)
-    .eq('user_id', session.userId)
-    .single();
-
-  if (error || !ideaRaw) {
-    notFound();
-  }
-
-  // Create properly typed idea object using the helper function
-  const idea = mapDatabaseRowToStartupIdea(ideaRaw);
-
+  // Extract and type-cast data structures
   const sourceData = (idea.source_data as Record<string, unknown>) || {};
   const solutionData = (idea.solution as unknown as Record<string, unknown>) || {};
   const marketAnalysisData = (idea.market_analysis as unknown as Record<string, unknown>) || {};
@@ -225,6 +55,7 @@ export default async function IdeaDetailPage({
       : null;
   const validationData = idea.validation_data ?? null;
 
+  // Extract and deduplicate pain points from various sources
   const rawPainPointSources = Array.isArray(sourceData.pain_point_sources)
     ? (sourceData.pain_point_sources as string[])
     : [];
@@ -250,6 +81,7 @@ export default async function IdeaDetailPage({
     idea.problem_statement,
   ]);
 
+  // Extract solution descriptions
   const solutionDescription =
     typeof solutionData.description === 'string' ? solutionData.description : undefined;
   const uniqueValueProposition =
@@ -262,6 +94,7 @@ export default async function IdeaDetailPage({
       : undefined;
   const validatedValueProposition = uniqueValueProposition || solutionDescription;
 
+  // Extract validation feedback
   const validationFeedbackRaw = (() => {
     if (!validationData) return undefined;
     if (typeof validationData.feedback === 'string') return validationData.feedback;
@@ -283,6 +116,7 @@ export default async function IdeaDetailPage({
     ? dedupeStrings(extractSentences(validationFeedbackRaw))
     : [];
 
+  // Extract personas
   const sourcePersonas = Array.isArray(sourceData.target_personas)
     ? (sourceData.target_personas as Array<{ name: string; role: string; painPoints?: string[] }>)
     : [];
@@ -309,18 +143,10 @@ export default async function IdeaDetailPage({
   // ============================================================================
   // NARRATIVE EXTRACTION STRATEGY
   // ============================================================================
-  // This section carefully extracts distinct narratives for different sections:
-  // 1. Hero Summary - WHAT: main value proposition (what the product is)
-  // 2. Primary Pain Point - the core problem being solved
-  // 3. Solution Narrative - HOW: how the product works/solves the problem
-  // 4. Why Now - WHY: market timing/urgency
-  // 5. Secondary Pain Points - additional problems (must be distinct)
-  // 6. Persona Challenges - persona-specific issues (must be distinct)
-  // ============================================================================
-  
+  // Carefully extract distinct narratives for different sections to avoid duplication
   const narrativePool: string[] = [];
-  
-  // 1. Extract hero summary (main value proposition)
+
+  // 1. Hero Summary - WHAT: main value proposition
   const heroSummary =
     pickNarrative(
       [
@@ -334,8 +160,8 @@ export default async function IdeaDetailPage({
     ) ?? 'We uncovered a promising opportunity grounded in real customer sentiment.';
 
   const normalizedHeroSummary = normalizeNarrative(heroSummary);
-  
-  // 2. Extract primary pain point (should be different from hero summary)
+
+  // 2. Primary Pain Point
   const primaryPainPoint =
     pickNarrative(
       [
@@ -349,44 +175,35 @@ export default async function IdeaDetailPage({
     ) ?? 'We identified a recurring operator challenge that currently goes unsolved.';
 
   const normalizedPrimaryPain = normalizeNarrative(primaryPainPoint);
-  
+
   // 3. Filter validation data to exclude already used narratives
   const validationStrengthsUnique = validationStrengths.filter((item) => {
     const normalized = normalizeNarrative(item);
     return (
-      normalized &&
-      normalized !== normalizedPrimaryPain &&
-      normalized !== normalizedHeroSummary
+      normalized && normalized !== normalizedPrimaryPain && normalized !== normalizedHeroSummary
     );
   });
   const validationRecommendationsUnique = validationRecommendations.filter((item) => {
     const normalized = normalizeNarrative(item);
     return (
-      normalized &&
-      normalized !== normalizedPrimaryPain &&
-      normalized !== normalizedHeroSummary
+      normalized && normalized !== normalizedPrimaryPain && normalized !== normalizedHeroSummary
     );
   });
 
-  // 4. Extract solution narrative (what is it? / how does it work?)
-  // For "How", we want the actual solution description, not just any narrative
-  // Priority: specific solution details over generic narratives
+  // 4. Solution Narrative - HOW
   const solutionNarrative = (() => {
-    // If we have a solution description that's different from hero, use it
     const normalizedSolution = normalizeNarrative(solutionDescription);
     if (normalizedSolution && normalizedSolution !== normalizedHeroSummary) {
       narrativePool.push(solutionDescription!);
       return solutionDescription!;
     }
-    
-    // Try original solution description
+
     const normalizedOriginal = normalizeNarrative(originalSolutionDescription);
     if (normalizedOriginal && normalizedOriginal !== normalizedHeroSummary) {
       narrativePool.push(originalSolutionDescription!);
       return originalSolutionDescription!;
     }
-    
-    // If solution description was used in hero, try to extract a different sentence
+
     if (solutionDescription) {
       const sentences = extractSentences(solutionDescription);
       for (const sentence of sentences) {
@@ -397,16 +214,15 @@ export default async function IdeaDetailPage({
         }
       }
     }
-    
-    // Fall back to validation insights
-    return pickNarrative(
-      [
-        validationRecommendationsUnique[0],
-        validationStrengthsUnique[0],
-      ],
-      narrativePool,
+
+    return (
+      pickNarrative(
+        [validationRecommendationsUnique[0], validationStrengthsUnique[0]],
+        narrativePool,
+        'An AI-powered platform that streamlines operations and automates key workflows to solve the core challenges.'
+      ) ??
       'An AI-powered platform that streamlines operations and automates key workflows to solve the core challenges.'
-    ) ?? 'An AI-powered platform that streamlines operations and automates key workflows to solve the core challenges.';
+    );
   })();
 
   const marketOpportunityCandidates = Array.isArray(marketAnalysisData?.opportunities)
@@ -415,13 +231,11 @@ export default async function IdeaDetailPage({
   const additionalValidationNarrative = validationFeedbackSentences.find((sentence) => {
     const normalized = normalizeNarrative(sentence);
     return (
-      normalized &&
-      normalized !== normalizedHeroSummary &&
-      normalized !== normalizedPrimaryPain
+      normalized && normalized !== normalizedHeroSummary && normalized !== normalizedPrimaryPain
     );
   });
-  
-  // 5. Extract "why now" narrative (market timing)
+
+  // 5. Why Now - WHY
   const whyNowNarrative =
     pickNarrative(
       [
@@ -433,13 +247,15 @@ export default async function IdeaDetailPage({
       'Market momentum and buyer urgency make this the right moment to launch.'
     ) ?? 'Market momentum and buyer urgency make this the right moment to launch.';
 
-  // 6. Build secondary pain points list (exclude primary pain and already used narratives)
-  const usedNarratives = new Set([
-    normalizeNarrative(heroSummary),
-    normalizeNarrative(primaryPainPoint),
-    normalizeNarrative(solutionNarrative),
-    normalizeNarrative(whyNowNarrative),
-  ].filter((n): n is string => !!n));
+  // 6. Secondary Pain Points
+  const usedNarratives = new Set(
+    [
+      normalizeNarrative(heroSummary),
+      normalizeNarrative(primaryPainPoint),
+      normalizeNarrative(solutionNarrative),
+      normalizeNarrative(whyNowNarrative),
+    ].filter((n): n is string => !!n)
+  );
 
   const secondaryPainPoints = painPoints
     .filter((point) => {
@@ -448,14 +264,12 @@ export default async function IdeaDetailPage({
     })
     .slice(0, 5);
 
-  // 7. Process personas to have unique challenges (not already mentioned)
+  // 7. Process personas with unique challenges
   const personasWithUniqueChallenges = personas.map((persona) => {
-    const uniqueChallenges = dedupeStrings(persona.painPoints ?? []).filter(
-      (point) => {
-        const normalized = normalizeNarrative(point);
-        return normalized && !usedNarratives.has(normalized);
-      }
-    );
+    const uniqueChallenges = dedupeStrings(persona.painPoints ?? []).filter((point) => {
+      const normalized = normalizeNarrative(point);
+      return normalized && !usedNarratives.has(normalized);
+    });
     return {
       ...persona,
       painPoints: uniqueChallenges,
@@ -463,13 +277,35 @@ export default async function IdeaDetailPage({
   });
   const primaryPersona = personasWithUniqueChallenges[0] ?? undefined;
 
-  // Reddit sources functionality disabled until posts table schema is updated
+  // Reddit sources (disabled until posts table schema is updated)
   const redditSources: Record<string, unknown>[] = [];
 
+  // Calculate confidence metrics
   const confidenceScore = idea.ai_confidence_score || 0;
   const confidenceLevel = getConfidenceLevel(confidenceScore);
   const colors = getConfidenceColors(confidenceLevel);
   const confidenceLabel = getConfidenceLabel(confidenceScore);
+
+  // Determine target audience for header
+  const targetAudience =
+    primaryPersona?.role ||
+    (typeof idea.target_market === 'string'
+      ? idea.target_market
+      : Array.isArray(sourceData.target_market_description)
+      ? (sourceData.target_market_description as string[])[0]
+      : 'Growth-focused teams looking for an edge');
+
+  // Extract product type and tech stack
+  const productType =
+    typeof sourceData.product_type === 'string'
+      ? (sourceData.product_type as string)
+      : undefined;
+  const techStack =
+    Array.isArray(sourceData.technical_stack) && (sourceData.technical_stack as string[]).length > 0
+      ? (sourceData.technical_stack as string[])
+      : undefined;
+  const targetMarketString =
+    typeof idea.target_market === 'string' ? idea.target_market : undefined;
 
   return (
     <div className="container mx-auto py-2 space-y-6">
@@ -482,1007 +318,79 @@ export default async function IdeaDetailPage({
           </Link>
         </Button>
         <div className="flex items-center gap-2">
-          <FavoriteButton
-            ideaId={idea.id}
-            initialFavoriteState={!!idea.is_favorite}
-          />
-          <ExportPDFButton
-            ideaId={idea.id}
-            ideaTitle={idea.title}
-          />
+          <FavoriteButton ideaId={idea.id} initialFavoriteState={!!idea.is_favorite} />
+          <ExportPDFButton ideaId={idea.id} ideaTitle={idea.title} />
         </div>
       </div>
 
-      {/* Hero Section with Idea Title and AI Score */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-blue-950/20 dark:via-background dark:to-purple-950/20 rounded-2xl border-2 border-blue-100 dark:border-blue-900/20">
-        <div className="absolute inset-0 bg-grid-pattern opacity-[0.02]" />
-        <div className="relative p-8">
-          <div className="flex items-start justify-between">
-            <div className="space-y-4 flex-1">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
-                  <Lightbulb className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <Badge variant="outline" className="mb-2">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    AI Generated Idea
-                  </Badge>
-                  <h1 className="text-3xl font-bold leading-tight">{idea.title}</h1>
-                </div>
-              </div>
-              <p className="text-lg text-muted-foreground max-w-3xl leading-relaxed">
-                {heroSummary}
-              </p>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <div className="p-4 rounded-xl bg-muted/30 border">
-                  <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Primary Pain Point</h4>
-                  <p className="text-sm leading-relaxed">{primaryPainPoint}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-muted/20 border">
-                  <h4 className="text-xs uppercase tracking-wide text-muted-foreground mb-1">Who We Serve</h4>
-                  <p className="text-sm leading-relaxed">
-                    {primaryPersona?.role ||
-                      (typeof idea.target_market === 'string'
-                        ? idea.target_market
-                        : Array.isArray(sourceData.target_market_description)
-                        ? (sourceData.target_market_description as string[])[0]
-                        : 'Growth-focused teams looking for an edge')}
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            {/* AI Confidence Score - Large Display */}
-            <div className={cn("text-center p-6 rounded-2xl border-2 min-w-[200px]", colors.bg, colors.border)}>
-              <div className="space-y-3">
-                <TrendingUp className={cn("h-8 w-8 mx-auto", colors.icon)} />
-                <div>
-                  <div className="text-4xl font-bold text-primary mb-1">{confidenceScore}%</div>
-                  <Badge className={cn("text-xs", colors.bg, colors.text)} variant="outline">
-                    {confidenceLabel}
-                  </Badge>
-                </div>
-                <Progress value={confidenceScore} className="h-2" />
-                <p className="text-xs text-muted-foreground">AI Confidence Score</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Hero Section */}
+      <IdeaHeader
+        title={idea.title}
+        heroSummary={heroSummary}
+        primaryPainPoint={primaryPainPoint}
+        targetAudience={targetAudience}
+        confidenceScore={confidenceScore}
+        confidenceLabel={confidenceLabel}
+        colors={colors}
+      />
 
       {/* Status Alert */}
-  <ValidationStatusAlert ideaId={idea.id} isValidated={idea.is_validated ?? null} />
+      <ValidationStatusAlert ideaId={idea.id} isValidated={idea.is_validated ?? null} />
 
-      {/* Idea Overview Section - Always visible */}
-      <Card className="border-2">
-        <CardHeader className="bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-950/10 dark:to-gray-950/10">
-          <CardTitle className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-900/20">
-              <FileText className="h-5 w-5 text-slate-600 dark:text-slate-400" />
-            </div>
-            Idea Overview
-          </CardTitle>
-          <CardDescription>Detailed breakdown of this startup concept</CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6 space-y-6">
-          <>
-            {(idea.source_data as Record<string, unknown>)?.product_type && (
-              <div>
-                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Product Type</h4>
-                <Badge variant="secondary" className="text-sm">
-                  {(idea.source_data as Record<string, unknown>).product_type as string}
-                </Badge>
-              </div>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">How does it work?</h4>
-                <p className="text-sm leading-relaxed">{solutionNarrative}</p>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Why now?</h4>
-                <p className="text-sm leading-relaxed">{whyNowNarrative}</p>
-              </div>
-            </div>
-
-            {secondaryPainPoints.length > 0 ? (
-              <div>
-                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Additional Pain Points</h4>
-                <p className="text-xs text-muted-foreground mb-2">Beyond the primary challenge highlighted above, users also struggle with:</p>
-                <div className="space-y-2">
-                  {secondaryPainPoints.map((point, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800">
-                      <AlertCircle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{point}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div>
-                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Additional Pain Points</h4>
-                <div className="p-4 rounded-lg border bg-muted/20 text-sm text-muted-foreground">
-                  The core challenge is captured in the primary pain point above. This focused problem definition helps with targeted validation and solution design.
-                </div>
-              </div>
-            )}
-
-            {personasWithUniqueChallenges.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Target User Personas</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {personasWithUniqueChallenges.slice(0, 3).map((persona, idx) => (
-                    <div key={idx} className="p-4 rounded-lg border bg-muted/30">
-                      <h5 className="font-medium mb-1">{persona.name}</h5>
-                      <p className="text-xs text-muted-foreground mb-3">{persona.role}</p>
-                      {persona.painPoints && persona.painPoints.length > 0 ? (
-                        <div className="space-y-1">
-                          <p className="text-xs font-medium">Specific challenges:</p>
-                          <ul className="text-xs text-muted-foreground space-y-0.5">
-                            {persona.painPoints.slice(0, 4).map((point, i) => (
-                              <li key={i}>• {point}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          This persona is primarily impacted by the main pain point described above.
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {(idea.source_data as Record<string, unknown>)?.technical_stack &&
-             Array.isArray((idea.source_data as Record<string, unknown>).technical_stack) &&
-             ((idea.source_data as Record<string, unknown>).technical_stack as string[]).length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-3 text-sm text-muted-foreground">Suggested Tech Stack</h4>
-                <div className="flex flex-wrap gap-2">
-                  {((idea.source_data as Record<string, unknown>).technical_stack as string[]).map((tech, idx) => (
-                    <Badge key={idx} variant="outline" className="text-xs">
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {idea.target_market && typeof idea.target_market === 'string' && (
-              <div>
-                <h4 className="font-semibold mb-2 text-sm text-muted-foreground">Target Market</h4>
-                <p className="text-sm">{idea.target_market}</p>
-              </div>
-            )}
-          </>
-        </CardContent>
-      </Card>
+      {/* Idea Overview Section */}
+      <IdeaOverview
+        productType={productType}
+        solutionNarrative={solutionNarrative}
+        whyNowNarrative={whyNowNarrative}
+        secondaryPainPoints={secondaryPainPoints}
+        personas={personasWithUniqueChallenges}
+        techStack={techStack}
+        targetMarket={targetMarketString}
+      />
 
       {/* Reddit Sources Section */}
       {redditSources.length > 0 && (
         <Card className="border border-orange-200 bg-orange-50/30 dark:border-orange-800 dark:bg-orange-950/10">
           <CardContent className="p-6">
-            <RedditSources
-              sources={redditSources as never[]}
-              title="Inspiration from Reddit Discussions"
-            />
+            <RedditSources sources={redditSources as never[]} title="Inspiration from Reddit Discussions" />
           </CardContent>
         </Card>
       )}
 
       {/* Main Content - Three Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
         {/* Left Column - Basic Information */}
         <div className="lg:col-span-8 space-y-6">
-          
-          {/* Target Market - Enhanced */}
-          <Card className="border-2 py-0">
-            <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/10 dark:to-emerald-950/10 py-4">
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
-                  <Users className="h-5 w-5 text-green-600 dark:text-green-400" />
-                </div>
-                Target Market Analysis
-              </CardTitle>
-              <CardDescription>Who will benefit from this solution?</CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              <>
-                {typeof idea.target_market === 'object' && idea.target_market && (idea.target_market as unknown as Record<string, unknown>).primary_demographic ? (
-                  <div className="space-y-4">
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Users className="h-5 w-5 text-blue-600" />
-                        Target Demographics
-                      </h4>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {(idea.target_market as unknown as Record<string, unknown>).primary_demographic as string}
-                      </p>
-                    </div>
+          <TargetMarketSection isValidated={!!idea.is_validated} targetMarket={idea.target_market} />
 
-                    <>
-                      {(idea.target_market as unknown as Record<string, unknown>).user_personas && Array.isArray((idea.target_market as unknown as Record<string, unknown>).user_personas) && ((idea.target_market as unknown as Record<string, unknown>).user_personas as Array<unknown>).length > 0 && (
-                        <div>
-                          <h4 className="font-semibold mb-3 flex items-center gap-2">
-                            <Target className="h-4 w-4 text-purple-600" />
-                            User Personas
-                          </h4>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {((idea.target_market as unknown as Record<string, unknown>).user_personas as Array<{ name: string; description: string; pain_points: string[] }>).map((persona, idx) => (
-                              <div key={idx} className="p-4 rounded-lg bg-muted/30 border">
-                                <h5 className="font-medium mb-2">{persona.name}</h5>
-                                <p className="text-sm text-muted-foreground mb-3">{persona.description}</p>
-                                {persona.pain_points && persona.pain_points.length > 0 && (
-                                  <div className="space-y-1">
-                                    <p className="text-xs font-medium text-muted-foreground">Pain Points:</p>
-                                    <ul className="text-xs text-muted-foreground space-y-0.5">
-                                      {persona.pain_points.map((point, i) => (
-                                        <li key={i}>• {point}</li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </>
+          <SolutionDetails
+            isValidated={!!idea.is_validated}
+            solution={idea.solution}
+            validatedValueProposition={validatedValueProposition}
+          />
 
-                  </div>
-                ) : (
-                <div className="text-center py-12">
-                  <div className="relative">
-                    <Lock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pro
-                    </div>
-                  </div>
-                  <h4 className="font-semibold mb-2">Detailed Market Data Available After Validation</h4>
-                  <p className="text-muted-foreground max-w-md mx-auto mb-4">
-                    Get comprehensive demographic analysis, market size calculations, and pain point assessment through AI-powered validation.
-                  </p>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>Validate this idea to unlock market sizing, demographics, and persona insights.</p>
-                    
-                  </div>
-                </div>
-                )}
-              </>
-            </CardContent>
-          </Card>
+          <MarketAnalysis isValidated={!!idea.is_validated} marketAnalysis={idea.market_analysis} />
 
-          {/* Solution Details */}
-          <Card className="border-2 py-0">
-            <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/10 dark:to-blue-950/10 py-4">
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/20">
-                  <CheckCircle className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                </div>
-                Solution Architecture
-              </CardTitle>
-              <CardDescription>How this idea solves the problem</CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-        {typeof idea.solution === 'object' && idea.solution && idea.solution.description ? (
-                <div className="space-y-6">
-                  {idea.solution.description && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Star className="h-4 w-4 text-violet-600" />
-                        Solution Overview
-                      </h4>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {idea.solution.description}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <h4 className="font-semibold mb-4 flex items-center gap-2">
-                      <Sparkles className="h-4 w-4 text-blue-600" />
-                      Key Features
-                    </h4>
-                    {idea.solution.key_features && Array.isArray(idea.solution.key_features) && idea.solution.key_features.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {idea.solution.key_features.map((feature: string, index: number) => (
-                          <div key={index} className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-                            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : idea.is_validated ? (
-                      <div className="p-6 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-900/10 border border-blue-200 dark:border-blue-800 text-center">
-                        <Sparkles className="h-8 w-8 text-blue-600 mx-auto mb-3" />
-                        <h5 className="font-medium mb-2">Core Solution Features</h5>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          This validated idea includes essential capabilities based on the problem statement and market analysis.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 dark:bg-black/20">
-                            <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">Core functionality implementation</span>
-                          </div>
-                          <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 dark:bg-black/20">
-                            <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">User-friendly interface design</span>
-                          </div>
-                          <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 dark:bg-black/20">
-                            <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">Data management system</span>
-                          </div>
-                          <div className="flex items-start gap-3 p-3 rounded-lg bg-white/60 dark:bg-black/20">
-                            <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">Analytics and reporting tools</span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="p-6 rounded-lg bg-muted/30 text-center">
-                        <div className="relative mb-4">
-                          <Lock className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                          <div className="absolute -top-1 -right-1 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs px-1.5 py-0.5 rounded-full">
-                            Pro
-                          </div>
-                        </div>
-                        <h5 className="font-medium mb-2">Detailed Features Available</h5>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          Get comprehensive feature breakdown and technical specifications after validation.
-                        </p>
-                        <div className="space-y-2 text-sm text-muted-foreground">
-                          <p>Validate to unlock the full feature breakdown, technical specs, and go-to-market playbooks.</p>
-                          
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-          {idea.solution.revenue_model && Array.isArray(idea.solution.revenue_model) && idea.solution.revenue_model.length > 0 && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/10 dark:to-green-950/10 border border-emerald-200 dark:border-emerald-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <DollarSign className="h-4 w-4 text-emerald-600" />
-                        Revenue Model
-                      </h4>
-                      <div className="space-y-2">
-                        {idea.solution.revenue_model.map((model: string, index: number) => (
-                          <p key={index} className="text-muted-foreground">
-                            • {model}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {validatedValueProposition && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Star className="h-4 w-4 text-violet-600" />
-                        Value Proposition
-                      </h4>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {validatedValueProposition}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">AI-powered automation</span>
-                    </div>
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">Personalized insights</span>
-                    </div>
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">Smart task scheduling</span>
-                    </div>
-                    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">Productivity tracking</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950/10 dark:to-green-950/10 border border-emerald-200 dark:border-emerald-800">
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-emerald-600" />
-                      Business Model
-                    </h4>
-                    <p className="text-muted-foreground">
-                      SaaS subscription model with tiered pricing
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Market Analysis */}
-          <Card className="border-2 py-0">
-            <CardHeader className="bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/10 dark:to-red-950/10 py-4">
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-rose-100 dark:bg-rose-900/20">
-                  <BarChart3 className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                </div>
-                Market Analysis & Competition
-              </CardTitle>
-              <CardDescription>Competitive landscape and market opportunities</CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              {idea.is_validated && typeof idea.market_analysis === 'object' && idea.market_analysis ? (
-                <div className="space-y-6">
-                  <>
-                    {(idea.market_analysis as unknown as Record<string, unknown>).market_size && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
-                      <h4 className="font-semibold mb-4 flex items-center gap-2">
-                        <TrendingUp className="h-5 w-5 text-indigo-600" />
-                        Market Opportunity
-                      </h4>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div>
-                          <div className="text-2xl font-bold text-blue-600">
-                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.tam as number || 0) / 1000000)}M
-                          </div>
-                          <div className="text-xs text-muted-foreground">TAM (Total Addressable)</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-indigo-600">
-                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.sam as number || 0) / 1000000)}M
-                          </div>
-                          <div className="text-xs text-muted-foreground">SAM (Serviceable)</div>
-                        </div>
-                        <div>
-                          <div className="text-2xl font-bold text-purple-600">
-                            ${Math.round((((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.som as number || 0) / 1000000)}M
-                          </div>
-                          <div className="text-xs text-muted-foreground">SOM (Obtainable)</div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {(idea.market_analysis as unknown as Record<string, unknown>).competition_level && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-rose-50 to-red-50 dark:from-rose-950/10 dark:to-red-950/10 border border-rose-200 dark:border-rose-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Target className="h-5 w-5 text-rose-600" />
-                        Competition Analysis
-                      </h4>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Competition Level</span>
-                          <Badge variant="outline" className="capitalize">{(idea.market_analysis as unknown as Record<string, unknown>).competition_level as string}</Badge>
-                        </div>
-                        <>
-                          {(idea.market_analysis as unknown as Record<string, unknown>).entry_barriers && (
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">Entry Barriers</span>
-                              <Badge variant="outline" className="capitalize">{(idea.market_analysis as unknown as Record<string, unknown>).entry_barriers as string}</Badge>
-                            </div>
-                          )}
-                        </>
-                      </div>
-                    </div>
-                  )}
-
-                  <>
-                    {(idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages && Array.isArray((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages) && ((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages as Array<unknown>).length > 0 && (
-                      <div>
-                        <h4 className="font-semibold mb-3 flex items-center gap-2">
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                          Competitive Advantages
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {((idea.market_analysis as unknown as Record<string, unknown>).competitive_advantages as string[]).map((advantage, idx) => (
-                            <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                              <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                              <span className="text-sm">{advantage}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-
-                  <>
-                    {(idea.market_analysis as unknown as Record<string, unknown>).market_timing && (
-                      <div className="p-6 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
-                        <h4 className="font-semibold mb-3 flex items-center gap-2">
-                          <Clock className="h-5 w-5 text-purple-600" />
-                          Market Timing
-                        </h4>
-                        <p className="text-muted-foreground text-sm leading-relaxed">
-                          {(idea.market_analysis as unknown as Record<string, unknown>).market_timing as string}
-                        </p>
-                      </div>
-                    )}
-                  </>
-
-                  </>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="relative mb-6">
-                    <Lock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pro
-                    </div>
-                  </div>
-                  
-                  <h4 className="text-xl font-semibold mb-3">Market Analysis & Competition Data</h4>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-                    Get comprehensive competitive analysis and market insights powered by AI research. 
-                    Our validation process analyzes your market landscape to provide actionable intelligence.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 max-w-4xl mx-auto">
-                    <div className="p-4 rounded-lg bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-100 dark:border-indigo-900/30">
-                      <TrendingUp className="h-6 w-6 text-indigo-600 mx-auto mb-2" />
-                      <h5 className="font-medium text-sm mb-1">Market Opportunity Size</h5>
-                      <p className="text-xs text-muted-foreground">TAM, SAM, SOM breakdown</p>
-                    </div>
-                    
-                    <div className="p-4 rounded-lg bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-900/10 border border-red-100 dark:border-red-900/30">
-                      <Target className="h-6 w-6 text-red-600 mx-auto mb-2" />
-                      <h5 className="font-medium text-sm mb-1">Competition Level</h5>
-                      <p className="text-xs text-muted-foreground">Barriers & intensity analysis</p>
-                    </div>
-                    
-                    <div className="p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-900/10 border border-green-100 dark:border-green-900/30">
-                      <CheckCircle className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <h5 className="font-medium text-sm mb-1">Competitive Advantages</h5>
-                      <p className="text-xs text-muted-foreground">Key differentiators</p>
-                    </div>
-                    
-                    <div className="p-4 rounded-lg bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-900/10 border border-purple-100 dark:border-purple-900/30">
-                      <Clock className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                      <h5 className="font-medium text-sm mb-1">Market Timing Analysis</h5>
-                      <p className="text-xs text-muted-foreground">Current conditions & trends</p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div className="text-sm text-muted-foreground text-center">
-                      <p className="mb-2">Validate this idea to unlock competitive benchmarking, TAM/SAM/SOM sizing, and risk assessment.</p>
-                     
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      <p className="flex items-center justify-center gap-2 mb-2">
-                        <Sparkles className="h-4 w-4 text-blue-500" />
-                        <span>Market validation includes:</span>
-                      </p>
-                      <div className="flex flex-wrap justify-center gap-x-8 gap-y-1 text-xs max-w-lg mx-auto">
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                          Competitor landscape
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                          Market opportunity sizing
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                          Success probability
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <div className="w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                          Risk assessment
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Implementation Details */}
-          <Card className="border-2 py-0">
-            <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 py-4">
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/20">
-                  <Zap className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                Implementation Roadmap
-              </CardTitle>
-              <CardDescription>How to bring this idea to life</CardDescription>
-            </CardHeader>
-            <CardContent className="px-6 pb-6">
-              {typeof idea.implementation === 'object' && idea.implementation ? (
-                <div className="space-y-6">
-                  <>
-                    <div className="grid grid-cols-2 gap-4">
-                      <>
-                        {(idea.implementation as unknown as Record<string, unknown>).technical_complexity && (
-                          <div className="p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-950/20 dark:to-blue-900/10 border border-indigo-200 dark:border-indigo-800">
-                            <h4 className="font-semibold mb-2 text-sm">Technical Complexity</h4>
-                            <Badge variant="outline" className="capitalize">{(idea.implementation as unknown as Record<string, unknown>).technical_complexity as string}</Badge>
-                          </div>
-                        )}
-                      </>
-                      <>
-                        {(idea.implementation as unknown as Record<string, unknown>).time_to_market && (
-                          <div className="p-4 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-950/10 dark:to-violet-950/10 border border-purple-200 dark:border-purple-800">
-                            <h4 className="font-semibold mb-2 text-sm">Time to Market</h4>
-                            <p className="text-sm text-muted-foreground">{(idea.implementation as unknown as Record<string, unknown>).time_to_market as string}</p>
-                          </div>
-                        )}
-                      </>
-                    </div>
-
-                    <>
-                      {(idea.implementation as unknown as Record<string, unknown>).phases && Array.isArray((idea.implementation as unknown as Record<string, unknown>).phases) && ((idea.implementation as unknown as Record<string, unknown>).phases as Array<unknown>).length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-4 flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-indigo-600" />
-                        Development Phases
-                      </h4>
-                      <div className="space-y-3">
-                        {((idea.implementation as unknown as Record<string, unknown>).phases as Array<{ phase: string; duration: string; description: string }>).map((phase, idx) => (
-                          <div key={idx} className="p-4 rounded-lg border bg-muted/30">
-                            <div className="flex items-start justify-between mb-2">
-                              <h5 className="font-medium">{phase.phase}</h5>
-                              <Badge variant="secondary" className="text-xs">{phase.duration}</Badge>
-                            </div>
-                            <p className="text-sm text-muted-foreground">{phase.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                      )}
-                    </>
-
-                    <>
-                      {(idea.implementation as unknown as Record<string, unknown>).milestones && Array.isArray((idea.implementation as unknown as Record<string, unknown>).milestones) && ((idea.implementation as unknown as Record<string, unknown>).milestones as Array<unknown>).length > 0 && (
-                    <div>
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        Key Milestones
-                      </h4>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {((idea.implementation as unknown as Record<string, unknown>).milestones as string[]).map((milestone, idx) => (
-                          <div key={idx} className="flex items-start gap-2 p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800">
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{milestone}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                      )}
-                    </>
-
-                    <>
-                      {(idea.implementation as unknown as Record<string, unknown>).tech_stack && Array.isArray((idea.implementation as unknown as Record<string, unknown>).tech_stack) && ((idea.implementation as unknown as Record<string, unknown>).tech_stack as Array<unknown>).length > 0 && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/10 dark:to-cyan-950/10 border border-blue-200 dark:border-blue-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Zap className="h-5 w-5 text-blue-600" />
-                        Recommended Tech Stack
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {((idea.implementation as unknown as Record<string, unknown>).tech_stack as string[]).map((tech, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {tech}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                      )}
-                    </>
-
-                    <>
-                      {(idea.implementation as unknown as Record<string, unknown>).team_capacity && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/10 dark:to-purple-950/10 border border-violet-200 dark:border-violet-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <Users className="h-5 w-5 text-violet-600" />
-                        Team Capacity
-                      </h4>
-                      <p className="text-sm text-muted-foreground leading-relaxed">
-                        {(idea.implementation as unknown as Record<string, unknown>).team_capacity as string}
-                      </p>
-                    </div>
-                      )}
-                    </>
-
-                    <>
-                      {(idea.implementation as unknown as Record<string, unknown>).resource_requirements && Array.isArray((idea.implementation as unknown as Record<string, unknown>).resource_requirements) && ((idea.implementation as unknown as Record<string, unknown>).resource_requirements as Array<unknown>).length > 0 && (
-                    <div className="p-6 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/10 dark:to-orange-950/10 border border-amber-200 dark:border-amber-800">
-                      <h4 className="font-semibold mb-3 flex items-center gap-2">
-                        <DollarSign className="h-5 w-5 text-amber-600" />
-                        Resource Requirements
-                      </h4>
-                      <ul className="space-y-2">
-                        {((idea.implementation as unknown as Record<string, unknown>).resource_requirements as string[]).map((req, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">• {req}</li>
-                        ))}
-                      </ul>
-                    </div>
-                      )}
-                    </>
-
-                  </>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="relative mb-6">
-                    <Lock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                    <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pro
-                    </div>
-                  </div>
-                  
-                  <h4 className="text-xl font-semibold mb-3">Implementation Roadmap</h4>
-                  <p className="text-muted-foreground max-w-2xl mx-auto mb-6 leading-relaxed">
-                    Get detailed implementation guidance, development timelines, and technical specifications through AI-powered validation.
-                  </p>
-                  
-                  <div className="text-sm text-muted-foreground">
-                    <p className="flex items-center justify-center gap-2 mb-2">
-                      <Sparkles className="h-4 w-4 text-purple-500" />
-                      <span>Implementation roadmap includes:</span>
-                    </p>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ImplementationRoadmap implementation={idea.implementation} />
         </div>
 
         {/* Right Column - Actions & Metadata */}
         <div className="lg:col-span-4 space-y-6">
-          
-          {/* Validation Status */}
-          <Card
-            id="validation-cta"
-            className={cn(
-              "border-2",
-              idea.is_validated
-                ? "border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/10"
-                : "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/10"
-            )}
-          > 
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {idea.is_validated ? (
-                  <>
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  </>
-                ) : (
-                  <AlertCircle className="h-5 w-5 text-amber-600" />
-                )}
-                Validation Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {idea.is_validated ? (
-                <div className="text-center py-4">
-                  <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-3" />
-                  <h4 className="font-semibold mb-2 text-green-800 dark:text-green-200">Validated!</h4>
-                  <p className="text-sm text-green-600 dark:text-green-400">
-                    This idea has been validated with comprehensive market research.
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 border-4 border-amber-200 border-t-amber-500 rounded-full animate-pulse"></div>
-                    </div>
-                    <Eye className="h-12 w-12 text-amber-600 mx-auto mb-3 relative z-10" />
-                  </div>
-                  <h4 className="font-semibold mb-2 text-amber-800 dark:text-amber-200">Ready to Validate</h4>
-                  <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
-                    Unlock detailed insights about your idea&apos;s market potential.
-                  </p>
-                  <div className="space-y-3">
-                    <ValidationButton ideaId={idea.id} isValidated={!!idea.is_validated} className="w-full" />
-                    <div className="text-xs text-center space-y-1">
-                      <p className="text-muted-foreground">✨ Unlock with validation:</p>
-                      <div className="text-xs space-y-0.5">
-                        <p className="text-blue-600">• Market size & demographics</p>
-                        <p className="text-green-600">• Competition analysis</p>
-                        <p className="text-purple-600">• Success probability</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <ValidationBadge ideaId={idea.id} isValidated={!!idea.is_validated} />
 
-          {/* Key Metrics Infographic */}
-          <Card className="border-2 border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 dark:border-indigo-800 dark:from-indigo-950/20 dark:to-blue-950/20">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-indigo-600" />
-                Key Metrics
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {idea.is_validated || (idea.market_analysis && Object.keys(idea.market_analysis).length > 0) ? (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* AI Confidence */}
-                    <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <TrendingUp className="h-6 w-6 text-blue-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-blue-600">{confidenceScore}%</div>
-                      <div className="text-xs text-muted-foreground">AI Confidence</div>
-                    </div>
-                    
-                    {/* Market Opportunity */}
-                    <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <Target className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <div className="text-2xl font-bold text-green-600">
-                        {(idea.market_analysis as unknown as Record<string, unknown>)?.market_size ?
-                          `$${Math.round(((idea.market_analysis as unknown as Record<string, unknown>).market_size as Record<string, unknown>)?.tam as number || 0) / 1000000}M` :
-                          'TBD'
-                        }
-                      </div>
-                      <div className="text-xs text-muted-foreground">Market Size</div>
-                    </div>
-                    
-                    {/* Validation Status */}
-                    <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <Shield className="h-6 w-6 text-green-600 mx-auto mb-2" />
-                      <div className={cn("text-sm font-bold capitalize", idea.is_validated ? "text-green-600" : "text-amber-600")}
-                      >
-                        {idea.is_validated ? 'Validated' : 'Pending'}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Status</div>
-                    </div>
+          <KeyMetrics
+            isValidated={!!idea.is_validated}
+            confidenceScore={confidenceScore}
+            marketAnalysis={idea.market_analysis}
+          />
 
-                    {/* Implementation Ready */}
-                    <div className="text-center p-4 rounded-xl bg-white/60 dark:bg-black/20">
-                      <CheckCircle className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                      <div className="text-sm font-bold text-purple-600">
-                        {idea.is_validated ? 'Ready' : 'In planning'}
-                      </div>
-                      <div className="text-xs text-muted-foreground">Implementation</div>
-                    </div>
-                  </div>
+          <QuickActions />
 
-                  {/* Progress Indicators */}
-                  <div className="mt-6 space-y-3">
-                    <div>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span>Market Readiness</span>
-                        <span>{confidenceScore}%</span>
-                      </div>
-                      <Progress value={confidenceScore} className="h-2" />
-                    </div>
-
-                    {idea.is_validated && (
-                      <div>
-                        <div className="flex justify-between text-xs mb-1">
-                          <span>Validation Complete</span>
-                          <span>100%</span>
-                        </div>
-                        <Progress value={100} className="h-2" />
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="relative mb-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900/30 dark:to-blue-900/30 flex items-center justify-center mx-auto mb-3">
-                      <BarChart3 className="h-8 w-8 text-indigo-500" />
-                    </div>
-                    <div className="absolute -top-1 -right-1 bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs px-2 py-1 rounded-full">
-                      Pro
-                    </div>
-                  </div>
-                  
-                  <h4 className="font-semibold mb-2">Comprehensive Metrics Available</h4>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-sm mx-auto">
-                    Unlock detailed performance metrics, market sizing, and risk assessment through AI validation.
-                  </p>
-                  
-                  <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-                    <div className="p-2 rounded bg-white/60 dark:bg-black/20">
-                      <TrendingUp className="h-4 w-4 text-blue-500 mx-auto mb-1" />
-                      <div className="text-muted-foreground">AI Score</div>
-                    </div>
-                    <div className="p-2 rounded bg-white/60 dark:bg-black/20">
-                      <Target className="h-4 w-4 text-green-500 mx-auto mb-1" />
-                      <div className="text-muted-foreground">Market Size</div>
-                    </div>
-                    <div className="p-2 rounded bg-white/60 dark:bg-black/20">
-                      <Shield className="h-4 w-4 text-red-500 mx-auto mb-1" />
-                      <div className="text-muted-foreground">Competition</div>
-                    </div>
-                    <div className="p-2 rounded bg-white/60 dark:bg-black/20">
-                      <Clock className="h-4 w-4 text-purple-500 mx-auto mb-1" />
-                      <div className="text-muted-foreground">Timeline</div>
-                    </div>
-                  </div>
-                  
-                  <Link href="#validation-cta" className="inline-flex items-center justify-center text-primary font-medium text-xs">
-                    Validate to unlock metrics
-                    <ArrowRight className="h-3 w-3 ml-1" />
-                  </Link>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <FileText className="h-4 w-4 mr-2" />
-                Generate Content
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start">
-                <TrendingUp className="h-4 w-4 mr-2" />
-                Analyze Trends  
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-              
-              <Button variant="outline" className="w-full justify-start">
-                <Target className="h-4 w-4 mr-2" />
-                Similar Ideas
-                <ArrowRight className="h-4 w-4 ml-auto" />
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-4 w-4" />
-                Idea Timeline
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-sm text-muted-foreground">Created</span>
-                <span className="text-sm font-medium">{new Date(idea.created_at).toLocaleDateString()}</span>
-              </div>
-              
-              {idea.updated_at !== idea.created_at && (
-                <div className="flex items-center justify-between py-2 border-t">
-                  <span className="text-sm text-muted-foreground">Last Updated</span>
-                  <span className="text-sm font-medium">{new Date(idea.updated_at).toLocaleDateString()}</span>
-                </div>
-              )}
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-muted-foreground">Idea Generated</span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <div className={cn("w-2 h-2 rounded-full", idea.is_validated ? "bg-green-500" : "bg-gray-300")}></div>
-                  <span className={cn("text-muted-foreground", idea.is_validated && "text-green-600")}>
-                    Market Validated {idea.is_validated ? "✓" : ""}
-                  </span>
-                </div>
-                
-                <div className="flex items-center gap-2 text-sm">
-                  <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                  <span className="text-muted-foreground">Content Generated</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <IdeaTimeline
+            createdAt={idea.created_at}
+            updatedAt={idea.updated_at}
+            isValidated={!!idea.is_validated}
+          />
         </div>
       </div>
     </div>

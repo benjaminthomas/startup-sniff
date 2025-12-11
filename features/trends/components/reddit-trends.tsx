@@ -1,160 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { log } from '@/lib/logger/client'
-import { 
-  TrendingUp, 
-  MessageCircle, 
-  BarChart3, 
-  ExternalLink,
+import {
+  TrendingUp,
+  MessageCircle,
+  BarChart3,
   RefreshCw,
-  Target,
-  Activity,
   ChevronRight
 } from "lucide-react";
-// import { getRedditTrendsSummary } from "@/features/reddit";
-
-interface RedditTrendAnalysis {
-  subreddit: string;
-  trending_topics: string[];
-  sentiment_score: number;
-  engagement_metrics: {
-    avg_score: number;
-    avg_comments: number;
-    total_posts: number;
-  };
-  opportunity_score: number;
-  top_posts: Array<{
-    id: string;
-    title: string;
-    content: string;
-    subreddit: string;
-    score: number;
-    num_comments: number;
-    created_at: string;
-    url: string;
-  }>;
-}
-
-interface TrendOpportunity {
-  subreddit: string;
-  opportunityScore: number;
-  trendingTopics: string[];
-  topPost: Record<string, unknown> | null;
-}
-
-interface TrendsSummary {
-  totalTopics: number;
-  activeCommunities: number;
-  weeklyGrowth: string;
-  topOpportunities: TrendOpportunity[];
-  fullAnalysis?: RedditTrendAnalysis[];
-}
+import { useRedditTrends } from "../hooks/useRedditTrends";
+import { TrendCard } from "./TrendCard";
+import { TrendsLoadingSkeleton } from "./TrendsLoadingSkeleton";
+import { DetailedAnalysisCard } from "./DetailedAnalysisCard";
 
 export function RedditTrends() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<TrendsSummary | null>(null);
-  const [fullAnalysis, setFullAnalysis] = useState<RedditTrendAnalysis[] | null>(null);
-  const [showFullAnalysis, setShowFullAnalysis] = useState(false);
-
-  const loadTrends = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch('/api/reddit-trends', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle specific error cases
-        if (response.status === 503 && data.status === 'service_unavailable') {
-          setError(data.message || 'Reddit data is temporarily unavailable. This is a known issue we are working to resolve.');
-        } else if (response.status === 401) {
-          setError('Please sign in to view Reddit trends.');
-        } else {
-          setError(data.details || 'Failed to load Reddit trends. Please try again.');
-        }
-        return;
-      }
-
-      setSummary(data);
-      if (data.fullAnalysis) {
-        setFullAnalysis(data.fullAnalysis);
-      }
-    } catch (err) {
-      setError('Unable to connect to the trends service. Please check your internet connection and try again.');
-      log.error('Error loading trends:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadTrends();
-  }, []);
-
-  const getSentimentColor = (score: number) => {
-    if (score >= 70) return 'text-green-600 bg-green-50 border-green-200';
-    if (score >= 50) return 'text-blue-600 bg-blue-50 border-blue-200';
-    if (score >= 30) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-red-600 bg-red-50 border-red-200';
-  };
-
-  const getOpportunityColor = (score: number) => {
-    if (score >= 80) return 'text-emerald-700';
-    if (score >= 60) return 'text-green-600';
-    if (score >= 40) return 'text-yellow-600';
-    return 'text-gray-600';
-  };
-
-  // Generate meaningful titles from trending topics and posts
-  const generateMeaningfulTitle = (opportunity: TrendOpportunity) => {
-    if (opportunity.topPost?.title) {
-      // Extract the main problem/pain point from the post title
-      const title = opportunity.topPost.title as string;
-      if (title.length > 60) {
-        return title.substring(0, 57) + '...';
-      }
-      return title;
-    }
-
-    // Fallback to trending topics if no post title
-    if (opportunity.trendingTopics && opportunity.trendingTopics.length > 0) {
-      const mainTopic = opportunity.trendingTopics[0];
-      return `${mainTopic} Solutions Needed`;
-    }
-
-    // Last resort - community focus
-    return `${opportunity.subreddit} Community Opportunities`;
-  };
-
-  const generateAnalysisTitle = (analysis: RedditTrendAnalysis) => {
-    if (analysis.top_posts && analysis.top_posts.length > 0) {
-      const topPost = analysis.top_posts[0];
-      if ((topPost.title as string).length > 50) {
-        return (topPost.title as string).substring(0, 47) + '...';
-      }
-      return topPost.title as string;
-    }
-
-    if (analysis.trending_topics && analysis.trending_topics.length > 0) {
-      return `${analysis.trending_topics[0]} Market Opportunities`;
-    }
-
-    return `r/${analysis.subreddit} Pain Points`;
-  };
+  const {
+    isLoading,
+    error,
+    summary,
+    fullAnalysis,
+    showFullAnalysis,
+    loadTrends,
+    toggleFullAnalysis
+  } = useRedditTrends();
 
   if (isLoading && !summary) {
     return <TrendsLoadingSkeleton />;
@@ -224,9 +93,9 @@ export function RedditTrends() {
                 Real user problems and business opportunities discovered from active Reddit discussions
               </CardDescription>
             </div>
-            <Button 
-              onClick={loadTrends} 
-              variant="outline" 
+            <Button
+              onClick={loadTrends}
+              variant="outline"
               size="sm"
               disabled={isLoading}
             >
@@ -243,45 +112,16 @@ export function RedditTrends() {
                 <h4 className="text-sm font-semibold mb-3">Top Opportunities</h4>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {summary.topOpportunities.map((opportunity) => (
-                    <Card key={opportunity.subreddit} className="border-l-4 border-l-blue-500">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <h5 className="font-medium text-sm leading-tight">{generateMeaningfulTitle(opportunity)}</h5>
-                          <Badge
-                            variant="outline"
-                            className={getOpportunityColor(opportunity.opportunityScore)}
-                          >
-                            {opportunity.opportunityScore}/100
-                          </Badge>
-                        </div>
-                        <div className="mb-2">
-                          <span className="text-xs text-muted-foreground">from r/{opportunity.subreddit}</span>
-                        </div>
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap gap-1">
-                            {opportunity.trendingTopics.slice(0, 3).map((topic) => (
-                              <Badge key={topic} variant="secondary" className="text-xs">
-                                {topic}
-                              </Badge>
-                            ))}
-                          </div>
-                          {opportunity.topPost && (
-                            <p className="text-xs text-muted-foreground line-clamp-2">
-                              &ldquo;{opportunity.topPost.title as string}&rdquo;
-                            </p>
-                          )}
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <TrendCard key={opportunity.subreddit} opportunity={opportunity} />
                   ))}
                 </div>
               </div>
 
               {/* Full Analysis Toggle */}
               <div className="flex items-center justify-center pt-4 border-t">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowFullAnalysis(!showFullAnalysis)}
+                <Button
+                  variant="outline"
+                  onClick={toggleFullAnalysis}
                   className="w-full max-w-md"
                 >
                   {showFullAnalysis ? 'Hide' : 'Show'} Detailed Analysis
@@ -295,119 +135,10 @@ export function RedditTrends() {
                   <h4 className="text-sm font-semibold">Detailed Community Analysis</h4>
                   <div className="space-y-4">
                     {fullAnalysis.map((analysis) => (
-                      <Card key={analysis.subreddit}>
-                        <CardHeader className="pb-3">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1 mr-4">
-                              <CardTitle className="text-lg leading-tight mb-1">{generateAnalysisTitle(analysis)}</CardTitle>
-                              <span className="text-sm text-muted-foreground">from r/{analysis.subreddit}</span>
-                            </div>
-                            <div className="flex items-center space-x-2 flex-shrink-0">
-                              <Badge
-                                variant="outline"
-                                className={getSentimentColor(analysis.sentiment_score)}
-                              >
-                                {analysis.sentiment_score}% sentiment
-                              </Badge>
-                              <Badge
-                                variant="outline"
-                                className={getOpportunityColor(analysis.opportunity_score)}
-                              >
-                                {analysis.opportunity_score}/100 opportunity
-                              </Badge>
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {/* Trending Topics */}
-                          <div>
-                            <h5 className="text-sm font-medium mb-2 flex items-center">
-                              <TrendingUp className="h-4 w-4 mr-1" />
-                              Trending Topics
-                            </h5>
-                            <div className="flex flex-wrap gap-2">
-                              {analysis.trending_topics.map((topic) => (
-                                <Badge key={topic} variant="secondary">
-                                  {topic}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Engagement Metrics */}
-                          <div className="grid grid-cols-3 gap-4 text-center">
-                            <div className="space-y-1">
-                              <div className="text-sm font-medium flex items-center justify-center">
-                                <Target className="h-3 w-3 mr-1" />
-                                Avg Score
-                              </div>
-                              <div className="text-2xl font-bold text-blue-600">
-                                {analysis.engagement_metrics.avg_score}
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-sm font-medium flex items-center justify-center">
-                                <MessageCircle className="h-3 w-3 mr-1" />
-                                Comments
-                              </div>
-                              <div className="text-2xl font-bold text-green-600">
-                                {analysis.engagement_metrics.avg_comments}
-                              </div>
-                            </div>
-                            <div className="space-y-1">
-                              <div className="text-sm font-medium flex items-center justify-center">
-                                <Activity className="h-3 w-3 mr-1" />
-                                Posts
-                              </div>
-                              <div className="text-2xl font-bold text-purple-600">
-                                {analysis.engagement_metrics.total_posts}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Top Posts */}
-                          <div>
-                            <h5 className="text-sm font-medium mb-2">Top Posts</h5>
-                            <div className="space-y-2">
-                              {analysis.top_posts.slice(0, 2).map((post) => (
-                                <div 
-                                  key={post.id}
-                                  className="p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                                >
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h6 className="font-medium text-sm line-clamp-1 flex-1 mr-2">
-                                      {post.title}
-                                    </h6>
-                                    <Button variant="ghost" size="sm" asChild>
-                                      <a 
-                                        href={post.url} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="shrink-0"
-                                      >
-                                        <ExternalLink className="h-3 w-3" />
-                                      </a>
-                                    </Button>
-                                  </div>
-                                  <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                                    {post.content}
-                                  </p>
-                                  <div className="flex items-center space-x-4 text-xs text-muted-foreground">
-                                    <span className="flex items-center">
-                                      <TrendingUp className="h-3 w-3 mr-1" />
-                                      {post.score} upvotes
-                                    </span>
-                                    <span className="flex items-center">
-                                      <MessageCircle className="h-3 w-3 mr-1" />
-                                      {post.num_comments} comments
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <DetailedAnalysisCard
+                        key={analysis.subreddit}
+                        analysis={analysis}
+                      />
                     ))}
                   </div>
                 </div>
@@ -425,52 +156,6 @@ export function RedditTrends() {
               </Button>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
-function TrendsLoadingSkeleton() {
-  return (
-    <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-4 rounded-full" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-3 w-32" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-      
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48 mb-2" />
-          <Skeleton className="h-4 w-96" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="p-4 border rounded-lg">
-                <Skeleton className="h-5 w-32 mb-3" />
-                <div className="space-y-2">
-                  <div className="flex space-x-2">
-                    {[1, 2, 3].map((j) => (
-                      <Skeleton key={j} className="h-5 w-16 rounded-full" />
-                    ))}
-                  </div>
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                </div>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>

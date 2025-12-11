@@ -80,7 +80,9 @@
       "Bash(fi)",
       "Bash(bash:*)",
       "Bash(wait)",
-      "Bash(timeout 60 npx tsc:*)"
+      "Bash(timeout 60 npx tsc:*)",
+      "Bash(test:*)",
+      "Bash(npx next build:*)"
     ],
     "deny": [],
     "ask": []
