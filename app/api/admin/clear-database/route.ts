@@ -12,6 +12,15 @@ import { validateRequestBody, clearDatabaseSchema } from '@/lib/validation/api-s
 import { log } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
+  // ✅ SECURITY: Disable in production (VULN-004)
+  if (process.env.NODE_ENV === 'production') {
+    log.warn('⚠️  Attempted to access clear-database endpoint in production');
+    return NextResponse.json(
+      { error: 'This endpoint is disabled in production' },
+      { status: 403 }
+    );
+  }
+
   // ✅ SECURITY: Verify admin authentication
   const authResult = await verifyAdminAuth();
   if (isAuthError(authResult)) {

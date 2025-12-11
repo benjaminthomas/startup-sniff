@@ -11,8 +11,12 @@ import { createServerAdminClient } from '@/modules/supabase/server'
 import { getCurrentSession } from '@/modules/auth/services/jwt'
 import { revalidatePath } from 'next/cache'
 import { log } from '@/lib/logger'
+import { z } from 'zod'
 
 type OutcomeType = 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
+
+// Zod schema for outcome validation (Security: VULN-003)
+const outcomeSchema = z.enum(['replied', 'call_scheduled', 'customer_acquired', 'dead_end']).nullable()
 
 interface UpdateOutcomeResult {
   success: boolean
@@ -25,6 +29,21 @@ export async function updateMessageOutcomeAction(
 ): Promise<UpdateOutcomeResult> {
   try {
     log.info('[update-outcome] Updating message to outcome', { messageId, outcome })
+
+    // Validate outcome parameter (Security: VULN-003)
+    const validationResult = outcomeSchema.safeParse(outcome)
+    if (!validationResult.success) {
+      log.warn('[update-outcome] Invalid outcome parameter', {
+        outcome,
+        errors: validationResult.error.errors
+      })
+      return {
+        success: false,
+        error: 'Invalid outcome value'
+      }
+    }
+
+    const validatedOutcome = validationResult.data
 
     // Authenticate user
     const session = await getCurrentSession()
@@ -74,14 +93,14 @@ export async function updateMessageOutcomeAction(
       replied_at?: string | null
       updated_at: string
     } = {
-      outcome,
+      outcome: validatedOutcome,
       updated_at: new Date().toISOString()
     }
 
     // Set replied_at timestamp when outcome is set to replied
-    if (outcome === 'replied' && !message.replied_at) {
+    if (validatedOutcome === 'replied' && !message.replied_at) {
       updateData.replied_at = new Date().toISOString()
-    } else if (outcome === null) {
+    } else if (validatedOutcome === null) {
       // Clear replied_at when outcome is cleared
       updateData.replied_at = null
     }

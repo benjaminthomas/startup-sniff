@@ -1,5 +1,6 @@
 'use server'
 
+import { z } from 'zod'
 import { createServerAdminClient } from '@/modules/supabase/server'
 import type { RedditContact, RedditContactInsert } from '@/types/supabase'
 import { log } from '@/lib/logger'
@@ -19,6 +20,15 @@ interface DiscoverContactsResult {
   currentPage: number
   error?: string
 }
+
+/**
+ * Pagination validation schema
+ * SECURITY: Prevents DoS attacks from extreme values
+ */
+const paginationSchema = z.object({
+  page: z.number().int().min(1).max(1000),
+  limit: z.number().int().min(1).max(100)
+})
 
 // Simple console logger for server actions
 const logger = {
@@ -146,6 +156,9 @@ function estimatePostingFrequency(karma: number, accountAgeDays: number): number
 
 /**
  * Discover contacts for a pain point with pagination support
+ *
+ * SECURITY FIX: Added validation for page and limit parameters
+ * to prevent DoS attacks from extreme values.
  */
 export async function discoverContactsAction(
   painPointId: string,
@@ -153,6 +166,27 @@ export async function discoverContactsAction(
   limit: number = 5
 ): Promise<DiscoverContactsResult> {
   try {
+    // Validate pagination parameters
+    const validationResult = paginationSchema.safeParse({ page, limit })
+
+    if (!validationResult.success) {
+      logger.warn('Invalid pagination parameters', {
+        page,
+        limit,
+        errors: validationResult.error.errors
+      })
+      return {
+        success: false,
+        contacts: [],
+        totalFound: 0,
+        totalPages: 0,
+        currentPage: 1,
+        error: 'Invalid pagination parameters'
+      }
+    }
+
+    const { page: validatedPage, limit: validatedLimit } = validationResult.data
+
     const supabase = createServerAdminClient()
 
     // 1. Get the pain point details
@@ -169,7 +203,7 @@ export async function discoverContactsAction(
         contacts: [],
         totalFound: 0,
         totalPages: 0,
-        currentPage: page,
+        currentPage: validatedPage,
         error: 'Pain point not found'
       }
     }
@@ -187,9 +221,9 @@ export async function discoverContactsAction(
       .gte('discovered_at', twentyFourHoursAgo)
 
     if (totalCount && totalCount > 0) {
-      // Calculate pagination
-      const offset = (page - 1) * limit
-      const totalPages = Math.ceil(totalCount / limit)
+      // Calculate pagination using validated values
+      const offset = (validatedPage - 1) * validatedLimit
+      const totalPages = Math.ceil(totalCount / validatedLimit)
 
       // Get paginated contacts
       const { data: cachedContacts, error: cacheError } = await supabase
@@ -198,16 +232,16 @@ export async function discoverContactsAction(
         .eq('pain_point_id', painPointId)
         .gte('discovered_at', twentyFourHoursAgo)
         .order('engagement_score', { ascending: false })
-        .range(offset, offset + limit - 1)
+        .range(offset, offset + validatedLimit - 1)
 
       if (!cacheError && cachedContacts && cachedContacts.length > 0) {
-        logger.info(`Returning ${cachedContacts.length} cached contacts (page ${page}/${totalPages})`)
+        logger.info(`Returning ${cachedContacts.length} cached contacts (page ${validatedPage}/${totalPages})`)
         return {
           success: true,
           contacts: cachedContacts,
           totalFound: totalCount,
           totalPages,
-          currentPage: page
+          currentPage: validatedPage
         }
       }
     }
@@ -361,33 +395,33 @@ export async function discoverContactsAction(
     if (insertError) {
       logger.error('Failed to cache contacts in database', insertError)
       // Return paginated contacts anyway (even if not cached)
-      const totalPages = Math.ceil(sortedContacts.length / limit)
-      const offset = (page - 1) * limit
-      const paginatedContacts = sortedContacts.slice(offset, offset + limit)
+      const totalPages = Math.ceil(sortedContacts.length / validatedLimit)
+      const offset = (validatedPage - 1) * validatedLimit
+      const paginatedContacts = sortedContacts.slice(offset, offset + validatedLimit)
 
       return {
         success: true,
         contacts: paginatedContacts as unknown as RedditContact[],
         totalFound: sortedContacts.length,
         totalPages,
-        currentPage: page,
+        currentPage: validatedPage,
         error: `Contacts found but caching failed: ${insertError.message || 'Unknown error'}`
       }
     }
 
     logger.info(`Successfully discovered ${insertedContacts.length} contacts`)
 
-    // 8. Return paginated results
-    const totalPages = Math.ceil(insertedContacts.length / limit)
-    const offset = (page - 1) * limit
-    const paginatedContacts = insertedContacts.slice(offset, offset + limit)
+    // 8. Return paginated results using validated values
+    const totalPages = Math.ceil(insertedContacts.length / validatedLimit)
+    const offset = (validatedPage - 1) * validatedLimit
+    const paginatedContacts = insertedContacts.slice(offset, offset + validatedLimit)
 
     return {
       success: true,
       contacts: paginatedContacts,
       totalFound: insertedContacts.length,
       totalPages,
-      currentPage: page
+      currentPage: validatedPage
     }
   } catch (error) {
     logger.error('Unexpected error in discoverContactsAction', error)
@@ -396,7 +430,7 @@ export async function discoverContactsAction(
       contacts: [],
       totalFound: 0,
       totalPages: 0,
-      currentPage: page,
+      currentPage: page, // Use original parameter as fallback in error case
       error: error instanceof Error ? error.message : 'Unknown error'
     }
   }
