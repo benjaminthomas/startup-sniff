@@ -3,7 +3,8 @@
  * Analyzes Reddit posts to identify startup opportunities
  */
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createServerAdminClient } from '@/features/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database, RedditPost } from '@/types/supabase'
 import { fallbackPainPoints } from '@/features/reddit/data/fallback-pain-points'
 import { log } from '@/lib/logger'
@@ -41,10 +42,7 @@ class PainPointExtractor {
   private supabase: SupabaseClient<Database>
 
   constructor() {
-    this.supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    this.supabase = createServerAdminClient()
   }
 
   /**

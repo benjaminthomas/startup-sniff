@@ -13,13 +13,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { RedditApiClient } from '@/services/reddit/api-client'
 import { RedditRateLimiter } from '@/services/reddit/rate-limiter'
 import { RedisCache } from '@/services/cache/redis'
 import { getHighPrioritySubreddits, getAllSubredditNames } from '@/services/reddit/subreddit-config'
 import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
-import type { Database } from '@/types/supabase'
 import { log } from '@/lib/logger'
 
 // Environment validation
@@ -160,10 +159,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Initialize Supabase client with service role key
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = createServerAdminClient()
 
     // Insert posts into database (using upsert to handle duplicates)
     let insertedCount = 0

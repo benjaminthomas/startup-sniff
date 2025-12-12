@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
+import { createServerAdminClient } from '@/features/supabase/server';
 import { verifyWebhookSignature } from '@/services/payments/razorpay';
 import { PRICING_PLANS } from '@/constants';
+import { WebhookEvent } from '@/types/webhook-events';
 import { log } from '@/lib/logger'
 
 // Create Supabase admin client for webhook operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseAdmin = createServerAdminClient();
 
 interface RazorpayWebhookPayload {
   event: string;
@@ -86,23 +84,23 @@ export async function POST(req: NextRequest) {
   });
 
   // Idempotency check: Has this event been processed before?
-  const { data: existingEvent } = await supabaseAdmin
-    .from('webhook_events')
+  const { data: existingEvent } = (await supabaseAdmin
+    .from('webhook_events' as never)
     .select('id, processed, error_message')
     .eq('event_id', eventId)
-    .single();
+    .single()) as { data: Pick<WebhookEvent, 'id' | 'processed' | 'error_message'> | null; error: unknown };
 
-  if (existingEvent) {
-    if (existingEvent.processed) {
-      log.info(`Event ${eventId} already processed, returning success (idempotent)`);
-      return NextResponse.json({ received: true, idempotent: true });
-    } else {
-      log.info(`Event ${eventId} found but not processed, will retry`);
-    }
+  if (existingEvent && existingEvent.processed) {
+    log.info(`Event ${eventId} already processed, returning success (idempotent)`);
+    return NextResponse.json({ received: true, idempotent: true });
+  }
+
+  if (existingEvent && !existingEvent.processed) {
+    log.info(`Event ${eventId} found but not processed, will retry`);
   } else {
     // Store new event for idempotency tracking
     await supabaseAdmin
-      .from('webhook_events')
+      .from('webhook_events' as never)
       .insert({
         event_id: eventId,
         event_type: eventType,
@@ -151,7 +149,7 @@ export async function POST(req: NextRequest) {
 
     // Mark event as successfully processed
     await supabaseAdmin
-      .from('webhook_events')
+      .from('webhook_events' as never)
       .update({
         processed: true,
         processed_at: new Date().toISOString(),
@@ -167,14 +165,14 @@ export async function POST(req: NextRequest) {
     // Mark event as failed for retry
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     // Get current retry count and increment it
-    const { data: currentEvent } = await supabaseAdmin
-      .from('webhook_events')
+    const { data: currentEvent } = (await supabaseAdmin
+      .from('webhook_events' as never)
       .select('retry_count')
       .eq('event_id', eventId)
-      .single();
+      .single()) as { data: Pick<WebhookEvent, 'retry_count'> | null; error: unknown };
 
     await supabaseAdmin
-      .from('webhook_events')
+      .from('webhook_events' as never)
       .update({
         processed: false,
         error_message: errorMessage,
@@ -244,6 +242,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       user_id: userId,
       razorpay_subscription_id: subscription.id,
       razorpay_plan_id: subscription.plan_id,
+      stripe_price_id: subscription.plan_id, // Legacy field
       status: 'active',
       plan_type: plan.id,
       current_period_start: subscription.current_start
@@ -436,7 +435,7 @@ async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload[
   const { error } = await supabaseAdmin
     .from('subscriptions')
     .update({
-      status: 'completed',
+      status: 'inactive',
     })
     .eq('razorpay_subscription_id', subscription.id);
 
@@ -476,7 +475,7 @@ async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['pa
   await supabaseAdmin
     .from('subscriptions')
     .update({
-      status: 'paused',
+      status: 'inactive', // Map 'paused' to 'inactive'
     })
     .eq('razorpay_subscription_id', subscription.id);
 
@@ -486,7 +485,7 @@ async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['pa
     await supabaseAdmin
       .from('users')
       .update({
-        subscription_status: 'paused',
+        subscription_status: 'inactive', // Map 'paused' to 'inactive'
       })
       .eq('id', userId);
   }
@@ -630,10 +629,10 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
 
 async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['payment']['entity']) {
   if (payment.subscription_id) {
-    // Update subscription status to past_due
+    // Update subscription status to inactive (payment failed)
     await supabaseAdmin
       .from('subscriptions')
-      .update({ status: 'past_due' })
+      .update({ status: 'inactive' }) // Map 'past_due' to 'inactive'
       .eq('razorpay_subscription_id', payment.subscription_id);
 
     // Send payment failed email

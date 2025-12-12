@@ -42,7 +42,7 @@ export async function checkRateLimit(
       return true
     }
 
-    const rateLimitWindowStart = new Date(rateLimit.window_start)
+    const rateLimitWindowStart = rateLimit.window_start ? new Date(rateLimit.window_start) : new Date(0)
 
     if (rateLimitWindowStart < windowStart) {
       // Window expired, reset
@@ -56,14 +56,14 @@ export async function checkRateLimit(
       return true
     }
 
-    if (rateLimit.attempts >= maxAttempts) {
+    if ((rateLimit.attempts ?? 0) >= maxAttempts) {
       // Rate limit exceeded
       const blockUntil = new Date(now.getTime() + windowMinutes * 60 * 1000)
       await RateLimitDatabase.upsert({
         identifier,
         endpoint,
-        attempts: rateLimit.attempts + 1,
-        window_start: rateLimit.window_start,
+        attempts: (rateLimit.attempts ?? 0) + 1,
+        window_start: rateLimit.window_start ?? undefined,
         blocked_until: blockUntil.toISOString(),
       })
       return false
@@ -73,8 +73,8 @@ export async function checkRateLimit(
     await RateLimitDatabase.upsert({
       identifier,
       endpoint,
-      attempts: rateLimit.attempts + 1,
-      window_start: rateLimit.window_start,
+      attempts: (rateLimit.attempts ?? 0) + 1,
+      window_start: rateLimit.window_start ?? undefined,
       blocked_until: rateLimit.blocked_until,
     })
 

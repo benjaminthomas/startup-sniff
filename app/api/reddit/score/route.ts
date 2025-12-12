@@ -12,10 +12,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { OpportunityScorer } from '@/services/opportunities/scorer'
 import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
-import type { Database } from '@/types/supabase'
 
 /**
  * POST /api/reddit/score
@@ -58,10 +57,7 @@ export async function POST(request: NextRequest) {
     monitor.log('info', `Scoring options: limit=${limit}, forceRescore=${forceRescore}, minScore=${minScore}`)
 
     // Initialize Supabase client with service role key
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = createServerAdminClient()
 
     // Fetch posts to score
     perf.start('fetch-posts')
@@ -248,10 +244,7 @@ export async function POST(request: NextRequest) {
  */
 export async function GET() {
   try {
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = createServerAdminClient()
 
     // Get scoring statistics
     const { data: allPosts, error: allError } = await supabase

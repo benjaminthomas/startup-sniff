@@ -5,8 +5,8 @@
  * Dashboard showing A/B test results for message template variants
  */
 
-import { createServerSupabaseClient } from '@/features/supabase/server'
 import { redirect } from 'next/navigation'
+import { getCurrentSession } from '@/features/auth/services/jwt'
 import { TemplateVariantDashboard } from '@/features/analytics/components/template-variant-dashboard'
 import { getTemplateVariantPerformance } from '@/features/analytics/actions/template-variants'
 
@@ -16,13 +16,10 @@ export const metadata = {
 }
 
 export default async function TemplateVariantsPage() {
-  const supabase = await createServerSupabaseClient()
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!session) {
     redirect('/login')
   }
 

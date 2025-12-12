@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerAdminClient } from '@/features/supabase/server';
 import { log } from '@/lib/logger'
 
 const CRON_SECRET = process.env.CRON_SECRET || 'your-cron-secret-here';
@@ -21,10 +21,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = createServerAdminClient();
 
     const now = new Date().toISOString();
 

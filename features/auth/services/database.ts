@@ -3,24 +3,12 @@
  * Uses Supabase database but bypasses Supabase Auth
  */
 
-import { createClient } from '@supabase/supabase-js'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { User, UserInsert, UserUpdate, UserSession, UserSessionInsert, AuthRateLimit, AuthRateLimitInsert } from '@/types/database'
 import { log } from '@/lib/logger'
 
 // Create Supabase client for database operations (not auth)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+const supabase = createServerAdminClient()
 
 /**
  * User database operations

@@ -65,10 +65,10 @@ function mapBudgetRange(budget?: string): 'bootstrap' | 'funded' | 'enterprise' 
 // Favorites functionality
 export async function toggleFavorite(ideaId: string) {
   const supabase = await createServerSupabaseClient();
-  
+
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     throw new Error('Authentication required');
   }
 
@@ -78,7 +78,7 @@ export async function toggleFavorite(ideaId: string) {
       .from('startup_ideas')
       .select('is_favorite')
       .eq('id', ideaId)
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single();
 
     if (fetchError) {
@@ -87,12 +87,12 @@ export async function toggleFavorite(ideaId: string) {
 
     // Toggle favorite status
     const newFavoriteStatus = !currentIdea.is_favorite;
-    
+
     const { error: updateError } = await supabase
       .from('startup_ideas')
       .update({ is_favorite: newFavoriteStatus })
       .eq('id', ideaId)
-      .eq('user_id', user.id);
+      .eq('user_id', session.userId);
 
     if (updateError) {
       throw new Error('Failed to update favorite status');
@@ -295,8 +295,8 @@ export async function validateIdea(ideaId: string) {
   const supabase = await createServerSupabaseClient();
   
   // Check authentication
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     redirect('/auth/signin');
   }
 
@@ -306,7 +306,7 @@ export async function validateIdea(ideaId: string) {
       .from('startup_ideas')
       .select('*')
       .eq('id', ideaId)
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single();
 
     if (ideaError || !idea) {
@@ -333,7 +333,7 @@ export async function validateIdea(ideaId: string) {
         updated_at: new Date().toISOString(),
       })
       .eq('id', ideaId)
-      .eq('user_id', user.id);
+      .eq('user_id', session.userId);
 
     if (updateError) {
       throw new Error('Failed to update idea with validation');
@@ -387,8 +387,8 @@ export async function getUserIdeas(limit: number = 10) {
 export async function getIdeaWithRedditSources(ideaId: string) {
   const supabase = await createServerSupabaseClient();
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const session = await getCurrentSession();
+  if (!session) {
     throw new Error('Authentication required');
   }
 
@@ -398,7 +398,7 @@ export async function getIdeaWithRedditSources(ideaId: string) {
       .from('startup_ideas')
       .select('*')
       .eq('id', ideaId)
-      .eq('user_id', user.id)
+      .eq('user_id', session.userId)
       .single();
 
     if (ideaError || !idea) {

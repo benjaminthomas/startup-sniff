@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerAdminClient } from '@/features/supabase/server';
 import { verifyAdminAuth, isAuthError } from '@/lib/middleware/admin-auth';
 import { validateRequestBody, activateSubscriptionSchema } from '@/lib/validation/api-schemas';
 import { log } from '@/lib/logger'
@@ -26,16 +26,7 @@ export async function POST(request: NextRequest) {
     log.info(`Admin ${adminUser.email} activating ${planType} for ${email}`);
 
     // Create Supabase admin client (bypasses RLS)
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    const supabase = createServerAdminClient();
 
     // 1. Get user
     const { data: user, error: userError } = await supabase
@@ -122,6 +113,13 @@ export async function POST(request: NextRequest) {
       const razorpayPlanId = planType === 'pro_monthly'
         ? process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID
         : process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID;
+
+      if (!razorpayPlanId) {
+        return NextResponse.json(
+          { error: 'Razorpay plan ID not configured for ' + planType },
+          { status: 500 }
+        );
+      }
 
       const { error: insertError } = await supabase
         .from('subscriptions')

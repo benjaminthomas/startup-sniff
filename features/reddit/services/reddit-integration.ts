@@ -3,7 +3,8 @@
  * Replaces mock data with real Reddit Trend Engine
  */
 
-import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { createServerAdminClient } from '@/features/supabase/server'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import Redis from 'ioredis'
 
 import type { Database } from '@/types/supabase'
@@ -55,10 +56,7 @@ class RedditIntegrationService {
 
   constructor() {
     // Initialize Supabase client
-    this.supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    this.supabase = createServerAdminClient()
   }
 
   private async initialize() {

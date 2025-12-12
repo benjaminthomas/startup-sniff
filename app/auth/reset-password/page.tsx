@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { getOrGenerateCSRFToken } from '@/features/auth/utils/csrf'
+import { getCurrentSession } from '@/features/auth/services/jwt'
 import { createServerAdminClient } from '@/features/supabase'
 import { ResetPasswordForm } from '@/features/auth/components/reset-password-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -45,18 +46,16 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   // Check if this is a valid password recovery session
   const cookieStore = await cookies()
   const recoverySession = cookieStore.get('auth-recovery')
-  
-  // Get user session directly from Supabase client
-  const supabase = createServerAdminClient()
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
+
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession()
+
   // Debug logging
   log.info('Reset password page', {
     recoverySession: recoverySession ? 'exists' : 'missing',
     codeParam: code ? 'exists' : 'missing',
     recoveryParam: recoveryParam ? 'true' : 'false',
-    userStatus: user ? 'authenticated' : 'not authenticated',
-    userError: userError ? userError.message : 'none'
+    sessionStatus: session ? 'authenticated' : 'not authenticated'
   })
   
   // Handle password reset code if present
@@ -97,15 +96,15 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   
   // Allow access if any of:
   // 1. Recovery session cookie exists (traditional flow)
-  // 2. User is authenticated (came from password reset callback)
+  // 2. JWT session exists (came from password reset callback)
   // 3. Recovery URL parameter is present (callback flow)
   // 4. Recovery token is present (new token-based flow)
-  const hasAccess = recoverySession || user || recoveryParam || recoveryToken
-  
+  const hasAccess = recoverySession || session || recoveryParam || recoveryToken
+
   if (!hasAccess) {
     log.info('Access denied', {
       recoverySession: recoverySession ? 'exists' : 'missing',
-      userStatus: user ? 'authenticated' : 'not authenticated',
+      sessionStatus: session ? 'authenticated' : 'not authenticated',
       recoveryParam
     })
     redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
@@ -113,7 +112,7 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
 
   log.info('Reset password access granted', {
     recoverySession: recoverySession ? 'exists' : 'missing',
-    userStatus: user ? 'authenticated' : 'not authenticated',
+    sessionStatus: session ? 'authenticated' : 'not authenticated',
     recoveryParam
   })
 

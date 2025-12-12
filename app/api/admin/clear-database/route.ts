@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerAdminClient } from '@/features/supabase/server';
 import { verifyAdminAuth, isAuthError } from '@/lib/middleware/admin-auth';
 import { validateRequestBody, clearDatabaseSchema } from '@/lib/validation/api-schemas';
 import { log } from '@/lib/logger'
@@ -43,16 +43,7 @@ export async function POST(request: NextRequest) {
     log.info(`⚠️  WARNING: Admin ${user.email} is clearing database...`);
 
     // Create Supabase admin client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false
-        }
-      }
-    );
+    const supabase = createServerAdminClient();
 
     // Delete in order respecting foreign key constraints
     const tablesToClear = tables || [
@@ -72,7 +63,7 @@ export async function POST(request: NextRequest) {
       log.info(`🗑️  Clearing ${table}...`);
 
       const { error, count } = await supabase
-        .from(table)
+        .from(table as never) // Type assertion needed for dynamic table names
         .delete()
         .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
 

@@ -23,14 +23,16 @@ interface ContactCardProps {
 export function ContactCard({ contact, hasRedditConnected = false }: ContactCardProps) {
   const [showTemplatePreview, setShowTemplatePreview] = useState(false)
   // Format account age
-  const formatAccountAge = (days: number): string => {
+  const formatAccountAge = (days: number | null): string => {
+    if (!days) return 'Unknown'
     if (days < 30) return `${days} days`
     if (days < 365) return `${Math.floor(days / 30)} months`
     return `${Math.floor(days / 365)} years`
   }
 
   // Format karma with commas
-  const formatKarma = (karma: number): string => {
+  const formatKarma = (karma: number | null): string => {
+    if (!karma) return '0'
     return karma.toLocaleString()
   }
 

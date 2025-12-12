@@ -5,8 +5,8 @@
  * Allows users to manage email preferences
  */
 
-import { createServerSupabaseClient } from '@/features/supabase/server'
 import { redirect } from 'next/navigation'
+import { getCurrentSession } from '@/features/auth/services/jwt'
 import { EmailPreferencesForm } from '@/features/settings/components/email-preferences-form'
 
 export const metadata = {
@@ -15,13 +15,10 @@ export const metadata = {
 }
 
 export default async function SettingsPage() {
-  const supabase = await createServerSupabaseClient()
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession()
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser()
-
-  if (!user) {
+  if (!session) {
     redirect('/login')
   }
 
@@ -43,14 +40,8 @@ export default async function SettingsPage() {
           <div className="space-y-3">
             <div>
               <span className="text-sm font-medium text-gray-600">Email:</span>
-              <p className="text-gray-900">{user.email}</p>
+              <p className="text-gray-900">{session.email}</p>
             </div>
-            {user.user_metadata?.name && (
-              <div>
-                <span className="text-sm font-medium text-gray-600">Name:</span>
-                <p className="text-gray-900">{user.user_metadata.name}</p>
-              </div>
-            )}
           </div>
         </div>
 
