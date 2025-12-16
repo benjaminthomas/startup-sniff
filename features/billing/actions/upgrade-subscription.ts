@@ -21,7 +21,6 @@ export async function upgradeMonthlyToYearly() {
 
   try {
     // 1. Get user's current subscription
-    // @ts-ignore
     const { data: currentSubscription, error: subError } = await supabase
       .from('subscriptions')
       .select('*')
@@ -30,21 +29,27 @@ export async function upgradeMonthlyToYearly() {
       .eq('plan_type', 'pro_monthly')
       .single();
 
-    if (subError || !currentSubscription) {
+    const typedSubscription = currentSubscription as {
+      id: string;
+      razorpay_subscription_id: string;
+      current_period_end: string | null;
+    } | null;
+
+    if (subError || !typedSubscription) {
       return {
         success: false,
         error: 'No active monthly subscription found. Please subscribe to monthly plan first.',
       };
     }
 
-    if (!currentSubscription.current_period_end) {
+    if (!typedSubscription.current_period_end) {
       return {
         success: false,
         error: 'Current subscription is missing billing period information.',
       };
     }
 
-    if (!currentSubscription.razorpay_subscription_id) {
+    if (!typedSubscription.razorpay_subscription_id) {
       return {
         success: false,
         error: 'Current subscription is missing Razorpay subscription ID.',
@@ -58,7 +63,9 @@ export async function upgradeMonthlyToYearly() {
       .eq('id', session.userId)
       .single();
 
-    if (!profile) {
+    const typedProfile = profile as { email: string | null } | null;
+
+    if (!typedProfile) {
       return {
         success: false,
         error: 'User profile not found',
@@ -66,7 +73,7 @@ export async function upgradeMonthlyToYearly() {
     }
 
     // 3. Check if manual subscription (needed for proration and cancellation logic)
-    const isManualSubscription = currentSubscription.razorpay_subscription_id.startsWith('manual_');
+    const isManualSubscription = typedSubscription.razorpay_subscription_id.startsWith('manual_');
 
     // 4. Calculate proration
     const monthlyPlan = PRICING_PLANS.find(p => p.id === 'pro_monthly')!;
@@ -84,7 +91,7 @@ export async function upgradeMonthlyToYearly() {
           message: 'Upgrading from manual subscription. You will pay the full yearly amount.',
         }
       : calculateMonthlyToYearlyProration(
-          currentSubscription.current_period_end,
+          typedSubscription.current_period_end,
           monthlyPlan.price,
           yearlyPlan.price
         );
@@ -93,7 +100,7 @@ export async function upgradeMonthlyToYearly() {
     if (!isManualSubscription) {
       // Only call Razorpay API for real subscriptions
       try {
-        await cancelRazorpaySubscription(currentSubscription.razorpay_subscription_id);
+        await cancelRazorpaySubscription(typedSubscription.razorpay_subscription_id);
       } catch (cancelError) {
         log.error('Failed to cancel monthly subscription:', cancelError);
         // Continue anyway - we'll mark it cancelled in our DB
@@ -105,11 +112,11 @@ export async function upgradeMonthlyToYearly() {
     // 6. Update current subscription status in database (works for both manual and real subscriptions)
     // Mark for cancellation but keep it active until period ends
     await supabase
-      .from('subscriptions')
+      .from('subscriptions' as never)
       .update({
         cancel_at_period_end: true,
-      })
-      .eq('id', currentSubscription.id);
+      } as never)
+      .eq('id', typedSubscription.id);
 
     // 7. Create new yearly subscription at Razorpay
     const yearlySubscription = await createRazorpaySubscription({
@@ -119,7 +126,7 @@ export async function upgradeMonthlyToYearly() {
       total_count: 1200, // Maximum allowed by Razorpay
       notes: {
         user_id: session.userId,
-        user_email: session.email || profile.email || '',
+        user_email: session.email || typedProfile.email || '',
         plan_type: 'pro_yearly',
         upgraded_from: 'pro_monthly',
         proration_credit: proration.creditAmount.toString(),
@@ -129,7 +136,7 @@ export async function upgradeMonthlyToYearly() {
     });
 
     // 8. Create new subscription record in database
-    await supabase.from('subscriptions').insert({
+    await supabase.from('subscriptions' as never).insert({
       user_id: session.userId,
       razorpay_subscription_id: yearlySubscription.id,
       razorpay_plan_id: yearlyPlan.priceId,
@@ -138,7 +145,7 @@ export async function upgradeMonthlyToYearly() {
       plan_type: 'pro_yearly',
       current_period_start: new Date().toISOString(),
       current_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-    });
+    } as never);
 
     // 9. Return subscription details for payment
     return {
@@ -171,7 +178,6 @@ export async function getUpgradeProration() {
 
   try {
     // Get user's current subscription
-    // @ts-ignore
     const { data: currentSubscription } = await supabase
       .from('subscriptions')
       .select('current_period_end')
@@ -180,14 +186,16 @@ export async function getUpgradeProration() {
       .eq('plan_type', 'pro_monthly')
       .single();
 
-    if (!currentSubscription) {
+    const typedSubscription = currentSubscription as { current_period_end: string | null } | null;
+
+    if (!typedSubscription) {
       return {
         success: false,
         error: 'No active monthly subscription found',
       };
     }
 
-    if (!currentSubscription.current_period_end) {
+    if (!typedSubscription.current_period_end) {
       return {
         success: false,
         error: 'Current subscription is missing billing period information.',
@@ -198,7 +206,7 @@ export async function getUpgradeProration() {
     const yearlyPlan = PRICING_PLANS.find(p => p.id === 'pro_yearly')!;
 
     const proration = calculateMonthlyToYearlyProration(
-      currentSubscription.current_period_end,
+      typedSubscription.current_period_end,
       monthlyPlan.price,
       yearlyPlan.price
     );

@@ -94,15 +94,15 @@ export async function GET(request: NextRequest) {
 
     // Create or update user profile
     const { error: profileError } = await supabase
-      .from('users')
+      .from('users' as never)
       .upsert({
         id: data.user.id,
         email: data.user.email!,
-        full_name: data.user.user_metadata?.full_name || 
+        full_name: data.user.user_metadata?.full_name ||
                    data.user.user_metadata?.name || '',
         avatar_url: data.user.user_metadata?.avatar_url || null,
         updated_at: new Date().toISOString(),
-      }, {
+      } as never, {
         onConflict: 'id'
       })
 

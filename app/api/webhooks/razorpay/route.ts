@@ -106,7 +106,7 @@ export async function POST(req: NextRequest) {
         event_type: eventType,
         payload: payload,
         processed: false,
-      });
+      } as never);
   }
 
   try {
@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
         processed: true,
         processed_at: new Date().toISOString(),
         error_message: null,
-      })
+      } as never)
       .eq('event_id', eventId);
 
     log.info(`Event ${eventId} processed successfully`);
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         processed: false,
         error_message: errorMessage,
         retry_count: (currentEvent?.retry_count || 0) + 1,
-      })
+      } as never)
       .eq('event_id', eventId);
 
     return NextResponse.json(
@@ -224,7 +224,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   if (existingSub) {
     // Update existing subscription
     await supabaseAdmin
-      .from('subscriptions')
+      .from('subscriptions' as never)
       .update({
         status: 'active',
         plan_type: plan.id,
@@ -234,11 +234,11 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
         current_period_end: subscription.current_end
           ? new Date(subscription.current_end * 1000).toISOString()
           : new Date().toISOString(),
-      })
+      } as never)
       .eq('razorpay_subscription_id', subscription.id);
   } else {
     // Create new subscription record
-    const { error } = await supabaseAdmin.from('subscriptions').insert({
+    const { error } = await supabaseAdmin.from('subscriptions' as never).insert({
       user_id: userId,
       razorpay_subscription_id: subscription.id,
       razorpay_plan_id: subscription.plan_id,
@@ -251,7 +251,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       current_period_end: subscription.current_end
         ? new Date(subscription.current_end * 1000).toISOString()
         : new Date().toISOString(),
-    });
+    } as never);
 
     if (error) {
       throw new Error(`Failed to create subscription: ${error.message}`);
@@ -262,11 +262,11 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   log.info('[WEBHOOK] Updating user plan:', { userId, planType: plan.id });
 
   const { error: userUpdateError } = await supabaseAdmin
-    .from('users')
+    .from('users' as never)
     .update({
       subscription_status: 'active',
       plan_type: plan.id,
-    })
+    } as never)
     .eq('id', userId);
 
   if (userUpdateError) {
@@ -285,12 +285,12 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
   });
 
   const { error: limitsError } = await supabaseAdmin
-    .from('usage_limits')
+    .from('usage_limits' as never)
     .update({
       plan_type: plan.id,
       monthly_limit_ideas: plan.limits.ideas === -1 ? 999999 : plan.limits.ideas,
       monthly_limit_validations: plan.limits.validations === -1 ? 999999 : plan.limits.validations,
-    })
+    } as never)
     .eq('user_id', userId);
 
   if (limitsError) {
@@ -308,7 +308,9 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       .eq('id', userId)
       .single();
 
-    if (user?.email) {
+    const typedUser = user as { email: string; full_name: string | null } | null
+
+    if (typedUser?.email) {
       // Get most recent payment transaction
       const { data: payment } = await supabaseAdmin
         .from('payment_transactions')
@@ -318,6 +320,8 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
         .limit(1)
         .single();
 
+      const typedPayment = payment as { razorpay_invoice_url: string | null; amount: number } | null
+
       // Determine event type
       const isUpgrade = subscription.notes.upgraded_from === 'pro_monthly';
 
@@ -326,12 +330,12 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       const emailFunction = isUpgrade ? sendSubscriptionUpgradedEmail : sendSubscriptionActivatedEmail;
 
       await emailFunction({
-        to: user.email,
-        userName: user.full_name || user.email.split('@')[0],
+        to: typedUser.email,
+        userName: typedUser.full_name || typedUser.email.split('@')[0],
         planName: plan.name,
-        amount: payment?.amount || 0,
+        amount: typedPayment?.amount || 0,
         currency: 'INR',
-        invoiceUrl: payment?.razorpay_invoice_url || 'https://startupsniff.com/dashboard/billing',
+        invoiceUrl: typedPayment?.razorpay_invoice_url || 'https://startupsniff.com/dashboard/billing',
         nextBillingDate: subscription.current_end
           ? new Date(subscription.current_end * 1000).toISOString()
           : null,
@@ -340,7 +344,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
           : undefined,
       });
 
-      log.info(`${isUpgrade ? 'Upgrade' : 'Activation'} email sent to ${user.email}`);
+      log.info(`${isUpgrade ? 'Upgrade' : 'Activation'} email sent to ${typedUser.email}`);
     }
   } catch (emailError) {
     log.error('Email notification failed:', emailError);
@@ -358,7 +362,7 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
 async function handleSubscriptionCharged(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
   // Update subscription period dates
   await supabaseAdmin
-    .from('subscriptions')
+    .from('subscriptions' as never)
     .update({
       status: 'active',
       current_period_start: subscription.current_start
@@ -367,7 +371,7 @@ async function handleSubscriptionCharged(subscription: RazorpayWebhookPayload['p
       current_period_end: subscription.current_end
         ? new Date(subscription.current_end * 1000).toISOString()
         : new Date().toISOString(),
-    })
+    } as never)
     .eq('razorpay_subscription_id', subscription.id);
 
   log.info(`Subscription charged: ${subscription.id}`);
@@ -375,11 +379,11 @@ async function handleSubscriptionCharged(subscription: RazorpayWebhookPayload['p
 
 async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
   const { error } = await supabaseAdmin
-    .from('subscriptions')
+    .from('subscriptions' as never)
     .update({
       status: 'cancelled',
       cancel_at_period_end: true,
-    })
+    } as never)
     .eq('razorpay_subscription_id', subscription.id);
 
   if (error) {
@@ -390,10 +394,10 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
   const userId = subscription.notes.user_id;
   if (userId) {
     await supabaseAdmin
-      .from('users')
+      .from('users' as never)
       .update({
         subscription_status: 'cancelled',
-      })
+      } as never)
       .eq('id', userId);
 
     // Send cancellation email
@@ -404,22 +408,24 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
         .eq('id', userId)
         .single();
 
-      if (user?.email) {
-        const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
+      const typedUser2 = user as { email: string; full_name: string | null; plan_type: string } | null
+
+      if (typedUser2?.email) {
+        const plan = PRICING_PLANS.find(p => p.id === typedUser2.plan_type);
 
         if (plan) {
           const { sendSubscriptionCancelledEmail } = await import('@/services/email/subscription-emails');
 
           await sendSubscriptionCancelledEmail({
-            to: user.email,
-            userName: user.full_name || user.email.split('@')[0],
+            to: typedUser2.email,
+            userName: typedUser2.full_name || typedUser2.email.split('@')[0],
             planName: plan.name,
             nextBillingDate: subscription.current_end
               ? new Date(subscription.current_end * 1000).toISOString()
               : null,
           });
 
-          log.info(`Cancellation email sent to ${user.email}`);
+          log.info(`Cancellation email sent to ${typedUser2.email}`);
         }
       }
     } catch (emailError) {
@@ -433,10 +439,10 @@ async function handleSubscriptionCancelled(subscription: RazorpayWebhookPayload[
 
 async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
   const { error } = await supabaseAdmin
-    .from('subscriptions')
+    .from('subscriptions' as never)
     .update({
       status: 'inactive',
-    })
+    } as never)
     .eq('razorpay_subscription_id', subscription.id);
 
   if (error) {
@@ -447,23 +453,23 @@ async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload[
   const userId = subscription.notes.user_id;
   if (userId) {
     await supabaseAdmin
-      .from('users')
+      .from('users' as never)
       .update({
         subscription_status: 'cancelled',
         plan_type: 'free',
-      })
+      } as never)
       .eq('id', userId);
 
     // Reset to free plan limits
     const freePlan = PRICING_PLANS.find(p => p.id === 'free');
     if (freePlan) {
       await supabaseAdmin
-        .from('usage_limits')
+        .from('usage_limits' as never)
         .update({
           plan_type: 'free',
           monthly_limit_ideas: freePlan.limits.ideas,
           monthly_limit_validations: freePlan.limits.validations,
-        })
+        } as never)
         .eq('user_id', userId);
     }
   }
@@ -473,20 +479,20 @@ async function handleSubscriptionCompleted(subscription: RazorpayWebhookPayload[
 
 async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
   await supabaseAdmin
-    .from('subscriptions')
+    .from('subscriptions' as never)
     .update({
       status: 'inactive', // Map 'paused' to 'inactive'
-    })
+    } as never)
     .eq('razorpay_subscription_id', subscription.id);
 
   // Update user status
   const userId = subscription.notes.user_id;
   if (userId) {
     await supabaseAdmin
-      .from('users')
+      .from('users' as never)
       .update({
         subscription_status: 'inactive', // Map 'paused' to 'inactive'
-      })
+      } as never)
       .eq('id', userId);
   }
 
@@ -495,20 +501,20 @@ async function handleSubscriptionPaused(subscription: RazorpayWebhookPayload['pa
 
 async function handleSubscriptionResumed(subscription: RazorpayWebhookPayload['payload']['subscription']['entity']) {
   await supabaseAdmin
-    .from('subscriptions')
+    .from('subscriptions' as never)
     .update({
       status: 'active',
-    })
+    } as never)
     .eq('razorpay_subscription_id', subscription.id);
 
   // Update user status
   const userId = subscription.notes.user_id;
   if (userId) {
     await supabaseAdmin
-      .from('users')
+      .from('users' as never)
       .update({
         subscription_status: 'active',
-      })
+      } as never)
       .eq('id', userId);
   }
 
@@ -519,8 +525,8 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
   if (payment.subscription_id) {
     // Update subscription status to active
     await supabaseAdmin
-      .from('subscriptions')
-      .update({ status: 'active' })
+      .from('subscriptions' as never)
+      .update({ status: 'active' } as never)
       .eq('razorpay_subscription_id', payment.subscription_id);
 
     // Get subscription to find user_id
@@ -530,7 +536,9 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
       .eq('razorpay_subscription_id', payment.subscription_id)
       .single();
 
-    if (subscription) {
+    const typedSubscription = subscription as { user_id: string } | null
+
+    if (typedSubscription) {
       // Create or update payment transaction record
       const { data: existingPayment } = await supabaseAdmin
         .from('payment_transactions')
@@ -541,19 +549,19 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
       if (existingPayment) {
         // Update existing record
         await supabaseAdmin
-          .from('payment_transactions')
+          .from('payment_transactions' as never)
           .update({
             status: 'captured',
             amount: payment.amount,
             captured_at: new Date().toISOString(),
-          })
+          } as never)
           .eq('razorpay_payment_id', payment.id);
       } else {
         // Create new record
         await supabaseAdmin
-          .from('payment_transactions')
+          .from('payment_transactions' as never)
           .insert({
-            user_id: subscription.user_id,
+            user_id: typedSubscription.user_id,
             razorpay_subscription_id: payment.subscription_id,
             razorpay_payment_id: payment.id,
             razorpay_order_id: payment.order_id,
@@ -562,7 +570,7 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
             status: 'captured',
             payment_method: payment.method,
             captured_at: new Date().toISOString(),
-          });
+          } as never);
       }
 
       // Generate or fetch invoice
@@ -585,18 +593,20 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
           const { data: user } = await supabaseAdmin
             .from('users')
             .select('email, full_name, razorpay_customer_id')
-            .eq('id', subscription.user_id)
+            .eq('id', typedSubscription.user_id)
             .single();
 
-          if (user && user.razorpay_customer_id) {
+          const typedUser3 = user as { email: string; full_name: string | null; razorpay_customer_id: string | null } | null
+
+          if (typedUser3 && typedUser3.razorpay_customer_id) {
             // Create new invoice
             const newInvoice = await createInvoice({
-              customerId: user.razorpay_customer_id,
+              customerId: typedUser3.razorpay_customer_id,
               amount: payment.amount,
               currency: payment.currency || 'INR',
               description: 'StartupSniff Pro Subscription',
-              customer_email: user.email,
-              customer_name: user.full_name || user.email.split('@')[0],
+              customer_email: typedUser3.email,
+              customer_name: typedUser3.full_name || typedUser3.email.split('@')[0],
               payment_id: payment.id,
             });
 
@@ -609,12 +619,12 @@ async function handlePaymentCaptured(payment: RazorpayWebhookPayload['payload'][
         // Store invoice ID and URL in payment transaction
         if (invoiceId) {
           await supabaseAdmin
-            .from('payment_transactions')
+            .from('payment_transactions' as never)
             .update({
               razorpay_invoice_id: invoiceId,
               razorpay_invoice_url: invoiceUrl,
               invoice_generated_at: new Date().toISOString(),
-            })
+            } as never)
             .eq('razorpay_payment_id', payment.id);
         }
       } catch (invoiceError) {
@@ -631,8 +641,8 @@ async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['p
   if (payment.subscription_id) {
     // Update subscription status to inactive (payment failed)
     await supabaseAdmin
-      .from('subscriptions')
-      .update({ status: 'inactive' }) // Map 'past_due' to 'inactive'
+      .from('subscriptions' as never)
+      .update({ status: 'inactive' } as never) // Map 'past_due' to 'inactive'
       .eq('razorpay_subscription_id', payment.subscription_id);
 
     // Send payment failed email
@@ -643,28 +653,32 @@ async function handlePaymentFailed(payment: RazorpayWebhookPayload['payload']['p
         .eq('razorpay_subscription_id', payment.subscription_id)
         .single();
 
-      if (subscription) {
+      const typedSubscription2 = subscription as { user_id: string } | null
+
+      if (typedSubscription2) {
         const { data: user } = await supabaseAdmin
           .from('users')
           .select('email, full_name, plan_type')
-          .eq('id', subscription.user_id)
+          .eq('id', typedSubscription2.user_id)
           .single();
 
-        if (user?.email) {
-          const plan = PRICING_PLANS.find(p => p.id === user.plan_type);
+        const typedUser4 = user as { email: string; full_name: string | null; plan_type: string } | null
+
+        if (typedUser4?.email) {
+          const plan = PRICING_PLANS.find(p => p.id === typedUser4.plan_type);
 
           if (plan) {
             const { sendPaymentFailedEmail } = await import('@/services/email/subscription-emails');
 
             await sendPaymentFailedEmail({
-              to: user.email,
-              userName: user.full_name || user.email.split('@')[0],
+              to: typedUser4.email,
+              userName: typedUser4.full_name || typedUser4.email.split('@')[0],
               planName: plan.name,
               amount: payment.amount,
               currency: 'INR',
             });
 
-            log.info(`Payment failed email sent to ${user.email}`);
+            log.info(`Payment failed email sent to ${typedUser4.email}`);
           }
         }
       }

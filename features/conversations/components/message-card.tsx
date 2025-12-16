@@ -17,8 +17,8 @@ interface Message {
   id: string
   reddit_username: string
   message_text: string
-  template_variant: string
-  send_status: string
+  template_variant: string | null
+  send_status: string | null
   sent_at: string | null
   outcome: string | null
   replied_at: string | null
@@ -26,14 +26,14 @@ interface Message {
   contact: {
     reddit_username: string
     post_excerpt: string | null
-    karma: number
+    karma: number | null
     engagement_score: number
-  }
+  } | null
   pain_point: {
     reddit_id: string
     title: string
     subreddit: string
-  }
+  } | null
 }
 
 interface MessageCardProps {
@@ -123,27 +123,37 @@ export function MessageCard({ message }: MessageCardProps) {
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-1">
             <Link
-              href={`https://reddit.com/user/${message.contact.reddit_username}`}
+              href={`https://reddit.com/user/${message.contact?.reddit_username || message.reddit_username}`}
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-gray-900 hover:text-blue-600"
             >
-              u/{message.contact.reddit_username}
+              u/{message.contact?.reddit_username || message.reddit_username}
             </Link>
-            <span className="text-gray-400">•</span>
-            <span className="text-sm text-gray-500">{message.contact.karma} karma</span>
+            {message.contact?.karma && (
+              <>
+                <span className="text-gray-400">•</span>
+                <span className="text-sm text-gray-500">{message.contact.karma} karma</span>
+              </>
+            )}
           </div>
-          <Link
-            href={`/dashboard/opportunities/${message.pain_point.reddit_id}`}
-            className="text-sm text-gray-600 hover:text-blue-600"
-          >
-            Re: {message.pain_point.title}
-          </Link>
+          {message.pain_point && (
+            <Link
+              href={`/dashboard/opportunities/${message.pain_point.reddit_id}`}
+              className="text-sm text-gray-600 hover:text-blue-600"
+            >
+              Re: {message.pain_point.title}
+            </Link>
+          )}
           <div className="flex items-center gap-2 mt-2 text-xs text-gray-500">
-            <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-              r/{message.pain_point.subreddit}
-            </span>
-            <span>•</span>
+            {message.pain_point && (
+              <>
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                  r/{message.pain_point.subreddit}
+                </span>
+                <span>•</span>
+              </>
+            )}
             <span>{formatDate(message.sent_at)}</span>
           </div>
         </div>
@@ -154,7 +164,7 @@ export function MessageCard({ message }: MessageCardProps) {
       </div>
 
       {/* Post Excerpt */}
-      {message.contact.post_excerpt && (
+      {message.contact?.post_excerpt && (
         <div className="bg-gray-50 rounded-lg p-3 mb-4 text-sm text-gray-700 border border-gray-200">
           <p className="italic line-clamp-2">&quot;{message.contact.post_excerpt}&quot;</p>
         </div>
@@ -229,12 +239,14 @@ export function MessageCard({ message }: MessageCardProps) {
           <p className="text-sm text-gray-600 mb-2">
             This message hasn&apos;t been sent yet. Go to the contacts page to send it.
           </p>
-          <Link
-            href={`/dashboard/opportunities/${message.pain_point.reddit_id}/contacts`}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            View Contacts
-          </Link>
+          {message.pain_point && (
+            <Link
+              href={`/dashboard/opportunities/${message.pain_point.reddit_id}/contacts`}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              View Contacts
+            </Link>
+          )}
         </div>
       )}
     </div>

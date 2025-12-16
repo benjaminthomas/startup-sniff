@@ -59,8 +59,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day1Start.toISOString())
       .lte('created_at', day1End.toISOString())
 
-    if (day1Users) {
-      for (const user of day1Users) {
+    const typedDay1Users = (day1Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay1Users.length > 0) {
+      for (const user of typedDay1Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -68,11 +70,11 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay1(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day1_sent_at: now.toISOString(),
               last_onboarding_email: 'day1',
-            })
+            } as never)
             .eq('id', user.id)
 
           day1Count++
@@ -104,8 +106,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day3Start.toISOString())
       .lte('created_at', day3End.toISOString())
 
-    if (day3Users) {
-      for (const user of day3Users) {
+    const typedDay3Users = (day3Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay3Users.length > 0) {
+      for (const user of typedDay3Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -113,11 +117,11 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay3(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day3_sent_at: now.toISOString(),
               last_onboarding_email: 'day3',
-            })
+            } as never)
             .eq('id', user.id)
 
           day3Count++
@@ -149,8 +153,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day7Start.toISOString())
       .lte('created_at', day7End.toISOString())
 
-    if (day7Users) {
-      for (const user of day7Users) {
+    const typedDay7Users = (day7Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay7Users.length > 0) {
+      for (const user of typedDay7Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -158,11 +164,11 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay7(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day7_sent_at: now.toISOString(),
               last_onboarding_email: 'day7',
-            })
+            } as never)
             .eq('id', user.id)
 
           day7Count++

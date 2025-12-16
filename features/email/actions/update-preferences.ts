@@ -11,30 +11,10 @@
 
 'use server'
 
-import { z } from 'zod'
 import { getCurrentSession } from '@/features/auth/services/jwt'
 import { createServerSupabaseClient as createClient } from '@/features/supabase/server'
 import { log } from '@/lib/logger'
-
-export interface EmailPreferences {
-  onboarding?: boolean
-  weekly_summary?: boolean
-  product_updates?: boolean
-  marketing?: boolean
-  message_confirmations?: boolean
-}
-
-/**
- * Zod schema for email preferences validation
- * Ensures only valid boolean values are accepted
- */
-const emailPreferencesSchema = z.object({
-  onboarding: z.boolean().optional(),
-  weekly_summary: z.boolean().optional(),
-  product_updates: z.boolean().optional(),
-  marketing: z.boolean().optional(),
-  message_confirmations: z.boolean().optional()
-}).strict() // Reject any extra fields
+import { emailPreferencesSchema, type EmailPreferences } from '@/features/email/schemas/email-schemas'
 
 /**
  * Update user's email preferences
@@ -80,8 +60,8 @@ export async function updateEmailPreferences(
 
     // Update preferences using authenticated user's ID
     const { error } = await supabase
-      .from('users')
-      .update({ email_preferences: validatedPreferences })
+      .from('users' as never)
+      .update({ email_preferences: validatedPreferences } as never)
       .eq('id', session.userId) // Use session userId, not parameter
 
     if (error) {
@@ -139,7 +119,9 @@ export async function getEmailPreferences() {
       .eq('id', session.userId) // Use session userId, not parameter
       .single()
 
-    if (error) {
+    const typedData = data as { email_preferences: any } | null;
+
+    if (error || !typedData) {
       log.error('[get-preferences] Database error', error, {
         userId: session.userId
       })
@@ -152,7 +134,7 @@ export async function getEmailPreferences() {
 
     return {
       success: true,
-      preferences: (data.email_preferences as EmailPreferences) || {
+      preferences: (typedData.email_preferences as EmailPreferences) || {
         onboarding: true,
         weekly_summary: true,
         product_updates: true,

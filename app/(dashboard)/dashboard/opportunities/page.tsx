@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui/page-header"
 import { OpportunitiesContent } from "./opportunities-content"
 import { createServerAdminClient } from '@/features/supabase/server'
 import { log } from '@/lib/logger'
+import type { RedditPost } from '@/types/supabase'
 
 export const metadata = {
   title: 'Opportunities | StartupSniff',
@@ -73,6 +74,8 @@ export default async function OpportunitiesPage({
     log.error('Error fetching opportunities:', error)
   }
 
+  const typedOpportunities = (opportunities || []) as RedditPost[]
+
   // Get filter options
   const { data: subreddits } = await supabase
     .from('reddit_posts')
@@ -81,8 +84,9 @@ export default async function OpportunitiesPage({
     .not('reddit_id', 'like', 'test_%') // Exclude test posts
     .order('subreddit')
 
+  const typedSubreddits = (subreddits || []) as Array<{ subreddit: string }>
   const uniqueSubreddits = Array.from(
-    new Set(subreddits?.map(s => s.subreddit) || [])
+    new Set(typedSubreddits.map(s => s.subreddit))
   )
 
   // Get statistics
@@ -92,10 +96,11 @@ export default async function OpportunitiesPage({
     .not('viability_score', 'is', null)
     .not('reddit_id', 'like', 'test_%') // Exclude test posts
 
-  const totalOpportunities = stats?.length || 0
-  const highPotential = stats?.filter(s => s.viability_score && s.viability_score >= 7).length || 0
-  const avgScore = stats && stats.length > 0
-    ? stats.reduce((sum, s) => sum + (s.viability_score || 0), 0) / stats.length
+  const typedStats = (stats || []) as Array<{ viability_score: number | null }>
+  const totalOpportunities = typedStats.length
+  const highPotential = typedStats.filter(s => s.viability_score && s.viability_score >= 7).length
+  const avgScore = typedStats.length > 0
+    ? typedStats.reduce((sum, s) => sum + (s.viability_score || 0), 0) / typedStats.length
     : 0
 
   return (
@@ -122,7 +127,7 @@ export default async function OpportunitiesPage({
       </div>
 
       <OpportunitiesContent
-        opportunities={opportunities || []}
+        opportunities={typedOpportunities}
         subreddits={uniqueSubreddits}
         currentFilters={{
           minScore,

@@ -85,7 +85,9 @@
       "Bash(npx next build:*)",
       "Bash(do if grep -q \"supabase\\.auth\\.getUser()\" \"$file\")",
       "Bash(then echo \"$file\")",
-      "Bash(timeout 120 npm run build:*)"
+      "Bash(timeout 120 npm run build:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

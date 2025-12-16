@@ -42,17 +42,19 @@ export async function createSubscription(planId: string) {
       .eq('id', session.userId)
       .single();
 
+    const typedProfile = profile as { razorpay_customer_id: string | null; full_name: string | null } | null;
+
     // Step 1: Create or get Razorpay customer
     const customer = await createOrGetCustomer(
       session.email || '',
-      profile?.full_name || undefined
+      typedProfile?.full_name || undefined
     );
 
     // Update user profile with customer ID if not present
-    if (!profile?.razorpay_customer_id) {
+    if (!typedProfile?.razorpay_customer_id) {
       await supabase
-        .from('users')
-        .update({ razorpay_customer_id: customer.id })
+        .from('users' as never)
+        .update({ razorpay_customer_id: customer.id } as never)
         .eq('id', session.userId);
     }
 
@@ -168,10 +170,10 @@ export async function cancelSubscription(subscriptionId: string) {
     // Update subscription in database - keep it active until period ends
     // Status will be changed to 'cancelled' by a background job when current_period_end is reached
     await supabase
-      .from('subscriptions')
+      .from('subscriptions' as never)
       .update({
         cancel_at_period_end: true
-      })
+      } as never)
       .eq('razorpay_subscription_id', subscriptionId);
 
     return {
@@ -202,7 +204,9 @@ export async function updateSubscription(newPlanId: string) {
       .eq('status', 'active')
       .single();
 
-    if (!subscription || !(subscription as unknown as { razorpay_subscription_id?: string }).razorpay_subscription_id) {
+    const typedSubscription = subscription as { id: string; razorpay_subscription_id: string } | null;
+
+    if (!typedSubscription || !typedSubscription.razorpay_subscription_id) {
       return { error: 'No active subscription found' };
     }
 
@@ -214,20 +218,19 @@ export async function updateSubscription(newPlanId: string) {
     }
 
     // Update subscription in Razorpay
-    const razorpaySubId = (subscription as unknown as { razorpay_subscription_id?: string }).razorpay_subscription_id!;
-    await updateRazorpaySubscription(razorpaySubId, {
+    await updateRazorpaySubscription(typedSubscription.razorpay_subscription_id, {
       plan_id: newPlan.priceId,
       schedule_change_at: 'now'
     });
 
     // Update subscription in database
     await supabase
-      .from('subscriptions')
+      .from('subscriptions' as never)
       .update({
         razorpay_plan_id: newPlan.priceId,
         plan_type: newPlan.id as unknown as 'free' | 'pro_monthly' | 'pro_yearly'
       } as never)
-      .eq('id', subscription.id);
+      .eq('id', typedSubscription.id);
 
     // Update user's plan type
     await supabase

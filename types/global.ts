@@ -1,3 +1,5 @@
+import type { TargetMarket, Solution, MarketAnalysis, Implementation, SuccessMetrics } from './startup-ideas';
+
 export type PlanType = 'free' | 'pro_monthly' | 'pro_yearly';
 export type SubscriptionStatus = 'trial' | 'active' | 'inactive' | 'cancelled' | 'past_due';
 
@@ -27,65 +29,52 @@ export interface UsageLimits {
   updated_at: string;
 }
 
-export interface TargetMarket {
-  demographic: string;
-  size: string;
-  pain_level: number;
-}
-
-export interface Solution {
-  value_proposition: string;
-  features: string[];
-  business_model: string;
-}
-
-export interface MarketAnalysis {
-  competition_level: string;
-  timing: string;
-  barriers: string[];
-}
-
-export interface Implementation {
-  complexity: number;
-  mvp: string;
-  time_to_market: string;
-}
-
-export interface SuccessMetrics {
-  probability_score: number;
-  risk_factors: string[];
-}
-
 export interface StartupIdea {
   id: string;
   user_id: string;
   title: string;
   problem_statement: string;
-  target_market: TargetMarket;
-  solution: Solution;
-  market_analysis: MarketAnalysis;
-  implementation: Implementation;
-  success_metrics: SuccessMetrics;
-  ai_confidence_score?: number;
-  source_data?: {
+  target_market: {
+    description: string;
+    size: string;
+  } | null;
+  solution: {
+    description: string;
+    unique_value_proposition: string;
+    revenue_model: string;
+  } | null;
+  market_analysis: {
+    competition: string;
+    opportunities: string[];
+    risks: string[];
+  } | null;
+  implementation: {
+    estimated_cost: string;
+    time_to_market: string;
+    next_steps: string | string[];
+  } | null;
+  success_metrics: Record<string, unknown> | null;
+  ai_confidence_score: number | null;
+  source_data: {
     pain_point_sources?: string[];
     research_urls?: string[];
+    generation_params?: Record<string, unknown>;
+    generated_at?: string;
+    reddit_powered?: boolean;
+    generation_method?: string;
+    product_type?: string;
+    specific_pain_points?: string[];
+    target_personas?: Array<{
+      name: string;
+      role: string;
+      painPoints: string[];
+    }>;
+    technical_stack?: string[];
     [key: string]: unknown;
-  };
-  is_validated?: boolean;
-  validation_data?: {
-    market_size?: {
-      tam?: number;
-      sam?: number;
-    };
-    revenue_potential?: {
-      monthly?: number;
-      annual?: number;
-    };
-    validation_score?: number;
-    [key: string]: unknown;
-  };
-  is_favorite?: boolean;
+  } | null;
+  is_validated: boolean | null;
+  validation_data: Record<string, unknown> | null;
+  is_favorite: boolean | null;
   created_at: string;
   updated_at: string;
 }

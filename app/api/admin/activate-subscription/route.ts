@@ -8,7 +8,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerAdminClient } from '@/features/supabase/server';
 import { verifyAdminAuth, isAuthError } from '@/lib/middleware/admin-auth';
 import { validateRequestBody, activateSubscriptionSchema } from '@/lib/validation/api-schemas';
-import { log } from '@/lib/logger'
+import { log } from '@/lib/logger';
+import type { User } from '@/types/database';
 
 export async function POST(request: NextRequest) {
   // ✅ SECURITY: Verify admin authentication
@@ -35,7 +36,9 @@ export async function POST(request: NextRequest) {
       .eq('email', email)
       .single();
 
-    if (userError || !user) {
+    const typedUser = user as User | null
+
+    if (userError || !typedUser) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -46,13 +49,15 @@ export async function POST(request: NextRequest) {
     const { data: payment } = await supabase
       .from('payment_transactions')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', typedUser.id)
       .eq('status', 'captured')
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
-    if (!payment) {
+    const typedPayment = payment as { razorpay_subscription_id: string | null; razorpay_payment_id: string } | null
+
+    if (!typedPayment) {
       return NextResponse.json(
         { error: 'No captured payment found for this user' },
         { status: 404 }
@@ -86,21 +91,21 @@ export async function POST(request: NextRequest) {
     const { data: existingSub } = await supabase
       .from('subscriptions')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', typedUser.id)
       .maybeSingle();
 
     if (existingSub) {
       // Update existing subscription
       const { error: updateError } = await supabase
-        .from('subscriptions')
+        .from('subscriptions' as never)
         .update({
           status: 'active',
           plan_type: planType,
           current_period_start: periodStart.toISOString(),
           current_period_end: periodEnd.toISOString(),
           cancel_at_period_end: false,
-        })
-        .eq('user_id', user.id);
+        } as never)
+        .eq('user_id', typedUser.id);
 
       if (updateError) {
         return NextResponse.json(
@@ -122,17 +127,17 @@ export async function POST(request: NextRequest) {
       }
 
       const { error: insertError } = await supabase
-        .from('subscriptions')
+        .from('subscriptions' as never)
         .insert({
-          user_id: user.id,
-          razorpay_subscription_id: payment.razorpay_subscription_id || `manual_${payment.razorpay_payment_id}`,
+          user_id: typedUser.id,
+          razorpay_subscription_id: typedPayment.razorpay_subscription_id || `manual_${typedPayment.razorpay_payment_id}`,
           razorpay_plan_id: razorpayPlanId,
           stripe_price_id: razorpayPlanId, // Legacy field
           status: 'active',
           plan_type: planType,
           current_period_start: periodStart.toISOString(),
           current_period_end: periodEnd.toISOString(),
-        });
+        } as never);
 
       if (insertError) {
         return NextResponse.json(
@@ -144,12 +149,12 @@ export async function POST(request: NextRequest) {
 
     // 5. Update user plan
     const { error: userUpdateError } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         plan_type: planType,
         subscription_status: 'active',
-      })
-      .eq('id', user.id);
+      } as never)
+      .eq('id', typedUser.id);
 
     if (userUpdateError) {
       return NextResponse.json(
@@ -162,36 +167,36 @@ export async function POST(request: NextRequest) {
     const { data: existingLimits } = await supabase
       .from('usage_limits')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', typedUser.id)
       .maybeSingle();
 
     if (existingLimits) {
       // Update existing limits
       await supabase
-        .from('usage_limits')
+        .from('usage_limits' as never)
         .update({
           plan_type: planType,
           monthly_limit_ideas: plan.limits.ideas,
           monthly_limit_validations: plan.limits.validations,
-        })
-        .eq('user_id', user.id);
+        } as never)
+        .eq('user_id', typedUser.id);
     } else {
       // Insert new limits
       await supabase
-        .from('usage_limits')
+        .from('usage_limits' as never)
         .insert({
-          user_id: user.id,
+          user_id: typedUser.id,
           plan_type: planType,
           monthly_limit_ideas: plan.limits.ideas,
           monthly_limit_validations: plan.limits.validations,
           ideas_generated: 0,
           validations_completed: 0,
-        });
+        } as never);
     }
 
     // Log admin action
     log.info(`✅ Admin ${adminUser.email} activated ${planType} for ${email}`, {
-      userId: user.id,
+      userId: typedUser.id,
       periodStart: periodStart.toISOString(),
       periodEnd: periodEnd.toISOString()
     });
@@ -200,7 +205,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Subscription activated successfully!',
       user: {
-        email: user.email,
+        email: typedUser.email,
         planType,
         periodStart: periodStart.toISOString(),
         periodEnd: periodEnd.toISOString(),

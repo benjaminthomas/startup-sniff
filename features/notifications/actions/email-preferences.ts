@@ -44,6 +44,8 @@ export async function getEmailPreferencesAction(): Promise<{
       .eq('id', session.userId)
       .single()
 
+    const typedData = data as { email_preferences: any } | null;
+
     if (error) {
       log.error('Failed to get email preferences:', error)
       return {
@@ -53,7 +55,7 @@ export async function getEmailPreferencesAction(): Promise<{
     }
 
     // Return preferences or defaults
-    const preferences = data?.email_preferences || {
+    const preferences = typedData?.email_preferences || {
       marketing: true,
       product_updates: true,
       weekly_summary: true,
@@ -95,10 +97,10 @@ export async function updateEmailPreferencesAction(
     const supabase = createServerAdminClient()
 
     const { error } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         email_preferences: preferences as unknown as Record<string, boolean>,
-      })
+      } as never)
       .eq('id', session.userId)
 
     if (error) {
@@ -140,10 +142,10 @@ export async function unsubscribeFromAllEmailsAction(): Promise<{
     const supabase = createServerAdminClient()
 
     const { error } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         email_unsubscribed: true,
-      })
+      } as never)
       .eq('id', session.userId)
 
     if (error) {
@@ -193,6 +195,8 @@ export async function canSendEmailAction(
       .eq('id', session.userId)
       .single()
 
+    const typedData = data as { email_preferences: any; email_unsubscribed: boolean | null } | null;
+
     if (error) {
       log.error('Failed to check email preferences:', error)
       return {
@@ -202,14 +206,14 @@ export async function canSendEmailAction(
     }
 
     // Check if user has unsubscribed from all emails
-    if (data?.email_unsubscribed) {
+    if (typedData?.email_unsubscribed) {
       return {
         canSend: false,
       }
     }
 
     // Check specific preference
-    const preferences = (data?.email_preferences || {}) as unknown as EmailPreferences
+    const preferences = (typedData?.email_preferences || {}) as unknown as EmailPreferences
     const canSend = preferences[emailType] !== false // Default to true if not set
 
     return {

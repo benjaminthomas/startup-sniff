@@ -106,8 +106,13 @@ export async function getCurrentUserUsage(): Promise<UsageData | null> {
       .eq('user_id', user.id)
       .eq('is_validated', true);
 
+    const typedValidatedIdeas = (allValidatedIdeas || []) as Array<{
+      id: string;
+      validation_data: Record<string, unknown> | null;
+    }>;
+
     // Filter to only count validations done this month
-    const validationsUsed = allValidatedIdeas?.filter(idea => {
+    const validationsUsed = typedValidatedIdeas.filter(idea => {
       const validationData = idea.validation_data as Record<string, unknown> | null;
       if (!validationData?.validated_at) return false;
 

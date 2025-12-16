@@ -10,6 +10,7 @@ import { generateIdeasFromPainPoints } from '@/features/reddit';
 import { getCurrentUserUsage, getUserPlanAndUsage } from '@/features/usage';
 import type { IdeaGenerationOptions } from '@/features/ai/services/idea-generator';
 import { log } from '@/lib/logger'
+import type { StartupIdea } from '@/types/global';
 
 const generateIdeaSchema = z.object({
   industry: z.string().optional(),
@@ -81,16 +82,18 @@ export async function toggleFavorite(ideaId: string) {
       .eq('user_id', session.userId)
       .single();
 
-    if (fetchError) {
+    const typedIdea = currentIdea as { is_favorite: boolean } | null;
+
+    if (fetchError || !typedIdea) {
       throw new Error('Idea not found or access denied');
     }
 
     // Toggle favorite status
-    const newFavoriteStatus = !currentIdea.is_favorite;
+    const newFavoriteStatus = !typedIdea.is_favorite;
 
     const { error: updateError } = await supabase
-      .from('startup_ideas')
-      .update({ is_favorite: newFavoriteStatus })
+      .from('startup_ideas' as never)
+      .update({ is_favorite: newFavoriteStatus } as never)
       .eq('id', ideaId)
       .eq('user_id', session.userId);
 
@@ -213,7 +216,7 @@ export async function generateIdea(formData: FormData) {
 
     // Save the idea to the database
     const { data: savedIdea, error: saveError } = await supabase
-      .from('startup_ideas')
+      .from('startup_ideas' as never)
       .insert({
         user_id: session.userId,
         title: generatedIdea.title,
@@ -260,7 +263,7 @@ export async function generateIdea(formData: FormData) {
         is_validated: false,
         is_favorite: false,
         validation_data: null
-      })
+      } as never)
       .select()
       .single();
 
@@ -309,18 +312,20 @@ export async function validateIdea(ideaId: string) {
       .eq('user_id', session.userId)
       .single();
 
-    if (ideaError || !idea) {
+    const typedIdea = idea as { title: string; problem_statement: string; solution: any } | null;
+
+    if (ideaError || !typedIdea) {
       throw new Error('Idea not found');
     }
 
     // Generate validation using AI
     const validation = await validateIdeaWithAI(
-      `${idea.title}\n\nProblem: ${idea.problem_statement}\n\nSolution: ${JSON.stringify(idea.solution)}`
+      `${typedIdea.title}\n\nProblem: ${typedIdea.problem_statement}\n\nSolution: ${JSON.stringify(typedIdea.solution)}`
     );
 
     // Update the idea with validation results
     const { error: updateError } = await supabase
-      .from('startup_ideas')
+      .from('startup_ideas' as never)
       .update({
         is_validated: true,
         validation_data: {
@@ -331,7 +336,7 @@ export async function validateIdea(ideaId: string) {
           validated_at: new Date().toISOString(),
         },
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq('id', ideaId)
       .eq('user_id', session.userId);
 
@@ -347,7 +352,7 @@ export async function validateIdea(ideaId: string) {
   }
 }
 
-export async function getUserIdeas(limit: number = 10) {
+export async function getUserIdeas(limit: number = 10): Promise<StartupIdea[]> {
   const supabase = createServerAdminClient();
 
   // Use JWT session instead of Supabase auth
@@ -377,7 +382,7 @@ export async function getUserIdeas(limit: number = 10) {
       return [];
     }
 
-    return ideas || [];
+    return (ideas || []) as StartupIdea[];
   } catch (error) {
     log.error('Error getting user ideas:', error);
     return [];
@@ -401,15 +406,17 @@ export async function getIdeaWithRedditSources(ideaId: string) {
       .eq('user_id', session.userId)
       .single();
 
-    if (ideaError || !idea) {
+    const typedIdea = idea as { source_data?: Record<string, unknown> } | null;
+
+    if (ideaError || !typedIdea) {
       throw new Error('Idea not found');
     }
 
     // Extract Reddit source IDs from source_data
-    const painPointSources = (idea.source_data as Record<string, unknown>)?.pain_point_sources as string[] || [];
+    const painPointSources = (typedIdea.source_data as Record<string, unknown>)?.pain_point_sources as string[] || [];
 
     if (painPointSources.length === 0) {
-      return { idea, redditSources: [] };
+      return { idea: typedIdea, redditSources: [] };
     }
 
     // Fetch corresponding Reddit posts
@@ -420,13 +427,13 @@ export async function getIdeaWithRedditSources(ideaId: string) {
 
     if (redditError) {
       log.error('Error fetching Reddit sources:', redditError);
-      return { idea, redditSources: [] };
+      return { idea: typedIdea, redditSources: [] };
     }
 
     log.info(`📰 Found ${redditPosts?.length || 0} Reddit sources for idea ${ideaId}`);
 
     return {
-      idea,
+      idea: typedIdea,
       redditSources: redditPosts || []
     };
   } catch (error) {

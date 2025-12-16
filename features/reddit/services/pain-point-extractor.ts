@@ -119,7 +119,7 @@ class PainPointExtractor {
 
     // Calculate various scores
     const engagementScore = this.calculateEngagementScore(post)
-    const sentimentScore = post.sentiment || 0
+    const sentimentScore = (post as unknown as { sentiment?: number }).sentiment || 0
     const opportunityScore = this.calculateOpportunityScore(post, painIndicators, engagementScore)
 
     return {

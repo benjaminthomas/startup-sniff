@@ -240,7 +240,7 @@ export function useIdeaGenerationForm() {
           log.error('Failed to refresh usage after idea generation:', refreshError);
         }
 
-        toast.success(`Created "${result.idea.title}" - Your next big opportunity awaits!`, {
+        toast.success(`Created "${typedIdea?.title || 'New Idea'}" - Your next big opportunity awaits!`, {
           id: loadingToast,
           duration: 5000
         });

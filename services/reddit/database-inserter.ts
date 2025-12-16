@@ -213,12 +213,20 @@ export class RedditDatabaseInserter {
       .select('hash, reddit_id, created_utc, score, updated_at')
       .or(`hash.in.(${hashes.join(',')}),reddit_id.in.(${redditIds.join(',')})`)
 
+    const typedExistingPosts = (existingPosts || []) as Array<{
+      hash: string;
+      reddit_id: string;
+      created_utc: string;
+      score: number;
+      updated_at: string;
+    }>;
+
     if (checkError) {
       throw new Error(`Failed to check for existing posts: ${checkError.message}`)
     }
 
     const existingMap = new Map<string, Record<string, unknown>>()
-    existingPosts?.forEach(post => {
+    typedExistingPosts.forEach(post => {
       existingMap.set(post.hash, post)
       existingMap.set(post.reddit_id, post)
     })
@@ -259,11 +267,11 @@ export class RedditDatabaseInserter {
   private async insertWithoutDeduplication(
     posts: ProcessedPost[]
   ): Promise<Omit<BatchResult, 'batchNumber' | 'duration'>> {
-    const dbPosts = posts.map(this.convertToDbFormat) as RedditPostInsert[]
+    const dbPosts = posts.map(this.convertToDbFormat) as unknown as RedditPostInsert[]
 
     const { data, error } = await this.supabase
-      .from('reddit_posts')
-      .insert(dbPosts)
+      .from('reddit_posts' as never)
+      .insert(dbPosts as never)
       .select('reddit_id')
 
     if (error) {
@@ -325,11 +333,11 @@ export class RedditDatabaseInserter {
    * Insert a single post
    */
   private async insertSinglePost(post: ProcessedPost): Promise<void> {
-    const dbPost = this.convertToDbFormat(post) as RedditPostInsert
+    const dbPost = this.convertToDbFormat(post) as unknown as RedditPostInsert
 
     const { error } = await this.supabase
-      .from('reddit_posts')
-      .insert(dbPost)
+      .from('reddit_posts' as never)
+      .insert(dbPost as never)
 
     if (error) {
       throw new Error(`Failed to insert post ${post.reddit_id}: ${error.message}`)
@@ -356,8 +364,8 @@ export class RedditDatabaseInserter {
     }
 
     const { error } = await this.supabase
-      .from('reddit_posts')
-      .update(updateData)
+      .from('reddit_posts' as never)
+      .update(updateData as never)
       .eq('reddit_id', redditId)
 
     if (error) {

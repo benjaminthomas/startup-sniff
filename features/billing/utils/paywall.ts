@@ -42,7 +42,9 @@ export async function checkPaidAccess(): Promise<PaywallCheckResult> {
     .eq('id', session.userId)
     .single();
 
-  if (!user) {
+  const typedUser = user as { plan_type: string | null; subscription_status: string | null } | null;
+
+  if (!typedUser) {
     return {
       hasAccess: false,
       accessLevel: 'none',
@@ -61,7 +63,7 @@ export async function checkPaidAccess(): Promise<PaywallCheckResult> {
     .limit(1)
     .maybeSingle();
 
-  const planType = (user.plan_type as 'free' | 'pro_monthly' | 'pro_yearly') || 'free';
+  const planType = (typedUser.plan_type as 'free' | 'pro_monthly' | 'pro_yearly') || 'free';
   const isPaidPlan = planType === 'pro_monthly' || planType === 'pro_yearly';
 
   // Check access level based on subscription status and expiration
@@ -103,7 +105,7 @@ export async function checkPaidAccess(): Promise<PaywallCheckResult> {
     hasAccess,
     accessLevel,
     planType,
-    subscriptionStatus: user.subscription_status,
+    subscriptionStatus: typedUser.subscription_status,
     message
   };
 }

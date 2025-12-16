@@ -33,6 +33,12 @@ export async function GET(request: NextRequest) {
       .eq('cancel_at_period_end', true)
       .lt('current_period_end', now);
 
+    const typedExpiredSubscriptions = (expiredSubscriptions || []) as Array<{
+      id: string;
+      user_id: string;
+      users: { id: string; email: string } | null;
+    }>
+
     if (fetchError) {
       log.error('Error fetching expired subscriptions:', fetchError);
       return NextResponse.json(
@@ -41,7 +47,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!expiredSubscriptions || expiredSubscriptions.length === 0) {
+    if (!typedExpiredSubscriptions || typedExpiredSubscriptions.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'No expired subscriptions to process',
@@ -57,26 +63,26 @@ export async function GET(request: NextRequest) {
       error: string;
     }> = [];
 
-    for (const subscription of expiredSubscriptions) {
+    for (const subscription of typedExpiredSubscriptions) {
       try {
         // 1. Update subscription status to cancelled
         await supabase
-          .from('subscriptions')
-          .update({ status: 'cancelled' })
+          .from('subscriptions' as never)
+          .update({ status: 'cancelled' } as never)
           .eq('id', subscription.id);
 
         // 2. Update user plan to free
         await supabase
-          .from('users')
+          .from('users' as never)
           .update({
             plan_type: 'free',
             subscription_status: 'inactive',
-          })
+          } as never)
           .eq('id', subscription.user_id);
 
         // 3. Update usage limits to free tier
         await supabase
-          .from('usage_limits')
+          .from('usage_limits' as never)
           .upsert(
             {
               user_id: subscription.user_id,
@@ -85,7 +91,7 @@ export async function GET(request: NextRequest) {
               monthly_limit_validations: 3,
               ideas_generated: 0,
               validations_completed: 0,
-            },
+            } as never,
             { onConflict: 'user_id' }
           );
 
@@ -104,8 +110,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Processed ${expiredSubscriptions.length} expired subscription(s)`,
-      processed: expiredSubscriptions.length,
+      message: `Processed ${typedExpiredSubscriptions.length} expired subscription(s)`,
+      processed: typedExpiredSubscriptions.length,
       successful: successCount,
       failed: errorCount,
       errors: errors.length > 0 ? errors : undefined,

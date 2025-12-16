@@ -6,6 +6,7 @@ import { RedditApiClient } from '@/services/reddit/api-client'
 import { getRateLimiter } from '@/services/rate-limiter'
 import { sendMessageConfirmation } from '@/features/notifications/services/email-notifications'
 import { log } from '@/lib/logger'
+import { sendRedditMessageSchema } from '@/features/reddit/schemas/reddit-schemas'
 
 /**
  * Epic 2, Story 2.4 & 2.5: Rate Limiting + Message Sending
@@ -27,6 +28,18 @@ export async function sendRedditMessageAction(
   editedText?: string // Optional: user may have edited the template
 ): Promise<SendMessageResult> {
   try {
+    // 0. Validate input parameters
+    const validationResult = sendRedditMessageSchema.safeParse({ messageId, editedText })
+    if (!validationResult.success) {
+      log.warn('[send-message] Invalid input parameters', {
+        errors: validationResult.error.errors
+      })
+      return {
+        success: false,
+        error: 'Invalid input parameters'
+      }
+    }
+
     // 1. Check authentication
     const session = await getCurrentSession()
     if (!session) {
@@ -46,7 +59,14 @@ export async function sendRedditMessageAction(
       .eq('user_id', session.userId)
       .single()
 
-    if (messageError || !message) {
+    const typedMessage = message as {
+      send_status: string | null;
+      message_text: string;
+      reddit_username: string;
+      pain_point_id: string | null;
+    } | null;
+
+    if (messageError || !typedMessage) {
       log.error('[send-message] Message not found:', messageId)
       return {
         success: false,
@@ -55,7 +75,7 @@ export async function sendRedditMessageAction(
     }
 
     // 3. Check if message already sent
-    if (message.send_status === 'sent') {
+    if (typedMessage.send_status === 'sent') {
       return {
         success: false,
         error: 'Message already sent'
@@ -69,7 +89,14 @@ export async function sendRedditMessageAction(
       .eq('id', session.userId)
       .single()
 
-    if (userError || !user || !user.reddit_access_token) {
+    const typedUser = user as {
+      reddit_access_token: string | null;
+      reddit_refresh_token: string | null;
+      reddit_token_expires_at: string | null;
+      reddit_username: string | null;
+    } | null;
+
+    if (userError || !typedUser || !typedUser.reddit_access_token) {
       log.error('[send-message] User Reddit not connected:', session.userId)
       return {
         success: false,
@@ -95,15 +122,15 @@ export async function sendRedditMessageAction(
     }
 
     // 6. Check if access token expired and refresh if needed
-    let accessToken = user.reddit_access_token
-    const tokenExpiry = user.reddit_token_expires_at ? new Date(user.reddit_token_expires_at) : null
+    let accessToken = typedUser.reddit_access_token
+    const tokenExpiry = typedUser.reddit_token_expires_at ? new Date(typedUser.reddit_token_expires_at) : null
     const now = new Date()
 
-    if (tokenExpiry && now >= tokenExpiry && user.reddit_refresh_token) {
+    if (tokenExpiry && now >= tokenExpiry && typedUser.reddit_refresh_token) {
       log.info('[send-message] Refreshing expired Reddit token')
 
       const refreshResult = await RedditApiClient.refreshUserAccessToken({
-        refreshToken: user.reddit_refresh_token,
+        refreshToken: typedUser.reddit_refresh_token,
         clientId: process.env.REDDIT_CLIENT_ID!,
         clientSecret: process.env.REDDIT_CLIENT_SECRET!
       })
@@ -120,29 +147,29 @@ export async function sendRedditMessageAction(
 
       // Update tokens in database
       await supabase
-        .from('users')
+        .from('users' as never)
         .update({
           reddit_access_token: accessToken,
           reddit_token_expires_at: newExpiry.toISOString()
-        })
+        } as never)
         .eq('id', session.userId)
     }
 
     // 7. Update message status to pending
     await supabase
-      .from('messages')
-      .update({ send_status: 'pending' })
+      .from('messages' as never)
+      .update({ send_status: 'pending' } as never)
       .eq('id', messageId)
 
     // 8. Send message via Reddit API
-    const finalText = editedText || message.message_text
+    const finalText = editedText || typedMessage.message_text
     const subject = 'Saw your post on Reddit'
 
-    log.info(`[send-message] Sending message to u/${message.reddit_username}`)
+    log.info(`[send-message] Sending message to u/${typedMessage.reddit_username}`)
 
     const sendResult = await RedditApiClient.sendDirectMessage({
       accessToken,
-      to: message.reddit_username,
+      to: typedMessage.reddit_username,
       subject,
       text: finalText
     })
@@ -150,11 +177,11 @@ export async function sendRedditMessageAction(
     if (!sendResult.success) {
       // Update message as failed
       await supabase
-        .from('messages')
+        .from('messages' as never)
         .update({
           send_status: 'failed',
           error_message: sendResult.error || 'Unknown error'
-        })
+        } as never)
         .eq('id', messageId)
 
       return {
@@ -167,13 +194,13 @@ export async function sendRedditMessageAction(
     const sentAt = new Date().toISOString()
 
     await supabase
-      .from('messages')
+      .from('messages' as never)
       .update({
         send_status: 'sent',
         sent_at: sentAt,
         message_text: finalText, // Store edited version if changed
         outcome: 'sent'
-      })
+      } as never)
       .eq('id', messageId)
 
     // 10. Increment Redis rate limit counter
@@ -190,20 +217,26 @@ export async function sendRedditMessageAction(
         .eq('id', session.userId)
         .single()
 
-      // Get opportunity title from post
-      const { data: post } = await supabase
-        .from('reddit_posts')
-        .select('title')
-        .eq('reddit_id', message.pain_point_id)
-        .single()
+      const typedUserInfo = userInfo as { email: string; full_name: string | null } | null;
 
-      if (userInfo?.email && post?.title) {
+      // Get opportunity title from post if pain_point_id exists
+      let post: { title: string } | null = null
+      if (typedMessage.pain_point_id) {
+        const postQuery = await supabase
+          .from('reddit_posts')
+          .select('title')
+          .eq('reddit_id', typedMessage.pain_point_id)
+          .single()
+        post = postQuery.data as { title: string } | null
+      }
+
+      if (typedUserInfo?.email && post?.title && typedMessage.pain_point_id) {
         await sendMessageConfirmation({
-          email: userInfo.email,
-          name: userInfo.full_name || undefined,
+          email: typedUserInfo.email,
+          name: typedUserInfo.full_name || undefined,
           recipientCount: 1,
           opportunityTitle: post.title,
-          opportunityId: message.pain_point_id
+          opportunityId: typedMessage.pain_point_id
         })
       }
     } catch (emailError) {

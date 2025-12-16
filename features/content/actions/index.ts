@@ -51,13 +51,15 @@ export async function generateContent(formData: FormData) {
       .eq('id', session.userId)
       .single();
 
+    const typedUserData = userData as { plan_type: string | null } | null;
+
     const planLimits = {
       free: 2, // 2 content generations per month for free users
       pro_monthly: -1, // Unlimited
       pro_yearly: -1 // Unlimited
     };
-    
-    const userPlan = userData?.plan_type || 'free';
+
+    const userPlan = typedUserData?.plan_type || 'free';
     const monthlyLimit = planLimits[userPlan as keyof typeof planLimits];
     
     if (monthlyLimit !== -1) {
@@ -79,7 +81,7 @@ export async function generateContent(formData: FormData) {
 
     // Save the content to the database
     const { data: savedContent, error: saveError } = await supabase
-      .from('generated_content')
+      .from('generated_content' as never)
       .insert({
         user_id: session.userId,
         content_type: validationResult.data.contentType,
@@ -87,16 +89,18 @@ export async function generateContent(formData: FormData) {
         content: generatedContent.content,
         brand_voice: validationResult.data.tone,
         seo_keywords: generatedContent.seoKeywords,
-      })
+      } as never)
       .select()
       .single();
 
-    if (saveError) {
+    const typedContent = savedContent as { id: string; title: string } | null;
+
+    if (saveError || !typedContent) {
       log.error('Error saving content:', saveError);
       throw new Error('Failed to save generated content');
     }
 
-    log.info(`📝 Content generated successfully for user ${session.userId}: ${savedContent.title}`);
+    log.info(`📝 Content generated successfully for user ${session.userId}: ${typedContent.title}`);
 
     // Increment usage count
     await incrementUsage('content');

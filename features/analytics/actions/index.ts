@@ -75,6 +75,11 @@ export async function getValidationMetricsAction(): Promise<{
       .gte('metric_date', sevenDaysAgo.toISOString().split('T')[0])
       .order('metric_date', { ascending: false })
 
+    const typedMetrics = (dailyMetrics || []) as Array<{
+      avg_session_duration_seconds: number | null
+      seven_day_return_rate: number | null
+    }>
+
     if (metricsError) {
       log.error('[analytics] Failed to fetch daily metrics:', metricsError)
       return {
@@ -88,6 +93,8 @@ export async function getValidationMetricsAction(): Promise<{
       .from('validation_thresholds')
       .select('*')
 
+    const typedThresholds = thresholds as Array<{ metric_name: string; yellow_threshold: number; green_threshold: number; red_threshold: number; higher_is_better: boolean }> | null
+
     if (thresholdsError) {
       log.error('[analytics] Failed to fetch thresholds:', thresholdsError)
       return {
@@ -98,60 +105,60 @@ export async function getValidationMetricsAction(): Promise<{
 
     // Calculate averages from daily metrics
     const avgSessionDuration =
-      dailyMetrics && dailyMetrics.length > 0
+      typedMetrics && typedMetrics.length > 0
         ? Math.round(
-            dailyMetrics.reduce((sum, m) => sum + (m.avg_session_duration_seconds || 0), 0) /
-              dailyMetrics.length
+            typedMetrics.reduce((sum, m) => sum + (m.avg_session_duration_seconds || 0), 0) /
+              typedMetrics.length
           )
         : 0
 
     const avgSevenDayReturn =
-      dailyMetrics && dailyMetrics.length > 0
+      typedMetrics && typedMetrics.length > 0
         ? Number(
             (
-              dailyMetrics.reduce((sum, m) => sum + (m.seven_day_return_rate || 0), 0) /
-              dailyMetrics.length
+              typedMetrics.reduce((sum, m) => sum + (m.seven_day_return_rate || 0), 0) /
+              typedMetrics.length
             ).toFixed(2)
           )
         : 0
 
     const avgOpportunitiesPerSession =
-      dailyMetrics && dailyMetrics.length > 0
+      typedMetrics && typedMetrics.length > 0
         ? Number(
             (
-              dailyMetrics.reduce((sum, m) => sum + (m.avg_opportunities_per_session || 0), 0) /
-              dailyMetrics.length
+              typedMetrics.reduce((sum, m) => sum + ((m as any).avg_opportunities_per_session || 0), 0) /
+              typedMetrics.length
             ).toFixed(2)
           )
         : 0
 
     const avgBounceRate =
-      dailyMetrics && dailyMetrics.length > 0
+      typedMetrics && typedMetrics.length > 0
         ? Number(
             (
-              dailyMetrics.reduce((sum, m) => sum + (m.bounce_rate || 0), 0) / dailyMetrics.length
+              typedMetrics.reduce((sum, m) => sum + ((m as any).bounce_rate || 0), 0) / typedMetrics.length
             ).toFixed(2)
           )
         : 0
 
     const totalSessions =
-      dailyMetrics && dailyMetrics.length > 0
-        ? dailyMetrics.reduce((sum, m) => sum + (m.total_sessions || 0), 0)
+      typedMetrics && typedMetrics.length > 0
+        ? typedMetrics.reduce((sum, m) => sum + ((m as any).total_sessions || 0), 0)
         : 0
 
     const totalUsers =
-      dailyMetrics && dailyMetrics.length > 0
-        ? dailyMetrics.reduce((sum, m) => sum + (m.total_users || 0), 0)
+      typedMetrics && typedMetrics.length > 0
+        ? typedMetrics.reduce((sum, m) => sum + ((m as any).total_users || 0), 0)
         : 0
 
     const newUsers =
-      dailyMetrics && dailyMetrics.length > 0
-        ? dailyMetrics.reduce((sum, m) => sum + (m.new_users || 0), 0)
+      typedMetrics && typedMetrics.length > 0
+        ? typedMetrics.reduce((sum, m) => sum + ((m as any).new_users || 0), 0)
         : 0
 
     const returningUsers =
-      dailyMetrics && dailyMetrics.length > 0
-        ? dailyMetrics.reduce((sum, m) => sum + (m.returning_users || 0), 0)
+      typedMetrics && typedMetrics.length > 0
+        ? typedMetrics.reduce((sum, m) => sum + ((m as any).returning_users || 0), 0)
         : 0
 
     // Helper to calculate zone
@@ -174,10 +181,10 @@ export async function getValidationMetricsAction(): Promise<{
     }
 
     // Build metrics with zones
-    const sessionDurationThreshold = thresholds?.find((t) => t.metric_name === 'avg_session_duration')
-    const returnRateThreshold = thresholds?.find((t) => t.metric_name === 'seven_day_return_rate')
-    const opportunitiesThreshold = thresholds?.find((t) => t.metric_name === 'opportunities_per_session')
-    const bounceRateThreshold = thresholds?.find((t) => t.metric_name === 'bounce_rate')
+    const sessionDurationThreshold = typedThresholds?.find((t) => t.metric_name === 'avg_session_duration')
+    const returnRateThreshold = typedThresholds?.find((t) => t.metric_name === 'seven_day_return_rate')
+    const opportunitiesThreshold = typedThresholds?.find((t) => t.metric_name === 'opportunities_per_session')
+    const bounceRateThreshold = typedThresholds?.find((t) => t.metric_name === 'bounce_rate')
 
     const metrics: DashboardMetrics = {
       avgSessionDuration: {
@@ -335,14 +342,14 @@ export async function submitFeedbackAction(
 
     const supabase = createServerAdminClient()
 
-    const { error } = await supabase.from('user_feedback').insert({
+    const { error } = await supabase.from('user_feedback' as never).insert({
       user_id: session.userId,
       feedback_type: feedbackType,
       rating,
       comment,
       page_url: pageUrl,
       submitted_at: new Date().toISOString(),
-    })
+    } as never)
 
     if (error) {
       log.error('[analytics] Failed to submit feedback:', error)
@@ -381,9 +388,9 @@ export async function calculateDailyMetricsAction(targetDate?: string): Promise<
     const dateToCalculate = targetDate || yesterday.toISOString().split('T')[0]
 
     // Call the database function to calculate metrics
-    const { error } = await supabase.rpc('calculate_daily_metrics', {
+    const { error } = await supabase.rpc('calculate_daily_metrics' as any, {
       target_date: dateToCalculate,
-    })
+    } as any)
 
     if (error) {
       log.error('[analytics] Failed to calculate daily metrics:', error)

@@ -34,21 +34,23 @@ export async function sendOnboardingDay1Email(userId: string) {
       .eq('id', userId)
       .single()
 
-    if (error || !user) {
+    const typedUser = user as { email: string; full_name: string | null } | null;
+
+    if (error || !typedUser) {
       log.error('[onboarding-day-1] User not found', error)
       return { success: false, error: 'User not found' }
     }
 
     // Render email template
     const emailComponent = createElement(OnboardingDay1Email, {
-      userName: user.full_name || user.email.split('@')[0],
+      userName: typedUser.full_name || typedUser.email.split('@')[0],
       dashboardUrl: `${BASE_URL}/dashboard`
     })
     const html = await renderEmailToHtml(emailComponent)
 
     // Send email
     const result = await sendEmail({
-      to: user.email,
+      to: typedUser.email,
       subject: 'Welcome to StartupSniff! 🎉',
       html,
       tags: ['onboarding', 'day-1'],
@@ -68,7 +70,7 @@ export async function sendOnboardingDay1Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      log.info('[onboarding-day-1] Email sent successfully', { email: user.email })
+      log.info('[onboarding-day-1] Email sent successfully', { email: typedUser.email })
     }
 
     return result
@@ -95,7 +97,9 @@ export async function sendOnboardingDay3Email(userId: string) {
       .eq('id', userId)
       .single()
 
-    if (userError || !user) {
+    const typedUser = user as { email: string; full_name: string | null } | null;
+
+    if (userError || !typedUser) {
       log.error('[onboarding-day-3] User not found', userError)
       return { success: false, error: 'User not found' }
     }
@@ -111,7 +115,7 @@ export async function sendOnboardingDay3Email(userId: string) {
 
     // Render email template
     const emailComponent = createElement(OnboardingDay3Email, {
-      userName: user.full_name || user.email.split('@')[0],
+      userName: typedUser.full_name || typedUser.email.split('@')[0],
       opportunitiesViewedCount,
       dashboardUrl: `${BASE_URL}/dashboard`
     })
@@ -119,7 +123,7 @@ export async function sendOnboardingDay3Email(userId: string) {
 
     // Send email
     const result = await sendEmail({
-      to: user.email,
+      to: typedUser.email,
       subject: 'Day 3: How to Spot Gold 🏆',
       html,
       tags: ['onboarding', 'day-3'],
@@ -140,7 +144,7 @@ export async function sendOnboardingDay3Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      log.info('[onboarding-day-3] Email sent successfully', { email: user.email })
+      log.info('[onboarding-day-3] Email sent successfully', { email: typedUser.email })
     }
 
     return result
@@ -167,7 +171,9 @@ export async function sendOnboardingDay7Email(userId: string) {
       .eq('id', userId)
       .single()
 
-    if (userError || !user) {
+    const typedUser = user as { email: string; full_name: string | null } | null;
+
+    if (userError || !typedUser) {
       log.error('[onboarding-day-7] User not found', userError)
       return { success: false, error: 'User not found' }
     }
@@ -178,12 +184,14 @@ export async function sendOnboardingDay7Email(userId: string) {
       .select('outcome')
       .eq('user_id', userId)
 
-    const messagesSent = messages?.length || 0
-    const repliesReceived = messages?.filter(m => m.outcome && m.outcome !== 'draft').length || 0
+    const typedMessages = (messages || []) as Array<{ outcome: string | null }>;
+
+    const messagesSent = typedMessages.length || 0
+    const repliesReceived = typedMessages.filter(m => m.outcome && m.outcome !== 'draft').length || 0
 
     // Render email template
     const emailComponent = createElement(OnboardingDay7Email, {
-      userName: user.full_name || user.email.split('@')[0],
+      userName: typedUser.full_name || typedUser.email.split('@')[0],
       messagesSent,
       repliesReceived,
       dashboardUrl: `${BASE_URL}/dashboard`,
@@ -193,7 +201,7 @@ export async function sendOnboardingDay7Email(userId: string) {
 
     // Send email
     const result = await sendEmail({
-      to: user.email,
+      to: typedUser.email,
       subject: 'Week 1 Complete! 🎊 (Plus a special offer)',
       html,
       tags: ['onboarding', 'day-7', 'upgrade-cta'],
@@ -215,7 +223,7 @@ export async function sendOnboardingDay7Email(userId: string) {
         mailgun_id: result.messageId
       })
 
-      log.info('[onboarding-day-7] Email sent successfully', { email: user.email })
+      log.info('[onboarding-day-7] Email sent successfully', { email: typedUser.email })
     }
 
     return result

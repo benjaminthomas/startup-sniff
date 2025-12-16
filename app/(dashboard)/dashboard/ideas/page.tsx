@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { IdeaCard } from '@/features/dashboard/components/idea-card';
 import { getUserIdeas } from '@/features/ideas';
-import { StartupIdea } from '@/types/global';
 import { Plus, Lightbulb } from 'lucide-react';
 
 export default async function IdeasPage() {
@@ -62,23 +61,23 @@ export default async function IdeasPage() {
             </div>
             <div className="flex items-center space-x-2">
               <Badge variant="secondary" className="text-xs">
-                {ideas.filter(idea => (idea as unknown as StartupIdea).is_validated).length} Validated
+                {ideas.filter(idea => idea.is_validated).length} Validated
               </Badge>
               <Badge variant="outline" className="text-xs">
-                {ideas.length - ideas.filter(idea => (idea as unknown as StartupIdea).is_validated).length} Pending
+                {ideas.length - ideas.filter(idea => idea.is_validated).length} Pending
               </Badge>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {ideas.map((idea) => (
-              <Suspense 
-                key={idea.id} 
+              <Suspense
+                key={idea.id}
                 fallback={
                   <div className="animate-pulse bg-muted h-64 rounded-lg" />
                 }
               >
-                <IdeaCard idea={idea as never} />
+                <IdeaCard idea={idea} />
               </Suspense>
             ))}
           </div>

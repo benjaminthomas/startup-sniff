@@ -41,7 +41,7 @@ interface IdeaCardProps {
     implementation: {
       estimated_cost: string;
       time_to_market: string;
-      next_steps: string;
+      next_steps: string | string[];
     } | null;
     validation_data: Record<string, unknown> | null;
     is_validated: boolean | null;

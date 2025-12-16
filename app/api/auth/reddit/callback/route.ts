@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     const tokenExpiry = new Date(Date.now() + (tokens.expires_in * 1000))
 
     const { error: updateError } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         reddit_access_token: tokens.access_token,
         reddit_refresh_token: tokens.refresh_token || null,
@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
         reddit_connected_at: new Date().toISOString(),
         reddit_username: redditUsername,
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', userId)
 
     if (updateError) {

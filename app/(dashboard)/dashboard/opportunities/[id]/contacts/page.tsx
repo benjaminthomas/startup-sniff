@@ -7,6 +7,7 @@ import { discoverContactsAction } from '@/features/reddit/actions/discover-conta
 import { getCurrentSession } from '@/features/auth/services/jwt'
 import { ConnectRedditButton } from '@/features/reddit/components/connect-reddit-button'
 import { enforcePaidAccess } from '@/features/billing/utils/paywall'
+import type { RedditPost } from '@/types/supabase'
 
 export async function generateMetadata({
   params
@@ -21,8 +22,10 @@ export async function generateMetadata({
     .eq('reddit_id', id)
     .single()
 
+  const typedOpportunity = opportunity as { title: string } | null
+
   return {
-    title: opportunity ? `Contacts for ${opportunity.title} | StartupSniff` : 'Contacts | StartupSniff',
+    title: typedOpportunity ? `Contacts for ${typedOpportunity.title} | StartupSniff` : 'Contacts | StartupSniff',
     description: 'Discover Reddit users who posted about this pain point'
   }
 }
@@ -55,7 +58,9 @@ export default async function ContactsPage({
     .eq('reddit_id', id)
     .single()
 
-  if (error || !opportunity) {
+  const typedOpportunity = opportunity as RedditPost | null
+
+  if (error || !typedOpportunity) {
     notFound()
   }
 
@@ -66,10 +71,11 @@ export default async function ContactsPage({
     .eq('id', session.userId)
     .single()
 
-  const hasRedditConnected = !!(userData?.reddit_username && userData?.reddit_connected_at)
+  const typedUserData = userData as { reddit_username: string | null; reddit_connected_at: string | null } | null
+  const hasRedditConnected = !!(typedUserData?.reddit_username && typedUserData?.reddit_connected_at)
 
   // Discover contacts with pagination (uses cache if available)
-  const contactsResult = await discoverContactsAction(opportunity.id, currentPage, 5)
+  const contactsResult = await discoverContactsAction(typedOpportunity.id, currentPage, 5)
 
   return (
     <>
@@ -81,11 +87,11 @@ export default async function ContactsPage({
                 Discovered Contacts
               </h1>
               <p className="text-gray-600 mb-4">
-                Reddit users who posted about: <span className="font-medium">&quot;{opportunity.title}&quot;</span>
+                Reddit users who posted about: <span className="font-medium">&quot;{typedOpportunity.title}&quot;</span>
               </p>
               <div className="flex items-center gap-2 text-sm text-gray-500">
                 <span className="inline-flex items-center px-2 py-1 rounded-md bg-blue-50 text-blue-700 font-medium">
-                  r/{opportunity.subreddit}
+                  r/{typedOpportunity.subreddit}
                 </span>
                 <span>•</span>
                 <span>Last 48 hours</span>
@@ -142,7 +148,7 @@ export default async function ContactsPage({
               </svg>
               <div className="flex-1">
                 <p className="text-sm font-medium text-green-900">
-                  Connected as <span className="font-semibold">u/{userData?.reddit_username}</span>
+                  Connected as <span className="font-semibold">u/{typedUserData?.reddit_username}</span>
                 </p>
                 <p className="text-xs text-green-700 mt-1">
                   You can now send messages to contacts from your Reddit account
@@ -173,7 +179,7 @@ export default async function ContactsPage({
             <div className="text-gray-400 text-6xl mb-4">🔍</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No contacts found yet</h3>
             <p className="text-gray-600 mb-6">
-              We couldn&apos;t find any Reddit users who recently posted about this pain point in r/{opportunity.subreddit}.
+              We couldn&apos;t find any Reddit users who recently posted about this pain point in r/{typedOpportunity.subreddit}.
             </p>
             <div className="space-y-2 text-sm text-gray-500">
               <p>💡 This might mean:</p>

@@ -13,6 +13,22 @@ import { ConversationMetrics } from '@/features/conversations/components/convers
 import { MessageList } from '@/features/conversations/components/message-list'
 import Link from 'next/link'
 import { log } from '@/lib/logger'
+import type { Message } from '@/types/supabase'
+
+// Type for messages with joined contact and pain_point data
+type MessageWithRelations = Message & {
+  contact: {
+    reddit_username: string
+    post_excerpt: string | null
+    karma: number | null
+    engagement_score: number
+  } | null
+  pain_point: {
+    reddit_id: string
+    title: string
+    subreddit: string
+  } | null
+}
 
 export const metadata = {
   title: 'My Conversations | StartupSniff',
@@ -56,7 +72,7 @@ export default async function ConversationsPage() {
     log.error('[conversations] Error fetching messages:', error)
   }
 
-  const userMessages = messages || []
+  const userMessages = (messages || []) as MessageWithRelations[]
 
   // Calculate aggregate metrics
   const metrics = {

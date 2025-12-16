@@ -175,8 +175,8 @@ export async function GET(request: NextRequest) {
 
       if (rows.length > 0) {
         const { error } = await supabase
-          .from('reddit_posts')
-          .upsert(rows, { onConflict: 'reddit_id' });
+          .from('reddit_posts' as never)
+          .upsert(rows as never, { onConflict: 'reddit_id' });
 
         if (error) {
           log.error('❌ Failed to store Reddit posts:', error);

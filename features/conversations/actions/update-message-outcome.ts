@@ -11,12 +11,9 @@ import { createServerAdminClient } from '@/features/supabase/server'
 import { getCurrentSession } from '@/features/auth/services/jwt'
 import { revalidatePath } from 'next/cache'
 import { log } from '@/lib/logger'
-import { z } from 'zod'
+import { messageOutcomeSchema, type MessageOutcome } from '@/features/conversations/schemas/conversation-schemas'
 
-type OutcomeType = 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
-
-// Zod schema for outcome validation (Security: VULN-003)
-const outcomeSchema = z.enum(['replied', 'call_scheduled', 'customer_acquired', 'dead_end']).nullable()
+type OutcomeType = MessageOutcome
 
 interface UpdateOutcomeResult {
   success: boolean
@@ -31,7 +28,7 @@ export async function updateMessageOutcomeAction(
     log.info('[update-outcome] Updating message to outcome', { messageId, outcome })
 
     // Validate outcome parameter (Security: VULN-003)
-    const validationResult = outcomeSchema.safeParse(outcome)
+    const validationResult = messageOutcomeSchema.safeParse(outcome)
     if (!validationResult.success) {
       log.warn('[update-outcome] Invalid outcome parameter', {
         outcome,
@@ -63,7 +60,9 @@ export async function updateMessageOutcomeAction(
       .eq('id', messageId)
       .single()
 
-    if (fetchError || !message) {
+    const typedMessage = message as { id: string; user_id: string; send_status: string; replied_at: string | null } | null;
+
+    if (fetchError || !typedMessage) {
       log.error('[update-outcome] Message not found:', fetchError)
       return {
         success: false,
@@ -71,7 +70,7 @@ export async function updateMessageOutcomeAction(
       }
     }
 
-    if (message.user_id !== session.userId) {
+    if (typedMessage.user_id !== session.userId) {
       log.error('[update-outcome] Unauthorized access attempt')
       return {
         success: false,
@@ -80,7 +79,7 @@ export async function updateMessageOutcomeAction(
     }
 
     // Only allow updating outcomes for sent messages
-    if (message.send_status !== 'sent') {
+    if (typedMessage.send_status !== 'sent') {
       return {
         success: false,
         error: 'Can only update outcomes for sent messages'
@@ -98,7 +97,7 @@ export async function updateMessageOutcomeAction(
     }
 
     // Set replied_at timestamp when outcome is set to replied
-    if (validatedOutcome === 'replied' && !message.replied_at) {
+    if (validatedOutcome === 'replied' && !typedMessage.replied_at) {
       updateData.replied_at = new Date().toISOString()
     } else if (validatedOutcome === null) {
       // Clear replied_at when outcome is cleared
@@ -106,8 +105,8 @@ export async function updateMessageOutcomeAction(
     }
 
     const { error: updateError } = await supabase
-      .from('messages')
-      .update(updateData)
+      .from('messages' as never)
+      .update(updateData as never)
       .eq('id', messageId)
 
     if (updateError) {

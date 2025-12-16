@@ -28,16 +28,18 @@ async function main() {
     .order('viability_score', { ascending: false })
     .limit(10)
 
-  if (error || !posts) {
+  const typedPosts = (posts || []) as any[];
+
+  if (error || typedPosts.length === 0) {
     console.error('Error fetching posts:', error)
     return
   }
 
-  console.log(`\n📊 Found ${posts.length} high-potential posts (score ≥7.0)\n`)
+  console.log(`\n📊 Found ${typedPosts.length} high-potential posts (score ≥7.0)\n`)
 
   // Estimate cost
   const analyzer = new OpportunityDeepAnalyzer()
-  const costEstimate = analyzer.estimateCost(posts.length)
+  const costEstimate = analyzer.estimateCost(typedPosts.length)
 
   console.log('💰 Cost Estimate:')
   console.log(`   Input tokens: ${costEstimate.inputTokens.toLocaleString()}`)
@@ -54,7 +56,7 @@ async function main() {
   let successCount = 0
   let failCount = 0
 
-  for (const post of posts) {
+  for (const post of typedPosts) {
     console.log(`\n${'='.repeat(80)}`)
     console.log(`\n🔍 Analyzing: ${post.title.substring(0, 60)}...`)
     console.log(`   Subreddit: r/${post.subreddit}`)
@@ -100,8 +102,8 @@ async function main() {
 
       // Update database with viability explanation
       const { error: updateError } = await supabase
-        .from('reddit_posts')
-        .update({ viability_explanation: analysis.viability_explanation })
+        .from('reddit_posts' as never)
+        .update({ viability_explanation: analysis.viability_explanation } as never)
         .eq('reddit_id', post.reddit_id)
 
       if (updateError) {
@@ -118,7 +120,7 @@ async function main() {
     }
 
     // Rate limiting: wait 2 seconds between requests
-    if (posts.indexOf(post) < posts.length - 1) {
+    if (typedPosts.indexOf(post) < typedPosts.length - 1) {
       console.log(`\n⏳ Waiting 2 seconds before next request...`)
       await new Promise(resolve => setTimeout(resolve, 2000))
     }

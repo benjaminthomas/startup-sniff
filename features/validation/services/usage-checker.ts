@@ -33,8 +33,13 @@ export async function checkValidationLimits(userId: string): Promise<UsageLimits
     .eq('user_id', userId)
     .eq('is_validated', true)
 
+  const typedValidatedIdeas = (allValidatedIdeas || []) as Array<{
+    id: string;
+    validation_data: Record<string, unknown> | null;
+  }>;
+
   // Filter to only count validations done this month
-  const validationsThisMonth = allValidatedIdeas?.filter(validatedIdea => {
+  const validationsThisMonth = typedValidatedIdeas.filter(validatedIdea => {
     const validationData = validatedIdea.validation_data as Record<string, unknown> | null
     if (!validationData?.validated_at) return false
 
@@ -49,7 +54,8 @@ export async function checkValidationLimits(userId: string): Promise<UsageLimits
     .eq('id', userId)
     .single()
 
-  const planType = user?.plan_type || 'free'
+  const typedUser = user as { plan_type: string | null } | null;
+  const planType = typedUser?.plan_type || 'free'
   const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1
 
   log.info('📊 Validation limit check:', {
@@ -94,11 +100,11 @@ export async function updateValidationUsage(userId: string): Promise<void> {
   log.info(`📊 Updating usage limits: ${actualValidatedCount} validations completed`)
 
   const { error: usageUpdateError } = await supabase
-    .from('usage_limits')
+    .from('usage_limits' as never)
     .update({
       validations_completed: actualValidatedCount,
       updated_at: new Date().toISOString()
-    })
+    } as never)
     .eq('user_id', userId)
 
   if (usageUpdateError) {

@@ -52,15 +52,17 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .eq('id', userId)
       .single()
 
-    if (userError || !user) {
+    const typedUser = user as { email: string; full_name: string | null; created_at: string; email_preferences: any } | null;
+
+    if (userError || !typedUser) {
       log.error('[weekly-summary] User not found', userError)
       return { success: false, error: 'User not found' }
     }
 
     // Check if user has opted out of weekly summaries
-    const emailPrefs = user.email_preferences as { weekly_summary?: boolean } | null
+    const emailPrefs = typedUser.email_preferences as { weekly_summary?: boolean } | null
     if (emailPrefs && emailPrefs.weekly_summary === false) {
-      log.info('[weekly-summary] User opted out', { email: user.email })
+      log.info('[weekly-summary] User opted out', { email: typedUser.email })
       return { success: true, skipped: true, reason: 'User opted out' }
     }
 
@@ -76,6 +78,8 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .eq('user_id', userId)
       .gte('created_at', weekAgo.toISOString())
 
+    const typedMessages = (messages || []) as Array<{ outcome: string | null; created_at: string }>;
+
     // Get last week's metrics for comparison
     const { data: lastWeekMessages } = await supabase
       .from('messages')
@@ -83,6 +87,8 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .eq('user_id', userId)
       .gte('created_at', twoWeeksAgo.toISOString())
       .lt('created_at', weekAgo.toISOString())
+
+    const typedLastWeekMessages = (lastWeekMessages || []) as Array<{ outcome: string | null }>;
 
     // Get opportunities viewed (fallback if table doesn't exist yet)
     const { data: analytics } = await (supabase as any)
@@ -92,11 +98,11 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .single()
 
     // Calculate metrics
-    const messagesSent = messages?.filter(m => m.outcome !== 'draft').length || 0
-    const repliesReceived = messages?.filter(m => m.outcome === 'replied' || m.outcome === 'call_scheduled' || m.outcome === 'customer').length || 0
-    const callsScheduled = messages?.filter(m => m.outcome === 'call_scheduled' || m.outcome === 'customer').length || 0
-    const customersAcquired = messages?.filter(m => m.outcome === 'customer').length || 0
-    const previousWeekMessagesSent = lastWeekMessages?.filter(m => m.outcome !== 'draft').length || 0
+    const messagesSent = typedMessages.filter(m => m.outcome !== 'draft').length || 0
+    const repliesReceived = typedMessages.filter(m => m.outcome === 'replied' || m.outcome === 'call_scheduled' || m.outcome === 'customer').length || 0
+    const callsScheduled = typedMessages.filter(m => m.outcome === 'call_scheduled' || m.outcome === 'customer').length || 0
+    const customersAcquired = typedMessages.filter(m => m.outcome === 'customer').length || 0
+    const previousWeekMessagesSent = typedLastWeekMessages.filter(m => m.outcome !== 'draft').length || 0
 
     const metrics = {
       messagesSent,
@@ -139,18 +145,20 @@ export async function sendWeeklySummaryEmail(userId: string) {
       .limit(1)
       .single()
 
-    const topOpportunity = topOpp ? {
-      title: topOpp.title,
-      score: topOpp.viability_score || 0,
-      url: `${BASE_URL}/dashboard/opportunities/${topOpp.reddit_id}`
+    const typedTopOpp = topOpp as { title: string; viability_score: number | null; reddit_id: string } | null;
+
+    const topOpportunity = typedTopOpp ? {
+      title: typedTopOpp.title,
+      score: typedTopOpp.viability_score || 0,
+      url: `${BASE_URL}/dashboard/opportunities/${typedTopOpp.reddit_id}`
     } : undefined
 
     // Calculate week number
-    const weekNumber = getWeekNumber(user.created_at)
+    const weekNumber = getWeekNumber(typedUser.created_at)
 
     // Render email template
     const emailComponent = createElement(WeeklySummaryEmail, {
-      userName: user.full_name || user.email.split('@')[0],
+      userName: typedUser.full_name || typedUser.email.split('@')[0],
       weekNumber,
       metrics,
       insights,
@@ -161,7 +169,7 @@ export async function sendWeeklySummaryEmail(userId: string) {
 
     // Send email
     const result = await sendEmail({
-      to: user.email,
+      to: typedUser.email,
       subject: `Your Week ${weekNumber} Summary: ${messagesSent} messages, ${repliesReceived} replies`,
       html,
       tags: ['weekly-summary', `week-${weekNumber}`],
@@ -183,7 +191,7 @@ export async function sendWeeklySummaryEmail(userId: string) {
         mailgun_id: result.messageId
       })
 
-      log.info('[weekly-summary] Email sent successfully', { email: user.email })
+      log.info('[weekly-summary] Email sent successfully', { email: typedUser.email })
     }
 
     return result
@@ -213,12 +221,14 @@ export async function sendWeeklySummaryToAllUsers() {
       .select('id, email, last_login_at')
       .gte('last_login_at', thirtyDaysAgo.toISOString())
 
-    if (error || !users) {
+    const typedUsers = (users || []) as Array<{ id: string; email: string; last_login_at: string | null }>;
+
+    if (error || typedUsers.length === 0) {
       log.error('[weekly-summary-all] Failed to fetch users', error)
       return { success: false, error: 'Failed to fetch users' }
     }
 
-    log.info(`[weekly-summary-all] Sending to ${users.length} users...`)
+    log.info(`[weekly-summary-all] Sending to ${typedUsers.length} users...`)
 
     const results = {
       sent: 0,
@@ -228,7 +238,7 @@ export async function sendWeeklySummaryToAllUsers() {
     }
 
     // Send in batches to avoid rate limits
-    for (const user of users) {
+    for (const user of typedUsers) {
       const result = await sendWeeklySummaryEmail(user.id)
 
       if (result.success) {

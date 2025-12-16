@@ -11,25 +11,29 @@ import { MessageCard } from './message-card'
 
 interface Message {
   id: string
+  user_id: string
   reddit_username: string
+  reddit_post_id: string | null
+  reddit_contact_id: string | null
+  template_variant: string | null
   message_text: string
-  template_variant: string
-  send_status: string
+  send_status: 'draft' | 'sent' | 'failed' | null
+  outcome: 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
   sent_at: string | null
-  outcome: string | null
   replied_at: string | null
-  created_at: string | null
+  created_at: string
+  updated_at: string
   contact: {
     reddit_username: string
     post_excerpt: string | null
-    karma: number
+    karma: number | null
     engagement_score: number
-  }
+  } | null
   pain_point: {
     reddit_id: string
     title: string
     subreddit: string
-  }
+  } | null
 }
 
 interface MessageListProps {

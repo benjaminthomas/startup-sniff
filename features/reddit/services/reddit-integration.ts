@@ -175,12 +175,23 @@ class RedditIntegrationService {
 
       const { data, error } = await query
 
+      const typedData = (data || []) as Array<{
+        reddit_id: string;
+        title: string;
+        content: string | null;
+        subreddit: string;
+        score: number | null;
+        comments: number | null;
+        created_utc: string;
+        url: string | null;
+      }>;
+
       if (error) {
         log.error('Error fetching Reddit posts:', error)
         return []
       }
 
-      return data?.map(post => ({
+      return typedData.map(post => ({
         id: post.reddit_id,
         title: post.title,
         content: post.content || '',

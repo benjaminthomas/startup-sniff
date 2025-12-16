@@ -41,7 +41,7 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
       ? (params.eventProperties as Json)
       : null
 
-    await supabase.from('analytics_events').insert({
+    await supabase.from('analytics_events' as never).insert({
       user_id: params.userId || null,
       session_id: params.sessionId,
       event_name: params.eventName,
@@ -51,7 +51,7 @@ export async function trackEvent(params: TrackEventParams): Promise<void> {
       referrer: params.referrer,
       user_agent: params.userAgent,
       ip_address: params.ipAddress,
-    })
+    } as never)
   } catch (error) {
     // Don't throw errors from analytics tracking
     log.error('[analytics] Failed to track event:', error)
@@ -69,7 +69,7 @@ export async function startSession(
   try {
     const supabase = createServerAdminClient()
 
-    await supabase.from('user_sessions_analytics').upsert({
+    await supabase.from('user_sessions_analytics' as never).upsert({
       session_id: sessionId,
       user_id: userId,
       started_at: new Date().toISOString(),
@@ -81,7 +81,7 @@ export async function startSession(
       opportunities_clicked: 0,
       searches_performed: 0,
       filters_applied: 0,
-    })
+    } as never)
   } catch (error) {
     log.error('[analytics] Failed to start session:', error)
   }
@@ -100,18 +100,20 @@ export async function endSession(sessionId: string): Promise<void> {
       .eq('session_id', sessionId)
       .single()
 
-    if (session && session.started_at) {
+    const typedSession = session as { started_at: string } | null;
+
+    if (typedSession && typedSession.started_at) {
       const endTime = new Date()
-      const startTime = new Date(session.started_at)
+      const startTime = new Date(typedSession.started_at)
       const durationSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
 
       await supabase
-        .from('user_sessions_analytics')
+        .from('user_sessions_analytics' as never)
         .update({
           ended_at: endTime.toISOString(),
           duration_seconds: durationSeconds,
           updated_at: new Date().toISOString(),
-        })
+        } as never)
         .eq('session_id', sessionId)
     }
   } catch (error) {

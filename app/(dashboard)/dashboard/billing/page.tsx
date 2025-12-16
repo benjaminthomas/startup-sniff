@@ -55,7 +55,14 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
       .maybeSingle()
   ]);
 
-  const profile = userProfileResult.status === 'fulfilled' ? userProfileResult.value.data : null;
+  const profile = (userProfileResult.status === 'fulfilled' ? userProfileResult.value.data : null) as {
+    razorpay_customer_id?: string | null;
+    plan_type?: string;
+    email?: string;
+    id?: string;
+    full_name?: string | null;
+    subscription_status?: string;
+  } | null;
   const currentSubscription = subscriptionResult.status === 'fulfilled' ? subscriptionResult.value.data : null;
 
   // Use auth user data as fallback

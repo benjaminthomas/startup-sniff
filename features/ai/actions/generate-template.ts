@@ -5,6 +5,7 @@ import { createServerAdminClient } from '@/features/supabase/server'
 import { generateMessageTemplate } from '../services/template-generator'
 import type { TemplateVariant } from '@/lib/constants/template-variants'
 import { log } from '@/lib/logger'
+import { type RedditContact, type RedditPost } from '@/types/supabase'
 
 /**
  * Epic 2, Story 2.3: AI Message Templates
@@ -43,7 +44,9 @@ export async function generateTemplateAction(
       .eq('id', contactId)
       .single()
 
-    if (contactError || !contact) {
+    const typedContact = contact as RedditContact | null
+
+    if (contactError || !typedContact) {
       log.error('[generate-template] Contact not found:', contactId)
       return {
         success: false,
@@ -55,11 +58,13 @@ export async function generateTemplateAction(
     const { data: painPoint, error: painPointError } = await supabase
       .from('reddit_posts')
       .select('id, title, content')
-      .eq('id', contact.pain_point_id)
+      .eq('id', typedContact.reddit_post_id)
       .single()
 
-    if (painPointError || !painPoint) {
-      log.error('[generate-template] Pain point not found:', contact.pain_point_id)
+    const typedPainPoint = painPoint as Pick<RedditPost, 'id' | 'title' | 'content'> | null
+
+    if (painPointError || !typedPainPoint) {
+      log.error('[generate-template] Pain point not found:', typedContact.reddit_post_id)
       return {
         success: false,
         error: 'Pain point not found'
@@ -82,21 +87,23 @@ export async function generateTemplateAction(
       .limit(1)
       .single()
 
-    if (existingMessage) {
+    const typedExisting = existingMessage as { id: string; message_text: string } | null
+
+    if (typedExisting) {
       log.info('[generate-template] Returning cached template from last hour')
       return {
         success: true,
-        messageId: existingMessage.id,
-        template: existingMessage.message_text,
+        messageId: typedExisting.id,
+        template: typedExisting.message_text,
         tokensUsed: 0 // Cached, no tokens used
       }
     }
 
     // Generate template using AI
     const generationResult = await generateMessageTemplate({
-      contact,
-      painPointTitle: painPoint.title,
-      painPointContent: painPoint.content,
+      contact: typedContact,
+      painPointTitle: typedPainPoint.title,
+      painPointContent: typedPainPoint.content,
       variant
     })
 
@@ -109,20 +116,22 @@ export async function generateTemplateAction(
 
     // Store template in database as draft
     const { data: message, error: insertError } = await supabase
-      .from('messages')
+      .from('messages' as never)
       .insert({
         user_id: session.userId,
-        pain_point_id: painPoint.id,
+        pain_point_id: typedPainPoint.id,
         contact_id: contactId,
-        reddit_username: contact.reddit_username,
+        reddit_username: typedContact.reddit_username,
         template_variant: variant,
         message_text: generationResult.template,
         send_status: 'draft'
-      })
+      } as never)
       .select()
       .single()
 
-    if (insertError || !message) {
+    const typedMessage = message as { id: string; message_text: string } | null
+
+    if (insertError || !typedMessage) {
       log.error('[generate-template] Failed to save template:', insertError)
       // Still return the template even if save failed
       return {
@@ -133,12 +142,12 @@ export async function generateTemplateAction(
       }
     }
 
-    log.info(`[generate-template] Successfully generated and saved template ${message.id}`)
+    log.info(`[generate-template] Successfully generated and saved template ${typedMessage.id}`)
 
     return {
       success: true,
-      messageId: message.id,
-      template: message.message_text,
+      messageId: typedMessage.id,
+      template: typedMessage.message_text,
       tokensUsed: generationResult.tokensUsed
     }
   } catch (error) {

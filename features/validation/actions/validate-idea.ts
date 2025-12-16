@@ -61,7 +61,7 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
 
     // Create new startup idea with validation data
     const { data: ideaData, error: ideaError } = await supabase
-      .from('startup_ideas')
+      .from('startup_ideas' as never)
       .insert({
         user_id: session.userId,
         title: validatedData.ideaTitle,
@@ -82,16 +82,18 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
             target_market: validatedData.targetMarket
           }
         }
-      })
+      } as never)
       .select()
       .single()
 
-    if (ideaError) {
+    const typedIdeaData = ideaData as { id: string } | null;
+
+    if (ideaError || !typedIdeaData) {
       log.error('Database error', ideaError)
       throw new Error('Failed to save validated idea')
     }
 
-    log.info('Idea saved to database', { ideaId: ideaData.id })
+    log.info('Idea saved to database', { ideaId: typedIdeaData.id })
 
     // Update usage limits
     await updateValidationUsage(session.userId)
@@ -102,9 +104,9 @@ export async function validateIdea(formData: FormData): Promise<ValidationResult
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/ideas')
     revalidatePath('/dashboard/validation')
-    revalidatePath(`/dashboard/ideas/${ideaData.id}`)
+    revalidatePath(`/dashboard/ideas/${typedIdeaData.id}`)
 
-    return { success: true, ideaId: ideaData.id }
+    return { success: true, ideaId: typedIdeaData.id }
 
   } catch (error) {
     log.error('Validation error', error)

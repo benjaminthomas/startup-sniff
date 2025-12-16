@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerAdminClient } from '@/features/supabase/server'
 import { OpportunityScorer } from '@/services/opportunities/scorer'
 import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
+import { type RedditPost } from '@/types/supabase'
 
 /**
  * POST /api/reddit/score
@@ -75,13 +76,14 @@ export async function POST(request: NextRequest) {
       .order('score', { ascending: false })
       .limit(limit)
 
+    const typedPosts = (posts || []) as RedditPost[]
     const fetchDuration = perf.end('fetch-posts')
 
     if (fetchError) {
       throw new Error(`Failed to fetch posts: ${fetchError.message}`)
     }
 
-    if (!posts || posts.length === 0) {
+    if (!typedPosts || typedPosts.length === 0) {
       monitor.log('info', 'No posts to score')
       return NextResponse.json({
         success: true,
@@ -95,7 +97,7 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    monitor.log('info', `Fetched ${posts.length} posts to score`, {
+    monitor.log('info', `Fetched ${typedPosts.length} posts to score`, {
       duration: `${(fetchDuration / 1000).toFixed(2)}s`
     })
 
@@ -108,8 +110,8 @@ export async function POST(request: NextRequest) {
     let scoredCount = 0
     let updatedCount = 0
 
-    for (let i = 0; i < posts.length; i += BATCH_SIZE) {
-      const batch = posts.slice(i, i + BATCH_SIZE)
+    for (let i = 0; i < typedPosts.length; i += BATCH_SIZE) {
+      const batch = typedPosts.slice(i, i + BATCH_SIZE)
       const batchNum = Math.floor(i / BATCH_SIZE) + 1
 
       monitor.log('debug', `Processing batch ${batchNum}`, {
@@ -141,8 +143,8 @@ export async function POST(request: NextRequest) {
       if (updates.length > 0) {
         for (const update of updates) {
           const { error: updateError } = await supabase
-            .from('reddit_posts')
-            .update({ viability_score: update.viability_score })
+            .from('reddit_posts' as never)
+            .update({ viability_score: update.viability_score } as never)
             .eq('reddit_id', update.reddit_id)
 
           if (updateError) {
@@ -177,19 +179,21 @@ export async function POST(request: NextRequest) {
       .select('viability_score')
       .not('viability_score', 'is', null)
 
-    const avgScore = statsData && statsData.length > 0
-      ? statsData.reduce((sum, p) => sum + (p.viability_score || 0), 0) / statsData.length
+    const typedStatsData = (statsData || []) as Array<{ viability_score: number | null }>
+
+    const avgScore = typedStatsData && typedStatsData.length > 0
+      ? typedStatsData.reduce((sum, p) => sum + (p.viability_score || 0), 0) / typedStatsData.length
       : 0
 
-    const highScorers = statsData ? statsData.filter(p => (p.viability_score || 0) >= 7).length : 0
-    const mediumScorers = statsData ? statsData.filter(p => (p.viability_score || 0) >= 4 && (p.viability_score || 0) < 7).length : 0
-    const lowScorers = statsData ? statsData.filter(p => (p.viability_score || 0) < 4).length : 0
+    const highScorers = typedStatsData ? typedStatsData.filter(p => (p.viability_score || 0) >= 7).length : 0
+    const mediumScorers = typedStatsData ? typedStatsData.filter(p => (p.viability_score || 0) >= 4 && (p.viability_score || 0) < 7).length : 0
+    const lowScorers = typedStatsData ? typedStatsData.filter(p => (p.viability_score || 0) < 4).length : 0
 
     // Mark job as success
     const result = monitor.success({
-      itemsProcessed: posts.length,
+      itemsProcessed: typedPosts.length,
       itemsInserted: updatedCount,
-      itemsSkipped: posts.length - scoredCount,
+      itemsSkipped: typedPosts.length - scoredCount,
       errors: errors.hasErrors() ? errors.getSummary() : undefined
     })
 
@@ -197,13 +201,13 @@ export async function POST(request: NextRequest) {
       success: true,
       job: monitor.getSummary(),
       posts: {
-        fetched: posts.length,
+        fetched: typedPosts.length,
         scored: scoredCount,
         updated: updatedCount,
-        failed: posts.length - scoredCount
+        failed: typedPosts.length - scoredCount
       },
       statistics: {
-        totalScored: statsData?.length || 0,
+        totalScored: typedStatsData?.length || 0,
         averageScore: Number(avgScore.toFixed(2)),
         distribution: {
           high: highScorers,
@@ -251,13 +255,15 @@ export async function GET() {
       .from('reddit_posts')
       .select('viability_score, created_at')
 
+    const typedAllPosts = (allPosts || []) as Array<{ viability_score: number | null; created_at: string }>
+
     if (allError) throw allError
 
-    const totalPosts = allPosts?.length || 0
-    const scoredPosts = allPosts?.filter(p => p.viability_score !== null).length || 0
+    const totalPosts = typedAllPosts?.length || 0
+    const scoredPosts = typedAllPosts?.filter(p => p.viability_score !== null).length || 0
     const unscoredPosts = totalPosts - scoredPosts
 
-    const scoredData = allPosts?.filter(p => p.viability_score !== null) || []
+    const scoredData = typedAllPosts?.filter(p => p.viability_score !== null) || []
     const avgScore = scoredData.length > 0
       ? scoredData.reduce((sum, p) => sum + (p.viability_score || 0), 0) / scoredData.length
       : 0

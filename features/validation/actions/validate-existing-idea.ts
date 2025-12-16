@@ -43,12 +43,20 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
       .eq('user_id', session.userId) // Ensure user owns this idea
       .single()
 
-    if (ideaError || !idea) {
+    const typedIdea = idea as {
+      is_validated: boolean;
+      title: string;
+      problem_statement: string;
+      solution: string;
+      target_market: string | Record<string, unknown> | null;
+    } | null;
+
+    if (ideaError || !typedIdea) {
       log.error('Idea not found', ideaError, { ideaId, userId })
       return { success: false, error: 'Idea not found' }
     }
 
-    if (idea.is_validated) {
+    if (typedIdea.is_validated) {
       log.warn('Attempted to validate already validated idea', { ideaId, userId })
       return { success: false, error: 'Idea is already validated' }
     }
@@ -60,21 +68,21 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
     }
 
     // Validate with AI
-    const targetMarketValue = typeof idea.target_market === 'string'
-      ? idea.target_market
-      : typeof idea.target_market === 'object' && idea.target_market !== null
-        ? idea.target_market as Record<string, unknown>
+    const targetMarketValue = typeof typedIdea.target_market === 'string'
+      ? typedIdea.target_market
+      : typeof typedIdea.target_market === 'object' && typedIdea.target_market !== null
+        ? typedIdea.target_market as Record<string, unknown>
         : 'General market'
 
     const validationData = await validateWithAI({
-      title: idea.title,
-      description: idea.problem_statement,
+      title: typedIdea.title,
+      description: typedIdea.problem_statement,
       targetMarket: targetMarketValue
     })
 
     // Update the existing idea with validation data
     // IMPORTANT: Merge solution data instead of replacing to preserve original description
-    const existingSolution = typeof idea.solution === 'object' && idea.solution ? idea.solution as Record<string, unknown> : {}
+    const existingSolution = typeof typedIdea.solution === 'object' && typedIdea.solution ? typedIdea.solution as Record<string, unknown> : {}
     const mergedSolution = {
       // Preserve original description if it exists
       description: (existingSolution.description as string) || validationData.solution.value_proposition,
@@ -93,7 +101,7 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
     }
 
     const { data: updatedIdea, error: updateError } = await supabase
-      .from('startup_ideas')
+      .from('startup_ideas' as never)
       .update({
         target_market: validationData.target_market,
         solution: mergedSolution as never,
@@ -106,14 +114,14 @@ export async function validateExistingIdea(ideaId: string): Promise<ValidationRe
           validated_at: new Date().toISOString(),
           validation_method: 'ai_analysis',
           original_data: {
-            title: idea.title,
-            description: idea.problem_statement,
-            target_market: idea.target_market,
-            solution: idea.solution
+            title: typedIdea.title,
+            description: typedIdea.problem_statement,
+            target_market: typedIdea.target_market,
+            solution: typedIdea.solution
           }
         },
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', ideaId)
       .eq('user_id', session.userId)
       .select()

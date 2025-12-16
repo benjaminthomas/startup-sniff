@@ -177,8 +177,8 @@ export async function POST(request: NextRequest) {
       const batchNum = Math.floor(i / BATCH_SIZE) + 1
 
       const { data, error } = await supabase
-        .from('reddit_posts')
-        .upsert(batch, {
+        .from('reddit_posts' as never)
+        .upsert(batch as never, {
           onConflict: 'reddit_id',
           ignoreDuplicates: true
         })

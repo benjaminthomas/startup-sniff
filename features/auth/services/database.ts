@@ -60,14 +60,14 @@ export class UserDatabase {
    */
   static async create(userData: UserInsert): Promise<User> {
     const { data, error } = await supabase
-      .from('users')
+      .from('users' as never)
       .insert({
         ...userData,
         id: userData.id || crypto.randomUUID(),
         email: userData.email.toLowerCase(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .select()
       .single()
 
@@ -87,11 +87,11 @@ export class UserDatabase {
    */
   static async update(id: string, updates: UserUpdate): Promise<User> {
     const { data, error } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         ...updates,
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .eq('id', id)
       .select()
       .single()
@@ -114,8 +114,8 @@ export class UserDatabase {
     }
 
     const { error } = await supabase
-      .from('users')
-      .update(updates)
+      .from('users' as never)
+      .update(updates as never)
       .eq('id', id)
 
     if (error) {
@@ -129,12 +129,12 @@ export class UserDatabase {
    */
   static async updateLastLogin(id: string): Promise<void> {
     const { error } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         last_login_at: new Date().toISOString(),
         login_attempts: 0, // Reset attempts on successful login
         locked_until: null,
-      })
+      } as never)
       .eq('id', id)
 
     if (error) {
@@ -153,13 +153,13 @@ export class SessionDatabase {
    */
   static async create(sessionData: UserSessionInsert): Promise<UserSession> {
     const { data, error } = await supabase
-      .from('user_sessions')
+      .from('user_sessions' as never)
       .insert({
         ...sessionData,
         id: sessionData.id || crypto.randomUUID(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-      })
+      } as never)
       .select()
       .single()
 
@@ -265,12 +265,12 @@ export class RateLimitDatabase {
    */
   static async upsert(rateLimitData: AuthRateLimitInsert): Promise<AuthRateLimit> {
     const { data, error } = await supabase
-      .from('auth_rate_limits')
+      .from('auth_rate_limits' as never)
       .upsert({
         ...rateLimitData,
         id: rateLimitData.id || crypto.randomUUID(),
         updated_at: new Date().toISOString(),
-      }, {
+      } as never, {
         onConflict: 'identifier,endpoint'
       })
       .select()

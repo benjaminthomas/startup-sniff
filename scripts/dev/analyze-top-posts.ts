@@ -27,14 +27,25 @@ async function main() {
     .order('viability_score', { ascending: false })
     .limit(10)
 
-  if (error || !topPosts) {
+  const typedTopPosts = (topPosts || []) as Array<{
+    created_utc: string;
+    viability_score: number;
+    title: string;
+    subreddit: string;
+    score: number | null;
+    comments: number | null;
+    url: string | null;
+    content: string | null;
+  }>;
+
+  if (error || typedTopPosts.length === 0) {
     console.error('Error fetching posts:', error)
     return
   }
 
-  console.log(`\n📊 Found ${topPosts.length} top posts\n`)
+  console.log(`\n📊 Found ${typedTopPosts.length} top posts\n`)
 
-  topPosts.forEach((post, index) => {
+  typedTopPosts.forEach((post, index) => {
     const ageHours = (Date.now() - new Date(post.created_utc).getTime()) / (1000 * 60 * 60)
     const ageDays = Math.floor(ageHours / 24)
 
@@ -61,24 +72,24 @@ async function main() {
   console.log('='.repeat(80))
 
   // Engagement analysis
-  const avgUpvotes = topPosts.reduce((sum, p) => sum + (p.score ?? 0), 0) / topPosts.length
-  const avgComments = topPosts.reduce((sum, p) => sum + (p.comments ?? 0), 0) / topPosts.length
-  const avgScore = topPosts.reduce((sum, p) => sum + (p.viability_score || 0), 0) / topPosts.length
+  const avgUpvotes = typedTopPosts.reduce((sum, p) => sum + (p.score ?? 0), 0) / typedTopPosts.length
+  const avgComments = typedTopPosts.reduce((sum, p) => sum + (p.comments ?? 0), 0) / typedTopPosts.length
+  const avgScore = typedTopPosts.reduce((sum, p) => sum + (p.viability_score || 0), 0) / typedTopPosts.length
 
   console.log(`\nAverage Viability Score: ${avgScore.toFixed(2)}/10`)
   console.log(`Average Upvotes: ${Math.round(avgUpvotes)}`)
   console.log(`Average Comments: ${Math.round(avgComments)}`)
 
   // Content analysis
-  const withContent = topPosts.filter(p => p.content && p.content.length > 0).length
-  const linkPosts = topPosts.filter(p => !p.content || p.content.length === 0).length
+  const withContent = typedTopPosts.filter(p => p.content && p.content.length > 0).length
+  const linkPosts = typedTopPosts.filter(p => !p.content || p.content.length === 0).length
 
   console.log(`\nContent Distribution:`)
   console.log(`  Text posts: ${withContent}`)
   console.log(`  Link posts: ${linkPosts}`)
 
   // Subreddit distribution
-  const subreddits = topPosts.reduce((acc, p) => {
+  const subreddits = typedTopPosts.reduce((acc, p) => {
     acc[p.subreddit] = (acc[p.subreddit] || 0) + 1
     return acc
   }, {} as Record<string, number>)

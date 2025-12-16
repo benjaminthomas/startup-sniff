@@ -31,6 +31,13 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       supabase.from('usage_limits').select('*').eq('user_id', session.userId).single()
     ]);
 
+    const typedProfile = profileResult.data as { plan_type: string | null } | null;
+    const typedUsageLimits = usageLimitsResult.data as {
+      ideas_generated: number | null;
+      validations_completed: number | null;
+      created_at: string;
+    } | null;
+
     log.info('📊 Database results:', {
       profile: profileResult.data,
       profileError: profileResult.error,
@@ -39,10 +46,10 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
     });
 
     // Set plan type, default to free if not set
-    const planType = (profileResult.data?.plan_type as PlanType) || 'free';
+    const planType = (typedProfile?.plan_type as PlanType) || 'free';
 
     // Set usage data with validation against actual data
-    if (usageLimitsResult.data && !usageLimitsResult.error) {
+    if (typedUsageLimits && !usageLimitsResult.error) {
       // Get actual counts from all tables to validate usage_limits data
       const [ideasResult, validatedIdeasResult, contentResult] = await Promise.all([
         supabase
@@ -63,8 +70,8 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
       const actualIdeasCount = ideasResult.count || 0;
       const actualValidatedCount = validatedIdeasResult.count || 0;
       const actualContentCount = contentResult.count || 0;
-      const recordedIdeasCount = Number(usageLimitsResult.data.ideas_generated || 0);
-      const recordedValidatedCount = Number(usageLimitsResult.data.validations_completed || 0);
+      const recordedIdeasCount = Number(typedUsageLimits.ideas_generated || 0);
+      const recordedValidatedCount = Number(typedUsageLimits.validations_completed || 0);
       const recordedContentCount = 0; // Content is tracked separately in generated_content table
 
       // Check for data inconsistency and fix it
@@ -76,12 +83,12 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
 
         // Update usage_limits with correct data
         const updateResult = await supabase
-          .from('usage_limits')
+          .from('usage_limits' as never)
           .update({
             ideas_generated: actualIdeasCount,
             validations_completed: actualValidatedCount,
             updated_at: new Date().toISOString()
-          })
+          } as never)
           .eq('user_id', session.userId);
 
         log.info('✅ Usage counters update result:', {
@@ -101,7 +108,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           ideas_used: actualIdeasCount,
           validations_used: actualValidatedCount,
           content_used: actualContentCount,
-          last_reset: usageLimitsResult.data.created_at || new Date().toISOString()
+          last_reset: typedUsageLimits.created_at || new Date().toISOString()
         }
       };
     } else {
@@ -135,7 +142,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
 
       // Create usage_limits record with actual counts
       const insertResult = await supabase
-        .from('usage_limits')
+        .from('usage_limits' as never)
         .insert({
           user_id: session.userId,
           plan_type: planType,
@@ -145,7 +152,7 @@ export async function getUserPlanAndUsage(): Promise<PlanAndUsageData | null> {
           validations_completed: actualValidatedCount,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        })
+        } as never)
         .select()
         .single();
 
@@ -194,11 +201,11 @@ export async function incrementUsage(type: 'ideas' | 'validations' | 'content'):
       const currentUsage = type === 'validations' ? currentData.usage.validations_used : currentData.usage.ideas_used;
 
       await supabase
-        .from('usage_limits')
+        .from('usage_limits' as never)
         .update({
           [updateField]: currentUsage + 1,
           updated_at: new Date().toISOString()
-        })
+        } as never)
         .eq('user_id', session.userId);
     }
 

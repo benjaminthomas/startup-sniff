@@ -1,9 +1,9 @@
 'use server'
 
-import { z } from 'zod'
 import { createServerAdminClient } from '@/features/supabase/server'
 import type { RedditContact, RedditContactInsert } from '@/types/supabase'
 import { log } from '@/lib/logger'
+import { paginationSchema } from '@/features/reddit/schemas/reddit-schemas'
 
 /**
  * Epic 2, Story 2.1: Human Discovery
@@ -21,14 +21,7 @@ interface DiscoverContactsResult {
   error?: string
 }
 
-/**
- * Pagination validation schema
- * SECURITY: Prevents DoS attacks from extreme values
- */
-const paginationSchema = z.object({
-  page: z.number().int().min(1).max(1000),
-  limit: z.number().int().min(1).max(100)
-})
+// Pagination schema imported from centralized schemas
 
 // Simple console logger for server actions
 const logger = {
@@ -196,7 +189,9 @@ export async function discoverContactsAction(
       .eq('id', painPointId)
       .single()
 
-    if (painPointError || !painPoint) {
+    const typedPainPoint = painPoint as { title: string; id: string; subreddit: string; reddit_id: string } | null;
+
+    if (painPointError || !typedPainPoint) {
       logger.error('Pain point not found', painPointError, { painPointId })
       return {
         success: false,
@@ -208,7 +203,7 @@ export async function discoverContactsAction(
       }
     }
 
-    logger.info(`Discovering contacts for pain point: ${painPoint.title}`)
+    logger.info(`Discovering contacts for pain point: ${typedPainPoint.title}`)
 
     // 2. Check if we already have cached contacts (discovered within last 24h)
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
@@ -252,11 +247,21 @@ export async function discoverContactsAction(
     const { data: similarPosts, error: postsError } = await supabase
       .from('reddit_posts')
       .select('*')
-      .eq('subreddit', painPoint.subreddit)
+      .eq('subreddit', typedPainPoint.subreddit)
       .gte('created_utc', fortyEightHoursAgo)
       .neq('id', painPointId) // Exclude the original pain point
       .order('score', { ascending: false })
       .limit(20) // Get more than 5 to allow for filtering
+
+    const typedSimilarPosts = (similarPosts || []) as Array<{
+      author: string;
+      reddit_id: string;
+      id: string;
+      content: string | null;
+      title: string;
+      score: number;
+      subreddit: string;
+    }>;
 
     if (postsError) {
       logger.error('Failed to fetch similar posts', postsError)
@@ -270,7 +275,7 @@ export async function discoverContactsAction(
       }
     }
 
-    if (!similarPosts || similarPosts.length === 0) {
+    if (typedSimilarPosts.length === 0) {
       logger.warn('No similar posts found')
       return {
         success: true,
@@ -281,7 +286,7 @@ export async function discoverContactsAction(
       }
     }
 
-    logger.info(`Found ${similarPosts.length} similar posts`)
+    logger.info(`Found ${typedSimilarPosts.length} similar posts`)
 
     // 4. Get Reddit access token
     const accessToken = await getRedditAccessToken()
@@ -300,7 +305,7 @@ export async function discoverContactsAction(
     // 5. Fetch user profiles and calculate engagement scores
     // Filter unique, valid users first
     const seenUsernames = new Set<string>()
-    const validPosts = similarPosts.filter(post => {
+    const validPosts = typedSimilarPosts.filter(post => {
       // Skip duplicates
       if (seenUsernames.has(post.author)) {
         return false
@@ -388,8 +393,8 @@ export async function discoverContactsAction(
 
     // 7. Insert ALL contacts into database
     const { data: insertedContacts, error: insertError } = await supabase
-      .from('reddit_contacts')
-      .insert(sortedContacts)
+      .from('reddit_contacts' as never)
+      .insert(sortedContacts as never)
       .select()
 
     if (insertError) {

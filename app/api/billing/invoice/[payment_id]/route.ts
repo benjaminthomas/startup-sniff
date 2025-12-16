@@ -26,22 +26,32 @@ export async function GET(
       .eq('id', params.payment_id)
       .single();
 
-    if (error || !transaction) {
+    const typedTransaction = transaction as {
+      razorpay_invoice_id: string | null;
+      razorpay_invoice_url: string | null;
+      razorpay_payment_id: string;
+      razorpay_subscription_id: string | null;
+      user_id: string;
+      amount: number;
+      currency: string;
+    } | null
+
+    if (error || !typedTransaction) {
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
     // 2. Verify user owns this transaction (security check)
-    if (transaction.user_id !== session.userId) {
+    if (typedTransaction.user_id !== session.userId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // 3. Fetch or generate invoice from Razorpay
     let invoice;
 
-    if (transaction.razorpay_invoice_id) {
+    if (typedTransaction.razorpay_invoice_id) {
       // Use stored invoice ID (preferred fast path)
       try {
-        invoice = await fetchInvoice(transaction.razorpay_invoice_id);
+        invoice = await fetchInvoice(typedTransaction.razorpay_invoice_id);
       } catch (fetchError) {
         log.error('Failed to fetch invoice by ID:', fetchError);
         // Fall through to payment_id lookup
@@ -51,19 +61,19 @@ export async function GET(
     if (!invoice) {
       // Fallback: Query by payment ID
       try {
-        const invoices = await fetchInvoicesByPayment(transaction.razorpay_payment_id);
+        const invoices = await fetchInvoicesByPayment(typedTransaction.razorpay_payment_id);
 
         if (invoices.items && invoices.items.length > 0) {
           invoice = invoices.items[0];
 
           // Store invoice ID for future lookups
           await supabase
-            .from('payment_transactions')
+            .from('payment_transactions' as never)
             .update({
               razorpay_invoice_id: invoice.id,
               razorpay_invoice_url: invoice.short_url,
               invoice_generated_at: new Date().toISOString(),
-            })
+            } as never)
             .eq('id', params.payment_id);
         }
       } catch (queryError) {
@@ -78,10 +88,12 @@ export async function GET(
         const { data: user } = await supabase
           .from('users')
           .select('email, full_name, razorpay_customer_id')
-          .eq('id', transaction.user_id)
+          .eq('id', typedTransaction.user_id)
           .single();
 
-        if (!user || !user.razorpay_customer_id) {
+        const typedUser = user as { email: string; full_name: string | null; razorpay_customer_id: string | null } | null
+
+        if (!typedUser || !typedUser.razorpay_customer_id) {
           return NextResponse.json({
             error: 'Unable to generate invoice: customer information missing'
           }, { status: 500 });
@@ -89,26 +101,26 @@ export async function GET(
 
         // Create new invoice
         invoice = await createInvoice({
-          customerId: user.razorpay_customer_id,
-          amount: transaction.amount,
-          currency: transaction.currency || 'INR',
+          customerId: typedUser.razorpay_customer_id,
+          amount: typedTransaction.amount,
+          currency: typedTransaction.currency || 'INR',
           description: 'StartupSniff Pro Subscription',
-          customer_email: user.email,
-          customer_name: user.full_name || user.email.split('@')[0],
-          payment_id: transaction.razorpay_payment_id,
+          customer_email: typedUser.email,
+          customer_name: typedUser.full_name || typedUser.email.split('@')[0],
+          payment_id: typedTransaction.razorpay_payment_id,
         });
 
         // Store invoice ID and URL
         await supabase
-          .from('payment_transactions')
+          .from('payment_transactions' as never)
           .update({
             razorpay_invoice_id: invoice.id,
             razorpay_invoice_url: invoice.short_url,
             invoice_generated_at: new Date().toISOString(),
-          })
+          } as never)
           .eq('id', params.payment_id);
 
-        log.info(`Generated new invoice ${invoice.id} for payment ${transaction.razorpay_payment_id}`);
+        log.info(`Generated new invoice ${invoice.id} for payment ${typedTransaction.razorpay_payment_id}`);
       } catch (createError) {
         log.error('Failed to create invoice:', createError);
         return NextResponse.json({

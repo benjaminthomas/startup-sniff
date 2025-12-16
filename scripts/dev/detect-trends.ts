@@ -83,13 +83,13 @@ async function main() {
 
   for (const [postId, data] of updates) {
     const { error: updateError } = await supabase
-      .from('reddit_posts')
+      .from('reddit_posts' as never)
       .update({
         weekly_frequency: data.weekly_frequency,
         trend_direction: data.trend_direction,
         trend_percentage: data.trend_percentage,
         is_emerging: data.is_emerging
-      })
+      } as never)
       .eq('reddit_id', postId)
 
     if (updateError) {

@@ -35,12 +35,12 @@ export async function connectRedditAccountAction(): Promise<ConnectRedditAccount
     // Store state in database for verification
     const supabase = createServerAdminClient()
     const { error: updateError } = await supabase
-      .from('users')
+      .from('users' as never)
       .update({
         // Store state temporarily in a JSON field or separate column
         // For now, we'll use a simple timestamp-based approach
         updated_at: new Date().toISOString()
-      })
+      } as never)
       .eq('id', session.userId)
 
     if (updateError) {
