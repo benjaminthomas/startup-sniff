@@ -1,10 +1,9 @@
-import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageHeader } from '@/components/ui/page-header';
-import { IdeaCard } from '@/features/dashboard/components/idea-card';
+import { IdeasGrid } from '@/features/dashboard/components/ideas-grid';
 import { getUserIdeas } from '@/features/ideas';
 import { Plus, Lightbulb } from 'lucide-react';
 
@@ -69,18 +68,7 @@ export default async function IdeasPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {ideas.map((idea) => (
-              <Suspense
-                key={idea.id}
-                fallback={
-                  <div className="animate-pulse bg-muted h-64 rounded-lg" />
-                }
-              >
-                <IdeaCard idea={idea} />
-              </Suspense>
-            ))}
-          </div>
+          <IdeasGrid ideas={ideas} />
         </>
       )}
     </div>

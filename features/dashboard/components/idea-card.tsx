@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { validateExistingIdea } from '@/features/validation';
-import { toggleFavorite } from '@/features/ideas';
 import { UpgradeModal } from '@/components/ui/upgrade-modal';
 import { useServerPlanLimits } from '@/hooks';
 import {
@@ -23,35 +21,15 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { log } from '@/lib/logger/client'
+import type { IdeaCardData, ValidateIdeaHandler, ToggleFavoriteHandler } from '@/types/components'
 
 interface IdeaCardProps {
-  idea: {
-    id: string;
-    title: string;
-    problem_statement: string;
-    target_market: {
-      description: string;
-      size: string;
-    } | null;
-    solution: {
-      description: string;
-      unique_value_proposition: string;
-      revenue_model: string;
-    } | null;
-    implementation: {
-      estimated_cost: string;
-      time_to_market: string;
-      next_steps: string | string[];
-    } | null;
-    validation_data: Record<string, unknown> | null;
-    is_validated: boolean | null;
-    is_favorite: boolean | null;
-    ai_confidence_score: number | null;
-    created_at: string;
-  };
+  idea: IdeaCardData;
+  onValidate: ValidateIdeaHandler;
+  onToggleFavorite: ToggleFavoriteHandler;
 }
 
-export function IdeaCard({ idea }: IdeaCardProps) {
+export function IdeaCard({ idea, onValidate, onToggleFavorite }: IdeaCardProps) {
   const [isValidating, setIsValidating] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isFavorite, setIsFavorite] = useState(idea.is_favorite || false);
@@ -63,19 +41,19 @@ export function IdeaCard({ idea }: IdeaCardProps) {
       setShowUpgradeModal(true);
       return;
     }
-    
+
     setIsValidating(true);
-    
+
     // Show loading toast with detailed message
     const loadingToast = toast.loading("🔍 AI is analyzing market feasibility, competition, and potential...");
-    
+
     try {
-      const result = await validateExistingIdea(idea.id);
+      const result = await onValidate(idea.id);
       if (result.success) {
         toast.success("✅ Validation complete! Your idea has been scored and analyzed.", {
           id: loadingToast
         });
-        
+
         // Refresh usage data and reload page for better UX
         await refreshUsage();
         setTimeout(() => {
@@ -99,12 +77,16 @@ export function IdeaCard({ idea }: IdeaCardProps) {
   const handleToggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     setIsTogglingFavorite(true);
     try {
-      const result = await toggleFavorite(idea.id);
-      setIsFavorite(result.is_favorite);
-      toast.success(result.is_favorite ? 'Added to favorites!' : 'Removed from favorites');
+      const result = await onToggleFavorite(idea.id, idea.is_favorite);
+      if (result.success && result.data) {
+        setIsFavorite(result.data.is_favorite);
+        toast.success(result.data.is_favorite ? 'Added to favorites!' : 'Removed from favorites');
+      } else {
+        throw new Error(result.error || 'Failed to toggle favorite');
+      }
     } catch (error) {
       log.error('Toggle favorite error:', error);
       toast.error('Failed to update favorite status');

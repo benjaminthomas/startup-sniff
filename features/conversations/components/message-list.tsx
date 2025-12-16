@@ -1,46 +1,23 @@
 /**
- * Message List Component
+ * Message List Component (Standalone)
  *
  * Displays individual messages with status and outcome tracking
+ * Uses dependency injection for actions
  */
 
 'use client'
 
 import { useState } from 'react'
 import { MessageCard } from './message-card'
-
-interface Message {
-  id: string
-  user_id: string
-  reddit_username: string
-  reddit_post_id: string | null
-  reddit_contact_id: string | null
-  template_variant: string | null
-  message_text: string
-  send_status: 'draft' | 'sent' | 'failed' | null
-  outcome: 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
-  sent_at: string | null
-  replied_at: string | null
-  created_at: string
-  updated_at: string
-  contact: {
-    reddit_username: string
-    post_excerpt: string | null
-    karma: number | null
-    engagement_score: number
-  } | null
-  pain_point: {
-    reddit_id: string
-    title: string
-    subreddit: string
-  } | null
-}
+import { updateMessageOutcomeAction } from '@/features/conversations/actions/update-message-outcome'
+import type { MessageCardData, UpdateMessageOutcomeHandler } from '@/types/components'
 
 interface MessageListProps {
-  messages: Message[]
+  messages: MessageCardData[]
+  onUpdateOutcome?: UpdateMessageOutcomeHandler
 }
 
-export function MessageList({ messages }: MessageListProps) {
+export function MessageList({ messages, onUpdateOutcome = updateMessageOutcomeAction }: MessageListProps) {
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterOutcome, setFilterOutcome] = useState<string>('all')
 
@@ -107,7 +84,7 @@ export function MessageList({ messages }: MessageListProps) {
       {/* Message Cards */}
       <div className="space-y-4">
         {filteredMessages.map((message) => (
-          <MessageCard key={message.id} message={message} />
+          <MessageCard key={message.id} message={message} onUpdateOutcome={onUpdateOutcome} />
         ))}
       </div>
 

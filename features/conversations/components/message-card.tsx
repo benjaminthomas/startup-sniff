@@ -1,54 +1,31 @@
 /**
- * Message Card Component
+ * Message Card Component (Standalone)
  *
  * Individual message card with outcome logging UI
+ * Uses dependency injection for actions - fully standalone component
  */
 
 'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { updateMessageOutcomeAction } from '@/features/conversations/actions/update-message-outcome'
 import { log } from '@/lib/logger'
-
-type OutcomeType = 'replied' | 'call_scheduled' | 'customer_acquired' | 'dead_end' | null
-
-interface Message {
-  id: string
-  reddit_username: string
-  message_text: string
-  template_variant: string | null
-  send_status: string | null
-  sent_at: string | null
-  outcome: string | null
-  replied_at: string | null
-  created_at: string | null
-  contact: {
-    reddit_username: string
-    post_excerpt: string | null
-    karma: number | null
-    engagement_score: number
-  } | null
-  pain_point: {
-    reddit_id: string
-    title: string
-    subreddit: string
-  } | null
-}
+import type { MessageCardData, MessageOutcome, UpdateMessageOutcomeHandler } from '@/types/components'
 
 interface MessageCardProps {
-  message: Message
+  message: MessageCardData
+  onUpdateOutcome: UpdateMessageOutcomeHandler
 }
 
-export function MessageCard({ message }: MessageCardProps) {
+export function MessageCard({ message, onUpdateOutcome }: MessageCardProps) {
   const [isUpdating, setIsUpdating] = useState(false)
   const [showMessage, setShowMessage] = useState(false)
   const [localOutcome, setLocalOutcome] = useState(message.outcome)
 
-  const handleOutcomeUpdate = async (newOutcome: OutcomeType) => {
+  const handleOutcomeUpdate = async (newOutcome: MessageOutcome) => {
     setIsUpdating(true)
     try {
-      const result = await updateMessageOutcomeAction(message.id, newOutcome)
+      const result = await onUpdateOutcome(message.id, newOutcome)
       if (result.success) {
         setLocalOutcome(newOutcome)
         // Celebratory animation for positive outcomes
