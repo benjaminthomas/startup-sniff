@@ -140,7 +140,6 @@ export async function upgradeMonthlyToYearly() {
       user_id: session.userId,
       razorpay_subscription_id: yearlySubscription.id,
       razorpay_plan_id: yearlyPlan.priceId,
-      stripe_price_id: yearlyPlan.priceId, // Legacy field
       status: 'inactive', // Will be activated after payment
       plan_type: 'pro_yearly',
       current_period_start: new Date().toISOString(),

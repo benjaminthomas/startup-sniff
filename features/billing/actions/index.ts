@@ -132,7 +132,6 @@ export async function manageBilling() {
     return { error: 'User not authenticated' };
   }
 
-  // Razorpay doesn't have a built-in billing portal like Stripe
   // Redirect to the billing page where users can manage subscriptions
   redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`);
 }
