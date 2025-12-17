@@ -7,6 +7,49 @@
  * - Rate limiting for auth endpoints
  * - Secure route protection with proper redirects
  * - Attack prevention (XSS, session fixation, replay attacks)
+ *
+ * ROUTE PROTECTION SUMMARY:
+ *
+ * 1. PROTECTED PAGE ROUTES (require authentication):
+ *    - /dashboard/** - All dashboard pages and subpages
+ *    - Redirects to /auth/signin if not authenticated
+ *
+ * 2. AUTH PAGE ROUTES (public, redirect if authenticated):
+ *    - /auth/signin, /auth/signup, /auth/forgot-password
+ *    - /auth/reset-password, /auth/verify-email, /auth/callback
+ *    - Redirects to /dashboard if already authenticated
+ *
+ * 3. PUBLIC PAGE ROUTES (no auth required):
+ *    - / (home), /contact, /privacy_policy, /T&C, /refund_policy
+ *    - Marketing and legal pages
+ *
+ * 4. PROTECTED API ROUTES (check auth in route handler):
+ *    - /api/ideas/** - Idea generation and management
+ *    - /api/payments/verify - Payment verification
+ *    - /api/reddit-trends - Reddit trend analysis
+ *    - /api/billing/** - Billing and invoices
+ *    - All check getCurrentSession() and return 401 if unauthorized
+ *
+ * 5. PUBLIC API ROUTES (no auth required):
+ *    - /api/contact - Public contact form (has own rate limiting)
+ *    - /api/webhooks/** - Razorpay webhooks (signature verification)
+ *    - /api/auth/reddit/callback - OAuth callback (validates state)
+ *
+ * 6. ADMIN API ROUTES (admin auth required):
+ *    - /api/admin/** - Admin operations
+ *    - Check verifyAdminAuth() in route handler
+ *
+ * 7. CRON API ROUTES (Bearer token required):
+ *    - /api/cron/** - Scheduled background jobs
+ *    - Check Authorization: Bearer header in route handler
+ *
+ * 8. SPECIAL API ROUTES:
+ *    - /api/reddit/fetch, /api/reddit/score - Have own authentication
+ *
+ * CSRF PROTECTION:
+ * - Enabled for all POST/PUT/DELETE/PATCH requests
+ * - Skipped for: webhooks, cron, admin, contact, reddit endpoints
+ * - Server Actions protected by Next.js built-in CSRF
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
@@ -68,9 +111,15 @@ export async function middleware(request: NextRequest) {
     // CSRF Protection for all state-changing operations
     // Skip CSRF for:
     // - Webhooks (have their own signature verification)
-    // - Cron jobs (have their own secret authentication)
+    // - Cron jobs (have their own Bearer token authentication)
+    // - Admin routes (have their own admin authentication)
+    // - Contact form (public endpoint with own rate limiting and validation)
+    // - Reddit endpoints (have their own authentication)
     // - When explicitly disabled in development
     const skipCSRF = pathname.startsWith('/api/webhooks') ||
+                     pathname.startsWith('/api/cron') ||
+                     pathname.startsWith('/api/admin') ||
+                     pathname.startsWith('/api/contact') ||
                      pathname.startsWith('/api/reddit/fetch') ||
                      pathname.startsWith('/api/reddit/score') ||
                      (process.env.DISABLE_CSRF === 'true' && pathname.startsWith('/api/'))

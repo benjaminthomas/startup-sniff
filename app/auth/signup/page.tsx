@@ -6,7 +6,6 @@ import { Suspense } from 'react'
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import type { Route } from 'next'
 import { getCurrentUser } from '@/features/auth/actions'
 import { getOrGenerateCSRFToken } from '@/features/auth/utils/csrf'
 import { SignUpForm } from '@/features/auth/components/signup-form'
@@ -81,17 +80,6 @@ async function SignUpPageContent({ searchParams }: SignUpPageProps) {
               className="font-medium text-primary hover:underline transition-colors"
             >
               Sign in
-            </Link>
-          </div>
-
-          <div className="text-center text-xs text-muted-foreground">
-            By creating an account, you agree to our{' '}
-            <Link href={"/terms" as Route} className="underline hover:text-foreground">
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link href={"/privacy" as Route} className="underline hover:text-foreground">
-              Privacy Policy
             </Link>
           </div>
         </CardContent>

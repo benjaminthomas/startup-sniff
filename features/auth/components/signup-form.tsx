@@ -10,10 +10,12 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 import { signUpAction } from '@/features/auth/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -41,6 +43,9 @@ const signUpSchema = z.object({
     .regex(/^(?=.*[A-Z])/, 'Password must contain at least one uppercase letter')
     .regex(/^(?=.*\d)/, 'Password must contain at least one number'),
   confirmPassword: z.string(),
+  agreeToTerms: z.boolean().refine(val => val === true, {
+    message: 'You must agree to the Terms of Service and Privacy Policy',
+  }),
 }).refine(data => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
@@ -67,6 +72,7 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
       email: '',
       password: '',
       confirmPassword: '',
+      agreeToTerms: false,
     },
   })
 
@@ -301,9 +307,46 @@ export function SignUpForm({ csrfToken }: SignUpFormProps) {
           )}
         />
 
-        <Button 
-          type="submit" 
-          className="w-full" 
+        <FormField
+          control={form.control}
+          name="agreeToTerms"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  disabled={isPending}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel className="text-sm font-normal">
+                  I agree to the{' '}
+                  <Link
+                    href="/T&C"
+                    className="text-[#2D6EF7] hover:underline font-medium"
+                    target="_blank"
+                  >
+                    Terms of Service
+                  </Link>
+                  {' '}and{' '}
+                  <Link
+                    href="/privacy_policy"
+                    className="text-[#2D6EF7] hover:underline font-medium"
+                    target="_blank"
+                  >
+                    Privacy Policy
+                  </Link>
+                </FormLabel>
+                <FormMessage />
+              </div>
+            </FormItem>
+          )}
+        />
+
+        <Button
+          type="submit"
+          className="w-full"
           disabled={isPending || !form.formState.isValid}
           size="lg"
         >

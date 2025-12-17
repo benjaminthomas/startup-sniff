@@ -38,7 +38,7 @@ export function PolicyHeader({ title, subtitle, lastUpdated, type }: PolicyHeade
             transition={{ duration: 0.6, delay: 0.2 }}
             className="mb-6"
           >
-            <div className="w-16 h-16 mx-auto gradient-primary rounded-2xl flex items-center justify-center shadow-lg glow-purple mb-6">
+            <div className="w-16 h-16 mx-auto bg-gradient-to-br from-[#2D6EF7] to-[#1E5EE8] rounded-2xl flex items-center justify-center shadow-lg mb-6">
               <Icon className="w-8 h-8 text-white" />
             </div>
           </motion.div>
@@ -50,7 +50,7 @@ export function PolicyHeader({ title, subtitle, lastUpdated, type }: PolicyHeade
           >
             <Badge
               variant="outline"
-              className="mb-6 bg-secondary/80 border-primary/30 text-primary"
+              className="mb-6 bg-[#EBF2FE] border-[#2D6EF7]/30 text-[#2D6EF7]"
             >
               Legal Information
             </Badge>
