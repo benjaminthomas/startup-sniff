@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { Instagram, Facebook, Twitter } from 'lucide-react';
 
 /**
@@ -49,9 +50,11 @@ export function InfluencerCard({ influencer, onAddToCampaign }: InfluencerCardPr
   return (
     <div className="bg-white rounded-xl p-6 flex flex-col items-center gap-3 shadow-sm hover:shadow-md transition-shadow duration-200">
       {/* Avatar */}
-      <img
+      <Image
         src={influencer.avatar}
         alt={influencer.name}
+        width={64}
+        height={64}
         className="w-16 h-16 rounded-full object-cover ring-2 ring-neutral-100"
       />
 

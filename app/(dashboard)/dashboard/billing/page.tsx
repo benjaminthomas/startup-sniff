@@ -3,7 +3,6 @@ import { getCurrentSession } from '@/features/auth/services/jwt';
 import { createServerAdminClient } from '@/features/supabase';
 import { redirect } from 'next/navigation';
 import { DashboardShell } from '@/features/dashboard/components/dashboard-shell';
-import { PageHeader } from '@/components/ui/page-header';
 import { PricingCards } from '@/features/billing/components/pricing-cards';
 import { BillingHistory } from '@/features/billing/components/billing-history';
 import { CurrentPlan } from '@/features/billing/components/current-plan';
@@ -83,19 +82,19 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
     <DashboardShell>
       <div className="space-y-6">
         {showRedirectNotice && (
-          <Alert className="border-blue-200 bg-blue-50 text-blue-900">
-            <AlertCircle className="h-5 w-5" />
-            <AlertTitle>Upgrade Required</AlertTitle>
+          <Alert className="border-[#2D6EF7]/20 bg-[#EBF2FE] text-neutral-900">
+            <AlertCircle className="h-5 w-5 text-[#2D6EF7]" />
+            <AlertTitle className="text-neutral-900 font-semibold">Upgrade Required</AlertTitle>
             <AlertDescription className="mt-2">
               <div className="space-y-3">
-                <p>
+                <p className="text-neutral-700">
                   {redirectReason
                     ? redirectReason
                     : 'You were redirected here because this feature needs a paid StartupSniff plan.'}
                 </p>
                 <div>
-                  <p className="font-medium mb-2">Review the plans below to get started:</p>
-                  <ul className="list-disc list-inside space-y-1 text-blue-800">
+                  <p className="font-medium mb-2 text-neutral-900">Review the plans below to get started:</p>
+                  <ul className="list-disc list-inside space-y-1 text-neutral-700">
                     <li>Track all conversations and outcomes</li>
                     <li>Discover unlimited contacts from Reddit</li>
                     <li>Send personalized outreach messages</li>
@@ -107,10 +106,15 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
           </Alert>
         )}
 
-        <PageHeader
-          title="Billing & Subscription"
-          description="Manage your subscription and view billing history"
-        />
+        {/* Page Header - New Design System Style */}
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold text-neutral-900">
+            Billing & Subscription
+          </h1>
+          <p className="text-sm text-neutral-600">
+            Manage your subscription and view billing history
+          </p>
+        </div>
 
         <CurrentPlan
           currentPlan={currentPlan}
@@ -119,7 +123,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
         />
 
         <div id="pricing-cards">
-          <h2 className="text-2xl font-semibold mb-6">Available Plans</h2>
+          <h2 className="text-xl font-semibold text-neutral-900 mb-6">Available Plans</h2>
           <PricingCards
             currentPlanId={displayUser.plan_type || 'free'}
             userId={session.userId}
@@ -130,7 +134,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
 
         {profile?.razorpay_customer_id && (
           <div id="billing-history">
-            <h2 className="text-2xl font-semibold mb-6">Billing History</h2>
+            <h2 className="text-xl font-semibold text-neutral-900 mb-6">Billing History</h2>
             <BillingHistory userId={session.userId} />
           </div>
         )}

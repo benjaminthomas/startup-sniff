@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 /**
  * Notification Item Component
@@ -31,13 +32,6 @@ export function NotificationItem({
   onDecline,
   showActions = true,
 }: NotificationItemProps) {
-  const statusColors = {
-    warning: 'bg-[#FEF3C7]',
-    success: 'bg-[#D1FAE5]',
-    error: 'bg-[#FEE2E2]',
-    info: 'bg-[#DBEAFE]',
-  };
-
   const statusDotColors = {
     warning: 'bg-[#F59E0B]',
     success: 'bg-[#10B981]',
@@ -49,9 +43,11 @@ export function NotificationItem({
     <div className="flex gap-4 p-4 border-b border-neutral-200 hover:bg-neutral-50 transition-colors duration-200 cursor-pointer">
       {/* Avatar with Status Badge */}
       <div className="relative flex-shrink-0">
-        <img
+        <Image
           src={avatar}
           alt={company}
+          width={40}
+          height={40}
           className="w-10 h-10 rounded-full object-cover"
         />
         <span

@@ -23,35 +23,36 @@ export default async function SettingsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="mt-2 text-gray-600">
+    <div className="space-y-6">
+      {/* Page Header - New Design System Style */}
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold text-neutral-900">Settings</h1>
+        <p className="text-sm text-neutral-600">
           Manage your account preferences and email notifications
         </p>
       </div>
 
       <div className="space-y-6">
         {/* Account Information */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
+          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
             Account Information
           </h2>
           <div className="space-y-3">
             <div>
-              <span className="text-sm font-medium text-gray-600">Email:</span>
-              <p className="text-gray-900">{session.email}</p>
+              <span className="text-sm font-medium text-neutral-600">Email:</span>
+              <p className="text-neutral-900 mt-1">{session.email}</p>
             </div>
           </div>
         </div>
 
         {/* Email Preferences */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-neutral-200 p-6">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-neutral-900">
               Email Preferences
             </h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-neutral-600">
               Choose which emails you&apos;d like to receive from StartupSniff
             </p>
           </div>
@@ -60,15 +61,15 @@ export default async function SettingsPage() {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-white rounded-lg shadow-sm border border-red-200 p-6">
-          <h2 className="text-xl font-semibold text-red-900 mb-2">
+        <div className="bg-white rounded-xl shadow-sm border border-[#EF4444]/20 p-6">
+          <h2 className="text-lg font-semibold text-[#EF4444] mb-2">
             Danger Zone
           </h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-neutral-600 mb-4">
             These actions are irreversible. Please be certain.
           </p>
           <button
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            className="px-4 py-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             disabled
           >
             Delete Account (Coming Soon)

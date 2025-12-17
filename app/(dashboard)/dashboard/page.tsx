@@ -5,7 +5,6 @@ import { getCurrentSession } from "@/features/auth/services/jwt";
 import { UserDatabase } from "@/features/auth/services/database";
 import { createServerAdminClient } from "@/features/supabase";
 import { DashboardShell } from "@/features/dashboard/components/dashboard-shell";
-import { StatsCards } from "@/features/dashboard/components/stats-cards";
 import { RecentIdeas } from "@/features/dashboard/components/recent-ideas";
 import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { UsageTracker } from "@/components/ui/usage-tracker";
@@ -155,10 +154,6 @@ export default async function DashboardPage() {
     month: "long",
     day: "numeric",
   }).format(new Date());
-  const greetingName =
-    user?.full_name?.split(" ")[0] ||
-    user?.email?.split("@")[0] ||
-    "there";
 
   return (
     <DashboardShell>
