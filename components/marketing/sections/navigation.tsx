@@ -21,10 +21,10 @@ export function Navigation() {
             className="flex items-center space-x-3"
           >
             <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition-opacity">
-              <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#2D6EF7] to-[#1E5EE8] rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-lg">S</span>
               </div>
-              <span className="font-bold text-xl text-gradient">
+              <span className="font-bold text-xl bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
                 StartupSniff
               </span>
             </Link>
@@ -65,7 +65,7 @@ export function Navigation() {
             <Button variant="ghost" asChild className="text-sm">
               <Link href="/auth/signin">Sign In</Link>
             </Button>
-            <Button asChild className="gradient-primary glow-purple text-sm">
+            <Button asChild className="bg-[#2D6EF7] hover:bg-[#1E5EE8] text-white text-sm shadow-lg hover:shadow-[0_4px_12px_rgba(45,110,247,0.3)] transition-all">
               <Link href="/auth/signup">Get Started</Link>
             </Button>
           </motion.div>

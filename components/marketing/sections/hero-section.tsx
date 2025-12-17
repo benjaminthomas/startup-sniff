@@ -30,7 +30,7 @@ export function HeroSection() {
           >
             <Badge
               variant="outline"
-              className="mb-8 bg-secondary border-primary/30 text-primary"
+              className="mb-8 bg-[#EBF2FE] border-[#2D6EF7]/30 text-[#2D6EF7]"
             >
               <TrendingUp className="w-3 h-3 mr-1" />
               AI-Powered Startup Discovery
@@ -69,7 +69,7 @@ export function HeroSection() {
             <Button
               size="lg"
               asChild
-              className="text-lg px-8 py-4 gradient-primary glow-purple"
+              className="text-lg px-8 py-4 bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] hover:from-[#1E5EE8] hover:to-[#1A4FC4] text-white shadow-lg hover:shadow-[0_8px_16px_rgba(45,110,247,0.3)] transition-all"
             >
               <Link href="/auth/signup">
                 Start Free Today
@@ -80,7 +80,7 @@ export function HeroSection() {
               size="lg"
               variant="outline"
               asChild
-              className="text-lg px-8 py-4 border-primary/30 hover:bg-primary/10"
+              className="text-lg px-8 py-4 border-[#2D6EF7]/30 hover:bg-[#2D6EF7]/10"
             >
               <Link href="#demo">Watch Demo</Link>
             </Button>

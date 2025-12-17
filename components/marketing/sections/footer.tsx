@@ -11,10 +11,10 @@ export function Footer() {
           {/* Brand Section */}
           <div className="md:col-span-2 space-y-6">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg glow-purple">
+              <div className="w-12 h-12 bg-gradient-to-br from-[#2D6EF7] to-[#1E5EE8] rounded-xl flex items-center justify-center shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
-              <span className="font-bold text-2xl text-gradient">
+              <span className="font-bold text-2xl bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
                 StartupSniff
               </span>
             </div>

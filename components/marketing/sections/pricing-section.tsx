@@ -25,7 +25,7 @@ export function PricingSection({ onPlanSelect }: PricingSectionProps) {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gradient">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
             Choose Your Startup Discovery Plan
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
@@ -46,13 +46,13 @@ export function PricingSection({ onPlanSelect }: PricingSectionProps) {
               <Card
                 className={`relative h-full ${
                   plan.popular
-                    ? "border-primary glow-purple"
+                    ? "border-[#2D6EF7] shadow-[0_4px_12px_rgba(45,110,247,0.2)]"
                     : "border-border"
                 }`}
               >
                 {plan.popular && (
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <Badge className="gradient-primary text-white px-3 py-1">
+                    <Badge className="bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] text-white px-3 py-1">
                       Most Popular
                     </Badge>
                   </div>
@@ -62,7 +62,7 @@ export function PricingSection({ onPlanSelect }: PricingSectionProps) {
                     {plan.name}
                   </CardTitle>
                   <div className="mt-4">
-                    <span className="text-4xl font-bold text-gradient">
+                    <span className="text-4xl font-bold bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
                       {plan.price === 0 ? "Free" : `₹${plan.price}`}
                     </span>
                     <span className="text-muted-foreground">
@@ -76,7 +76,7 @@ export function PricingSection({ onPlanSelect }: PricingSectionProps) {
                   <Button
                     size="lg"
                     className={`w-full ${
-                      plan.popular ? "gradient-primary glow-purple" : ""
+                      plan.popular ? "bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] hover:from-[#1E5EE8] hover:to-[#1A4FC4] text-white shadow-lg hover:shadow-[0_4px_12px_rgba(45,110,247,0.3)] transition-all" : ""
                     }`}
                     variant={plan.popular ? "default" : "outline"}
                     onClick={() => onPlanSelect(plan.id, plan.price === 0)}
@@ -87,7 +87,7 @@ export function PricingSection({ onPlanSelect }: PricingSectionProps) {
                   <div className="mt-8 space-y-4">
                     {plan.features.map((feature, featureIndex) => (
                       <div key={featureIndex} className="flex items-center">
-                        <Check className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
+                        <Check className="h-5 w-5 text-[#2D6EF7] mr-3 flex-shrink-0" />
                         <span className="text-sm text-muted-foreground">
                           {feature}
                         </span>

@@ -100,7 +100,7 @@ export function UseCasesSection() {
             <Briefcase className="h-4 w-4" />
             Real Use Cases
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gradient">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
             Built for Every Stage of Your Journey
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -226,7 +226,7 @@ export function UseCasesSection() {
           <p className="text-lg text-muted-foreground mb-6">
             Ready to see which use case fits you best?
           </p>
-          <Button size="lg" asChild className="gradient-primary">
+          <Button size="lg" asChild className="bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] hover:from-[#1E5EE8] hover:to-[#1A4FC4] text-white shadow-lg hover:shadow-[0_8px_16px_rgba(45,110,247,0.3)] transition-all">
             <Link href="/auth/signup">
               Start Your Free Trial
               <ArrowRight className="ml-2 h-5 w-5" />

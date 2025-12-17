@@ -18,7 +18,7 @@ export function FeaturesSection() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-gradient">
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-[#2D6EF7] to-[#1E5EE8] bg-clip-text text-transparent">
             Everything You Need to Launch Smart
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
@@ -64,7 +64,7 @@ export function FeaturesSection() {
                   }
                   icon={
                     <div
-                      className={`w-8 h-8 bg-gradient-to-r ${feature.gradient} rounded-lg flex items-center justify-center glow-purple flex-shrink-0`}
+                      className={`w-8 h-8 bg-gradient-to-r ${feature.gradient} rounded-lg flex items-center justify-center shadow-lg flex-shrink-0`}
                     >
                       <feature.icon className="h-4 w-4 text-white" />
                     </div>
