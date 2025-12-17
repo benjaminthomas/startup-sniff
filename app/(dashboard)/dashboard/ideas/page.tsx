@@ -38,12 +38,13 @@ export default async function IdeasPage() {
             Get started by generating your first AI-powered startup idea.
             It only takes a few minutes!
           </p>
-          <Button asChild className="bg-[#2D6EF7] hover:bg-[#1E5EE8] text-white">
-            <Link href="/dashboard/generate">
-              <Plus className="mr-2 h-4 w-4" />
-              Generate Your First Idea
-            </Link>
-          </Button>
+          <Link
+            href="/dashboard/generate"
+            className="inline-flex items-center justify-center gap-2 bg-[#2D6EF7] hover:bg-[#1E5EE8] text-white px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Generate Your First Idea
+          </Link>
         </div>
       ) : (
         <>

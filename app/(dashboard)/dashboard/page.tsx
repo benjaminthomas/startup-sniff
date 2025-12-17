@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import type { StartupIdea, User as AppUser } from "@/types/global";
 import type { PlanType } from "@/types/database";
 import { getCurrentSession } from "@/features/auth/services/jwt";
@@ -185,12 +186,12 @@ export default async function DashboardPage() {
             <p className="text-sm opacity-90 mb-8 max-w-md">
               Discover startup ideas and validate them with AI-powered insights
             </p>
-            <button
-              onClick={() => window.location.href = '/dashboard/generate'}
-              className="bg-white text-[#2D6EF7] px-6 py-3 rounded-lg font-semibold text-sm hover:bg-neutral-50 transition-all duration-200 hover:shadow-lg"
+            <Link
+              href="/dashboard/generate"
+              className="inline-block bg-white text-[#2D6EF7] px-6 py-3 rounded-lg font-semibold text-sm hover:bg-neutral-50 transition-all duration-200 hover:shadow-lg"
             >
               Generate Ideas
-            </button>
+            </Link>
           </div>
 
           {/* Recent Campaign Card */}
@@ -214,12 +215,12 @@ export default async function DashboardPage() {
                 <div className="w-8 h-8 rounded-full bg-neutral-400 border-2 border-white" />
               </div>
               {ideas[0] && (
-                <button
-                  onClick={() => window.location.href = `/dashboard/ideas/${ideas[0].id}`}
-                  className="w-full text-[#2D6EF7] text-sm font-medium hover:underline"
+                <Link
+                  href={`/dashboard/ideas/${ideas[0].id}`}
+                  className="block w-full text-center text-[#2D6EF7] text-sm font-medium hover:underline"
                 >
                   See Campaign Details
-                </button>
+                </Link>
               )}
             </div>
           </div>
@@ -229,12 +230,12 @@ export default async function DashboardPage() {
         <div>
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-neutral-900">Last Transaction</h2>
-            <button
-              onClick={() => window.location.href = '/dashboard/billing'}
+            <Link
+              href="/dashboard/billing"
               className="text-[#2D6EF7] text-sm font-medium hover:underline"
             >
               See Details
-            </button>
+            </Link>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
