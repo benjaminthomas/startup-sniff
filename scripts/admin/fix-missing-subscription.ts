@@ -129,7 +129,6 @@ async function fixMissingSubscription(userEmail: string) {
         user_id: user.id,
         razorpay_subscription_id: `manual_${payment.razorpay_payment_id}`,
         razorpay_plan_id: razorpayPlanId,
-        stripe_price_id: razorpayPlanId, // Legacy field - still has NOT NULL constraint
         status: 'active',
         plan_type: planType,
         current_period_start: periodStart.toISOString(),

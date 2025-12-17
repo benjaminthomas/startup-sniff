@@ -51,7 +51,6 @@ export interface Subscription {
   user_id: string;
   razorpay_subscription_id: string;
   razorpay_plan_id: string | null;
-  stripe_price_id: string | null;
   status: 'trial' | 'active' | 'inactive' | 'cancelled' | null;
   plan_type: string | null;
   current_period_start: string | null;

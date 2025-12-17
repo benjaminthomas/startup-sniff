@@ -34,7 +34,6 @@ async function activateSubscription() {
     user_id: user.id,
     razorpay_subscription_id: SUBSCRIPTION_ID,
     razorpay_plan_id: process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID,
-    stripe_price_id: process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID, // Legacy field, same value
     status: 'active',
     plan_type: PLAN_TYPE,
     current_period_start: new Date().toISOString(),

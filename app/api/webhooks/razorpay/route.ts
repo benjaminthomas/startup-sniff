@@ -242,7 +242,6 @@ async function handleSubscriptionActivated(subscription: RazorpayWebhookPayload[
       user_id: userId,
       razorpay_subscription_id: subscription.id,
       razorpay_plan_id: subscription.plan_id,
-      stripe_price_id: subscription.plan_id, // Legacy field
       status: 'active',
       plan_type: plan.id,
       current_period_start: subscription.current_start

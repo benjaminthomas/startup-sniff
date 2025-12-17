@@ -132,7 +132,6 @@ export async function POST(request: NextRequest) {
           user_id: typedUser.id,
           razorpay_subscription_id: typedPayment.razorpay_subscription_id || `manual_${typedPayment.razorpay_payment_id}`,
           razorpay_plan_id: razorpayPlanId,
-          stripe_price_id: razorpayPlanId, // Legacy field
           status: 'active',
           plan_type: planType,
           current_period_start: periodStart.toISOString(),
