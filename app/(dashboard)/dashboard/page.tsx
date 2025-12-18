@@ -172,69 +172,38 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-          {/* Feature Card */}
-          <div
-            className="rounded-2xl p-12 text-white"
-            style={{
-              background: 'linear-gradient(135deg, #2D6EF7 0%, #1E5EE8 100%)',
-            }}
-          >
-            <h2 className="text-3xl font-bold leading-tight mb-4">
-              Let&apos;s create campaign for your amazing brand!
-            </h2>
-            <p className="text-sm opacity-90 mb-8 max-w-md">
-              Discover startup ideas and validate them with AI-powered insights
-            </p>
-            <Link
-              href="/dashboard/generate"
-              className="inline-block bg-white text-[#2D6EF7] px-6 py-3 rounded-lg font-semibold text-sm hover:bg-neutral-50 transition-all duration-200 hover:shadow-lg"
-            >
-              Generate Ideas
-            </Link>
-          </div>
-
-          {/* Recent Campaign Card */}
-          <div className="bg-white rounded-xl p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-neutral-900">Recent Campaign</h3>
-              <span className="text-xs text-[#2D6EF7] font-medium">Active</span>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-lg font-semibold text-neutral-900">
-                  {ideas[0]?.title || 'No recent ideas'}
-                </h4>
-                <p className="text-xs text-neutral-500 mt-1">
-                  Today, {new Date().toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex -space-x-2">
-                <div className="w-8 h-8 rounded-full bg-neutral-200 border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-neutral-300 border-2 border-white" />
-                <div className="w-8 h-8 rounded-full bg-neutral-400 border-2 border-white" />
-              </div>
-              {ideas[0] && (
-                <Link
-                  href={`/dashboard/ideas/${ideas[0].id}`}
-                  className="block w-full text-center text-[#2D6EF7] text-sm font-medium hover:underline"
-                >
-                  See Campaign Details
-                </Link>
-              )}
+        {/* Welcome Section - Only show if user has no ideas */}
+        {ideas.length === 0 && (
+          <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100">
+            <div className="max-w-2xl">
+              <h2 className="text-2xl font-bold text-neutral-900 mb-2">
+                Welcome to StartupSniff
+              </h2>
+              <p className="text-neutral-600 mb-6">
+                Discover and validate startup ideas powered by AI-driven Reddit insights. Get started by generating your first idea.
+              </p>
+              <Link
+                href="/dashboard/generate"
+                className="inline-flex items-center bg-[#2D6EF7] text-white px-6 py-3 rounded-lg font-semibold text-sm hover:bg-[#1E5EE8] transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                Generate Your First Idea
+              </Link>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Stats Section */}
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-neutral-900">Last Transaction</h2>
+            <h2 className="text-xl font-semibold text-neutral-900">Your Activity</h2>
             <Link
               href="/dashboard/billing"
               className="text-[#2D6EF7] text-sm font-medium hover:underline"
             >
-              See Details
+              View Usage Details
             </Link>
           </div>
 
