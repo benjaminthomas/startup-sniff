@@ -1,7 +1,7 @@
 /**
- * Custom JWT Authentication Middleware
+ * Custom JWT Authentication Proxy
  *
- * This middleware provides:
+ * This proxy provides:
  * - JWT session verification with database user validation
  * - CSRF protection for state-changing operations
  * - Rate limiting for auth endpoints
@@ -57,7 +57,7 @@ import { verifySessionToken } from '@/features/auth/services/jwt'
 import { UserDatabase } from '@/features/auth/services/database'
 import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/features/auth/utils/csrf'
 
-// Note: Middleware runs in Edge runtime, so we use console instead of Winston logger
+// Note: Proxy runs in Edge runtime, so we use console instead of Winston logger
 
 // Define route groups
 const AUTH_ROUTES = [
@@ -81,7 +81,7 @@ const RATE_LIMITS = {
 // In-memory rate limit store (in production, use Redis or database)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>()
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next()
 
@@ -264,7 +264,7 @@ export async function middleware(request: NextRequest) {
     return response
 
   } catch (error) {
-    console.error('Middleware error:', error)
+    console.error('Proxy error:', error)
     
     // Fail securely - redirect to signin on errors for protected routes
     const isProtectedRoute = PROTECTED_ROUTES.some(route =>
@@ -321,7 +321,6 @@ async function checkRateLimit(identifier: string, limit: number, windowMs: numbe
 }
 
 export const config = {
-  runtime: 'nodejs',
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
