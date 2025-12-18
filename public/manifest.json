@@ -1,0 +1,50 @@
+{
+  "name": "StartupSniff - AI-Powered Startup Ideas & Validation",
+  "short_name": "StartupSniff",
+  "description": "Discover trending startup opportunities and validate ideas using AI-powered market research and Reddit trend analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2D6EF7",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "32x32",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "tools"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Generate Ideas",
+      "short_name": "Generate",
+      "description": "Generate new startup ideas",
+      "url": "/dashboard/generate",
+      "icons": [
+        {
+          "src": "/icon",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Validate Ideas",
+      "short_name": "Validate",
+      "description": "Validate your startup ideas",
+      "url": "/dashboard/validation",
+      "icons": [
+        {
+          "src": "/icon",
+          "sizes": "32x32",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
