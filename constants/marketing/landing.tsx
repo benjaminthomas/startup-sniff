@@ -17,6 +17,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { FeatureItem, PlanFeature, StatItem } from "@/types/landing";
+import { PRICING_PLANS } from "@/constants";
 
 export const FEATURES: FeatureItem[] = [
   {
@@ -60,64 +61,6 @@ export const FEATURES: FeatureItem[] = [
     description:
       "Export your research to PDF, Notion, or share directly with your team and potential investors.",
     gradient: "from-teal-500 to-blue-500",
-  },
-];
-
-export const PRICING_PLANS: PlanFeature[] = [
-  {
-    id: "free",
-    name: "Free",
-    price: 0,
-    priceId: "",
-    features: [
-      "3 AI-generated startup ideas per month",
-      "1 market validation per month",
-      "3 content generations per month",
-      "Basic Reddit trend analysis",
-      "Standard content generation",
-      "Email support",
-    ],
-    limits: { ideas: 3, validations: 1, content: 3 },
-  },
-  {
-    id: "pro_monthly",
-    name: "Pro",
-    price: 2900,
-    priceId:
-      process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID ||
-      "plan_RQbJW54uNkoMwA",
-    billingCycle: "monthly",
-    features: [
-      "Unlimited AI-generated startup ideas",
-      "Unlimited market validations",
-      "Unlimited content generations",
-      "Advanced Reddit trend analysis",
-      "Premium content generation",
-      "Multi-platform trend analysis",
-      "Custom brand voice content",
-      "Export to PDF/Notion",
-      "Advanced analytics dashboard",
-      "Priority support",
-      "Cancel anytime",
-    ],
-    limits: { ideas: -1, validations: -1, content: -1 },
-    popular: true,
-  },
-  {
-    id: "pro_yearly",
-    name: "Pro",
-    price: 29000,
-    priceId:
-      process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID ||
-      "plan_RQbJzVfk744fiY",
-    billingCycle: "yearly",
-    features: [
-      "Everything in Pro plan",
-      "Save $58/year (2 months free)",
-      "Billed annually",
-    ],
-    limits: { ideas: -1, validations: -1, content: -1 },
-    badge: "SAVE 17%",
   },
 ];
 

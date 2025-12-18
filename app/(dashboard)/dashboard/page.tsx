@@ -238,7 +238,7 @@ export default async function DashboardPage() {
             </Link>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-lg bg-[#D1FAE5] flex items-center justify-center">
@@ -272,6 +272,24 @@ export default async function DashboardPage() {
               </div>
               <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mt-2">
                 Validations
+              </p>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#FEF3C7] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#F59E0B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-neutral-900">
+                  {usageData?.usage.content_used ?? 0}
+                </span>
+              </div>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mt-2">
+                Content Generated
               </p>
             </div>
           </div>

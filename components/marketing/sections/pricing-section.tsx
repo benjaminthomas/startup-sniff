@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PRICING_PLANS } from "@/constants/marketing/landing";
+import { PRICING_PLANS } from "@/constants";
 
 interface PricingSectionProps {
   onPlanSelect: (planId: string, isFree: boolean) => void;

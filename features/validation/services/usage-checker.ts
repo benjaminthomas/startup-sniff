@@ -1,5 +1,6 @@
 import { createServerAdminClient } from '@/features/supabase'
 import { log } from '@/lib/logger'
+import { PRICING_PLANS } from '@/constants'
 
 interface UsageLimits {
   canValidate: boolean
@@ -8,12 +9,6 @@ interface UsageLimits {
   validationsLimit: number
   planType: string
 }
-
-const PLAN_LIMITS = {
-  free: { validations_per_month: 1 },
-  pro_monthly: { validations_per_month: -1 }, // unlimited
-  pro_yearly: { validations_per_month: -1 }, // unlimited
-} as const
 
 /**
  * Checks if user can perform validation based on their plan limits
@@ -56,7 +51,8 @@ export async function checkValidationLimits(userId: string): Promise<UsageLimits
 
   const typedUser = user as { plan_type: string | null } | null;
   const planType = typedUser?.plan_type || 'free'
-  const limit = PLAN_LIMITS[planType as keyof typeof PLAN_LIMITS]?.validations_per_month || 1
+  const plan = PRICING_PLANS.find(p => p.id === planType)
+  const limit = plan?.limits.validations ?? 1
 
   log.info('📊 Validation limit check:', {
     planType,

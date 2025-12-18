@@ -9,7 +9,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     features: [
       '3 AI-generated startup ideas per month',
       '1 market validation per month',
-      '3 content generations per month',
+      '2 content generations per month',
       'Basic Reddit trend analysis',
       'Standard content generation',
       'Email support'
@@ -17,7 +17,7 @@ export const PRICING_PLANS: PricingPlan[] = [
     limits: {
       ideas: 3,
       validations: 1,
-      content: 3,
+      content: 2,
     },
   },
   {
@@ -49,13 +49,13 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'pro_yearly',
     name: 'Pro Yearly',
-    price: 28908, // ₹2900 * 12 * 0.83 = 17% off
+    price: 29000, // ₹2900 * 12 * 0.17 discount = ₹29,000/year (17% off)
     priceId: process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID || 'plan_RQbJzVfk744fiY',
     billingCycle: 'yearly',
     features: [
       'Everything in Pro plan',
-      'Save ₹5,892/year (17% off)',
-      'Billed annually at ₹28,908'
+      'Save ₹5,800/year (17% off)',
+      'Billed annually at ₹29,000'
     ],
     limits: {
       ideas: -1, // Unlimited

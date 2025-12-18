@@ -22,8 +22,10 @@ export interface UsageLimits {
   plan_type: PlanType;
   ideas_generated: number;
   validations_completed: number;
+  content_generated: number;
   monthly_limit_ideas: number;
   monthly_limit_validations: number;
+  monthly_limit_content: number;
   reset_date: string;
   created_at: string;
   updated_at: string;
