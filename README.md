@@ -53,7 +53,7 @@ Empower entrepreneurs to discover trending startup opportunities through AI-powe
 - **Icons**: Lucide React icon system (replacing SVG icons)
 - **Authentication**: Supabase Auth with secure server-side session management
 - **AI Integration**: OpenAI GPT-4 and Claude for content generation
-- **Payments**: Stripe Checkout with webhook integration
+- **Payments**: Razorpay with webhook integration
 - **Forms**: React Hook Form + Zod validation
 - **TypeScript**: Strict mode with generated Supabase types
 - **Testing**: Playwright for E2E testing with MCP integration
@@ -213,7 +213,7 @@ startup-sniff/
 │   │   ├── reset-password/        # Password reset form
 │   │   └── callback/              # OAuth/email confirmation
 │   ├── api/                       # API routes
-│   │   └── webhooks/stripe/       # Stripe webhook handler
+│   │   └── webhooks/razorpay/     # Razorpay webhook handler
 │   ├── icon.tsx                   # Dynamic favicon generation
 │   ├── page.tsx                   # Landing page
 │   ├── layout.tsx                 # Root layout
@@ -230,7 +230,6 @@ startup-sniff/
 │   ├── supabase/                  # Database clients (server/client)
 │   ├── ai/                        # OpenAI integration
 │   ├── icons.ts                   # Lucide React icon mappings
-│   ├── stripe.ts                  # Stripe integration
 │   └── utils.ts                   # Common utilities
 ├── server/                        # Server-only code
 │   └── actions/                   # Server actions (ideas, billing)
@@ -291,8 +290,8 @@ npx supabase gen types --local > types/supabase.ts
 
 ```sql
 -- Main Entity Relationships
-users (id, email, plan_type, stripe_customer_id)
-├── subscriptions (stripe data, billing cycles)
+users (id, email, plan_type, razorpay_customer_id)
+├── subscriptions (razorpay data, billing cycles)
 ├── usage_limits (plan quotas, monthly resets)
 ├── startup_ideas (AI-generated concepts with validation)
 └── generated_content (marketing materials, blog posts)
@@ -316,7 +315,7 @@ startup_ideas.solution = {
 - `startup_ideas` - AI-generated startup ideas with market analysis
 - `generated_content` - AI-generated marketing content (blog posts, tweets, emails)
 - `usage_limits` - User plan limits and monthly usage tracking
-- `subscriptions` - Stripe billing and subscription data
+- `subscriptions` - Razorpay billing and subscription data
 - `market_validations` - Market research and validation results
 
 ### Security Tables
@@ -345,12 +344,11 @@ CSRF_SECRET=your-production-csrf-secret
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
 
-# Stripe Integration
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
-NEXT_PUBLIC_STRIPE_FOUNDER_PRICE_ID=price_...
-NEXT_PUBLIC_STRIPE_GROWTH_PRICE_ID=price_...
+# Razorpay Payment Integration
+RAZORPAY_KEY_ID=rzp_live_...
+RAZORPAY_KEY_SECRET=...
+RAZORPAY_WEBHOOK_SECRET=...
+NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_live_...
 
 # Reddit API (for trend analysis)
 REDDIT_CLIENT_ID=your_reddit_client_id

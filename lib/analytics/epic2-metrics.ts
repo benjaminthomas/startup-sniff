@@ -9,7 +9,7 @@
  * - Churn rate
  */
 
-import { createServerAdminClient } from '@/modules/supabase/server';
+import { createServerAdminClient } from '@/features/supabase/server';
 
 export type MetricZone = 'GREEN' | 'YELLOW' | 'RED';
 
@@ -92,8 +92,10 @@ export async function calculateEpic2Metrics(days: number = 30): Promise<Epic2Met
     .select('id, plan_type, created_at')
     .gte('created_at', startDate.toISOString());
 
-  const totalUsers = allUsers?.length || 0;
-  const paidUsers = allUsers?.filter(u =>
+  const typedAllUsers = (allUsers || []) as Array<{ id: string; plan_type: string | null; created_at: string }>;
+
+  const totalUsers = typedAllUsers.length || 0;
+  const paidUsers = typedAllUsers.filter(u =>
     u.plan_type === 'pro_monthly' || u.plan_type === 'pro_yearly'
   ).length || 0;
 
@@ -116,14 +118,16 @@ export async function calculateEpic2Metrics(days: number = 30): Promise<Epic2Met
     .eq('send_status', 'sent')
     .gte('sent_at', startDate.toISOString());
 
-  const uniqueSenders = new Set(messagesSent?.map(m => m.user_id) || []).size;
+  const typedMessagesSent = (messagesSent || []) as Array<{ user_id: string; send_status: string }>;
+
+  const uniqueSenders = new Set(typedMessagesSent.map(m => m.user_id)).size;
   const sendRate = totalPaidUsers > 0 ? (uniqueSenders / totalPaidUsers) * 100 : 0;
   const sendZone: MetricZone =
     sendRate >= 10 ? 'GREEN' :
     sendRate >= 5 ? 'YELLOW' : 'RED';
 
   // 3. TEMPLATE RESPONSE RATE
-  const totalMessagesSent = messagesSent?.length || 0;
+  const totalMessagesSent = typedMessagesSent.length || 0;
   const { data: repliedMessages } = await supabase
     .from('messages')
     .select('id')
@@ -142,12 +146,17 @@ export async function calculateEpic2Metrics(days: number = 30): Promise<Epic2Met
     .select('plan_type, razorpay_plan_id')
     .eq('status', 'active');
 
-  const subscribers = activeSubscriptions?.length || 0;
+  const typedActiveSubscriptions = (activeSubscriptions || []) as Array<{
+    plan_type: string | null;
+    razorpay_plan_id: string | null;
+  }>;
+
+  const subscribers = typedActiveSubscriptions.length || 0;
 
   // Calculate MRR based on plan types
   // Pro Monthly: $20/month, Pro Yearly: $290/year = ~$24.17/month
   let mrr = 0;
-  activeSubscriptions?.forEach(sub => {
+  typedActiveSubscriptions.forEach(sub => {
     if (sub.plan_type === 'pro_monthly') {
       mrr += 20;
     } else if (sub.plan_type === 'pro_yearly') {
@@ -165,8 +174,10 @@ export async function calculateEpic2Metrics(days: number = 30): Promise<Epic2Met
     .select('status, created_at')
     .gte('created_at', startDate.toISOString());
 
-  const totalSubs = allSubscriptions?.length || 0;
-  const cancelledSubs = allSubscriptions?.filter(s => s.status === 'cancelled').length || 0;
+  const typedAllSubscriptions = (allSubscriptions || []) as Array<{ status: string; created_at: string }>;
+
+  const totalSubs = typedAllSubscriptions.length || 0;
+  const cancelledSubs = typedAllSubscriptions.filter(s => s.status === 'cancelled').length || 0;
   const churnRate = totalSubs > 0 ? (cancelledSubs / totalSubs) * 100 : 0;
   const churnZone: MetricZone =
     churnRate < 15 ? 'GREEN' :
@@ -267,6 +278,9 @@ async function calculateCohorts(startDate: Date) {
     .select('user_id, send_status, outcome')
     .gte('sent_at', startDate.toISOString());
 
+  const typedUsers = (users || []) as Array<{ id: string; plan_type: string | null }>;
+  const typedMessages = (messages || []) as Array<{ user_id: string; send_status: string; outcome: string | null }>;
+
   const cohortMap = new Map<string, {
     users: Set<string>;
     messagesSent: number;
@@ -283,14 +297,14 @@ async function calculateCohorts(startDate: Date) {
   });
 
   // Count users per plan
-  users?.forEach(user => {
+  typedUsers.forEach(user => {
     const plan = user.plan_type || 'free';
     cohortMap.get(plan)?.users.add(user.id);
   });
 
   // Count messages per plan
-  messages?.forEach(msg => {
-    const user = users?.find(u => u.id === msg.user_id);
+  typedMessages.forEach(msg => {
+    const user = typedUsers.find(u => u.id === msg.user_id);
     if (!user) return;
 
     const plan = user.plan_type || 'free';

@@ -7,12 +7,56 @@
  * - Rate limiting for auth endpoints
  * - Secure route protection with proper redirects
  * - Attack prevention (XSS, session fixation, replay attacks)
+ *
+ * ROUTE PROTECTION SUMMARY:
+ *
+ * 1. PROTECTED PAGE ROUTES (require authentication):
+ *    - /dashboard/** - All dashboard pages and subpages
+ *    - Redirects to /auth/signin if not authenticated
+ *
+ * 2. AUTH PAGE ROUTES (public, redirect if authenticated):
+ *    - /auth/signin, /auth/signup, /auth/forgot-password
+ *    - /auth/reset-password, /auth/verify-email, /auth/callback
+ *    - Redirects to /dashboard if already authenticated
+ *
+ * 3. PUBLIC PAGE ROUTES (no auth required):
+ *    - / (home), /contact, /privacy_policy, /T&C, /refund_policy
+ *    - Marketing and legal pages
+ *
+ * 4. PROTECTED API ROUTES (check auth in route handler):
+ *    - /api/ideas/** - Idea generation and management
+ *    - /api/payments/verify - Payment verification
+ *    - /api/reddit-trends - Reddit trend analysis
+ *    - /api/billing/** - Billing and invoices
+ *    - All check getCurrentSession() and return 401 if unauthorized
+ *
+ * 5. PUBLIC API ROUTES (no auth required):
+ *    - /api/contact - Public contact form (has own rate limiting)
+ *    - /api/webhooks/** - Razorpay webhooks (signature verification)
+ *    - /api/auth/reddit/callback - OAuth callback (validates state)
+ *
+ * 6. ADMIN API ROUTES (admin auth required):
+ *    - /api/admin/** - Admin operations
+ *    - Check verifyAdminAuth() in route handler
+ *
+ * 7. CRON API ROUTES (Bearer token required):
+ *    - /api/cron/** - Scheduled background jobs
+ *    - Check Authorization: Bearer header in route handler
+ *
+ * 8. SPECIAL API ROUTES:
+ *    - /api/reddit/fetch, /api/reddit/score - Have own authentication
+ *
+ * CSRF PROTECTION:
+ * - Enabled for all POST/PUT/DELETE/PATCH requests
+ * - Skipped for: webhooks, cron, admin, contact, reddit endpoints
+ * - Server Actions protected by Next.js built-in CSRF
  */
 
 import { type NextRequest, NextResponse } from 'next/server'
-import { verifySessionToken } from '@/modules/auth/services/jwt'
-import { UserDatabase } from '@/modules/auth/services/database'
-import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/modules/auth/utils/csrf'
+import { verifySessionToken } from '@/features/auth/services/jwt'
+import { UserDatabase } from '@/features/auth/services/database'
+import { extractAndVerifyCSRFToken, generateCSRFToken } from '@/features/auth/utils/csrf'
+import { log } from '@/lib/logger'
 
 // Define route groups
 const AUTH_ROUTES = [
@@ -48,7 +92,7 @@ export async function middleware(request: NextRequest) {
       const { allowed, remaining } = await checkRateLimit(identifier, limit, windowMs)
 
       if (!allowed) {
-        console.warn(`Rate limit exceeded for ${identifier} on ${pathname}`)
+        log.warn(`Rate limit exceeded for ${identifier} on ${pathname}`)
         return NextResponse.json(
           { error: 'Too many attempts. Please try again later.' },
           {
@@ -67,9 +111,15 @@ export async function middleware(request: NextRequest) {
     // CSRF Protection for all state-changing operations
     // Skip CSRF for:
     // - Webhooks (have their own signature verification)
-    // - Cron jobs (have their own secret authentication)
+    // - Cron jobs (have their own Bearer token authentication)
+    // - Admin routes (have their own admin authentication)
+    // - Contact form (public endpoint with own rate limiting and validation)
+    // - Reddit endpoints (have their own authentication)
     // - When explicitly disabled in development
     const skipCSRF = pathname.startsWith('/api/webhooks') ||
+                     pathname.startsWith('/api/cron') ||
+                     pathname.startsWith('/api/admin') ||
+                     pathname.startsWith('/api/contact') ||
                      pathname.startsWith('/api/reddit/fetch') ||
                      pathname.startsWith('/api/reddit/score') ||
                      (process.env.DISABLE_CSRF === 'true' && pathname.startsWith('/api/'))
@@ -80,12 +130,12 @@ export async function middleware(request: NextRequest) {
 
       if (isServerAction) {
         // For Server Actions, we rely on Next.js built-in CSRF protection
-        console.log(`🔒 Server Action protected by Next.js: ${pathname}`)
+        log.info(`🔒 Server Action protected by Next.js: ${pathname}`)
       } else {
         // For regular API routes and form submissions, enforce CSRF
         const csrfValid = await extractAndVerifyCSRFToken(request)
         if (!csrfValid) {
-          console.warn(`CSRF token validation failed for ${pathname}`)
+          log.warn(`CSRF token validation failed for ${pathname}`)
           return NextResponse.json(
             { error: 'Invalid or missing CSRF token' },
             { status: 403 }
@@ -111,13 +161,13 @@ export async function middleware(request: NextRequest) {
             }
           } else {
             // User not found or not verified, clear invalid session
-            console.warn(`Invalid session: User ${sessionPayload.userId} not found or not verified`)
+            log.warn(`Invalid session: User ${sessionPayload.userId} not found or not verified`)
             response.cookies.delete('session-token')
           }
         }
       } catch (error) {
         // Invalid token, clear it
-        console.error('Session verification error:', error)
+        log.error('Session verification error:', error)
         response.cookies.delete('session-token')
       }
     }
@@ -128,7 +178,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect unauthenticated users from protected routes to signin
     if (isProtectedRoute && !isAuthenticated) {
-      console.log(`🔒 Redirecting unauthenticated user from ${pathname} to /auth/signin`)
+      log.info(`🔒 Redirecting unauthenticated user from ${pathname} to /auth/signin`)
       const redirectUrl = new URL('/auth/signin', request.url)
       redirectUrl.searchParams.set('redirectTo', pathname)
       return NextResponse.redirect(redirectUrl)
@@ -136,7 +186,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated users away from auth pages to dashboard
     if (isAuthenticated && isAuthRoute) {
-      console.log(`✅ Redirecting authenticated user from ${pathname} to /dashboard`)
+      log.info(`✅ Redirecting authenticated user from ${pathname} to /dashboard`)
       const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard'
       return NextResponse.redirect(new URL(redirectTo, request.url))
     }
@@ -213,7 +263,7 @@ export async function middleware(request: NextRequest) {
     return response
 
   } catch (error) {
-    console.error('Middleware error:', error)
+    log.error('Middleware error:', error)
     
     // Fail securely - redirect to signin on errors for protected routes
     const isProtectedRoute = PROTECTED_ROUTES.some(route =>
@@ -221,12 +271,12 @@ export async function middleware(request: NextRequest) {
     )
     
     if (isProtectedRoute) {
-      console.error(`🔒 Error on protected route ${pathname}, redirecting to signin`)
+      log.error(`🔒 Error on protected route ${pathname}, redirecting to signin`)
       return NextResponse.redirect(new URL('/auth/signin', request.url))
     }
     
     // For public routes, allow through but log error
-    console.error(`⚠️ Error on public route ${pathname}, allowing through`)
+    log.error(`⚠️ Error on public route ${pathname}, allowing through`)
     return response
   }
 }

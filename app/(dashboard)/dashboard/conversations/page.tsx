@@ -5,13 +5,30 @@
  * for all user conversations with Reddit contacts.
  */
 
-import { createServerAdminClient } from '@/modules/supabase/server'
-import { getCurrentSession } from '@/modules/auth/services/jwt'
+import { createServerAdminClient } from '@/features/supabase/server'
+import { getCurrentSession } from '@/features/auth/services/jwt'
 import { redirect } from 'next/navigation'
-import { enforcePaidAccess } from '@/lib/paywall'
-import { ConversationMetrics } from '@/components/features/conversations/conversation-metrics'
-import { MessageList } from '@/components/features/conversations/message-list'
+import { enforcePaidAccess } from '@/features/billing/utils/paywall'
+import { ConversationMetrics } from '@/features/conversations/components/conversation-metrics'
+import { MessageList } from '@/features/conversations/components/message-list'
 import Link from 'next/link'
+import { log } from '@/lib/logger'
+import type { Message } from '@/types/supabase'
+
+// Type for messages with joined contact and pain_point data
+type MessageWithRelations = Message & {
+  contact: {
+    reddit_username: string
+    post_excerpt: string | null
+    karma: number | null
+    engagement_score: number
+  } | null
+  pain_point: {
+    reddit_id: string
+    title: string
+    subreddit: string
+  } | null
+}
 
 export const metadata = {
   title: 'My Conversations | StartupSniff',
@@ -52,10 +69,10 @@ export default async function ConversationsPage() {
     .order('created_at', { ascending: false })
 
   if (error) {
-    console.error('[conversations] Error fetching messages:', error)
+    log.error('[conversations] Error fetching messages:', error)
   }
 
-  const userMessages = messages || []
+  const userMessages = (messages || []) as MessageWithRelations[]
 
   // Calculate aggregate metrics
   const metrics = {

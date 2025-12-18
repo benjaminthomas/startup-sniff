@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../styles/design-tokens.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -40,6 +41,13 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* New Design System Colors */
+  --color-ds-primary-500: #2D6EF7;
+  --color-ds-primary-600: #1E5EE8;
+  --color-ds-success-400: #10B981;
+  --color-ds-warning-400: #F59E0B;
+  --color-ds-error-400: #EF4444;
 }
 
 :root {
@@ -47,39 +55,39 @@
   --font-geist-mono: 'Geist Mono', 'SFMono-Regular', Menlo, monospace;
   --radius: 10px;
 
-  /* Prodify-Inspired Light Purple Theme v1.0.0 */
-  --background: #FEFBFF;
-  --foreground: #1A1625;
+  /* Updated to New Design System - Blue Theme v2.0.0 */
+  --background: #F9FAFB;
+  --foreground: #111827;
   --card: #FFFFFF;
-  --card-foreground: #1A1625;
+  --card-foreground: #111827;
   --popover: #FFFFFF;
-  --popover-foreground: #1A1625;
-  --primary: #7C3AED;
+  --popover-foreground: #111827;
+  --primary: #2D6EF7;
   --primary-foreground: #FFFFFF;
-  --secondary: #F5F3FF;
-  --secondary-foreground: #1A1625;
-  --muted: #F5F3FF;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #111827;
+  --muted: #F3F4F6;
   --muted-foreground: #6B7280;
-  --accent: #EDE9FE;
-  --accent-foreground: #1A1625;
+  --accent: #EBF2FE;
+  --accent-foreground: #111827;
   --destructive: #EF4444;
   --destructive-foreground: #FFFFFF;
   --border: #E5E7EB;
   --input: #F9FAFB;
-  --ring: #7C3AED;
-  --chart-1: #7C3AED;
-  --chart-2: #A855F7;
-  --chart-3: #8B5CF6;
-  --chart-4: #22C55E;
-  --chart-5: #F59E0B;
-  --sidebar: #FEFBFF;
-  --sidebar-foreground: #1A1625;
-  --sidebar-primary: #7C3AED;
+  --ring: #2D6EF7;
+  --chart-1: #2D6EF7;
+  --chart-2: #10B981;
+  --chart-3: #F59E0B;
+  --chart-4: #EF4444;
+  --chart-5: #6B7280;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: #2D6EF7;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F5F3FF;
-  --sidebar-accent-foreground: #1A1625;
+  --sidebar-accent: #F3F4F6;
+  --sidebar-accent-foreground: #111827;
   --sidebar-border: #E5E7EB;
-  --sidebar-ring: #7C3AED;
+  --sidebar-ring: #2D6EF7;
 
   /* Brand Colors */
   --color-brand-primary: #7C3AED;

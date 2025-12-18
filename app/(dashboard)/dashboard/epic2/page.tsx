@@ -10,7 +10,7 @@
  */
 
 import { PageHeader } from "@/components/ui/page-header";
-import { getCurrentSession } from '@/modules/auth/services/jwt';
+import { getCurrentSession } from '@/features/auth/services/jwt';
 import { redirect } from 'next/navigation';
 import {
   Check,

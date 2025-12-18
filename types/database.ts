@@ -28,6 +28,7 @@ export interface User {
   onboarding_day3_sent_at: string | null
   onboarding_day7_sent_at: string | null
   last_weekly_summary_sent_at: string | null
+  role?: 'user' | 'admin' | null // Optional to match database schema
   created_at: string
   updated_at: string
 }
@@ -57,6 +58,7 @@ export interface UserInsert {
   onboarding_day3_sent_at?: string | null
   onboarding_day7_sent_at?: string | null
   last_weekly_summary_sent_at?: string | null
+  role?: 'user' | 'admin'
   created_at?: string
   updated_at?: string
 }
@@ -85,6 +87,7 @@ export interface UserUpdate {
   onboarding_day3_sent_at?: string | null
   onboarding_day7_sent_at?: string | null
   last_weekly_summary_sent_at?: string | null
+  role?: 'user' | 'admin'
   updated_at?: string
 }
 
@@ -93,8 +96,8 @@ export interface UserSession {
   user_id: string
   session_token: string
   expires_at: string
-  created_at: string
-  updated_at: string
+  created_at: string | null // Nullable to match database schema
+  updated_at: string | null // Nullable to match database schema
   user_agent: string | null
   ip_address: string | null
 }
@@ -114,11 +117,11 @@ export interface AuthRateLimit {
   id: string
   identifier: string
   endpoint: string
-  attempts: number
-  window_start: string
+  attempts: number | null // Nullable to match database schema
+  window_start: string | null // Nullable to match database schema
   blocked_until: string | null
-  created_at: string
-  updated_at: string
+  created_at: string | null // Nullable to match database schema
+  updated_at: string | null // Nullable to match database schema
 }
 
 export interface AuthRateLimitInsert {

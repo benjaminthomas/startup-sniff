@@ -1,3 +1,5 @@
+import { log } from '@/lib/logger'
+
 /**
  * Retry Utilities
  * Epic 1, Story 1.11: Error Handling and Monitoring
@@ -88,9 +90,9 @@ export async function retry<T>(
       // Call retry callback
       onRetry?.(lastError, attempt)
 
-      console.warn(
+      log.warn(
         `[retry] Attempt ${attempt}/${maxAttempts} failed. Retrying in ${delay}ms...`,
-        lastError.message
+        { errorMessage: lastError.message, attempt, maxAttempts, delay }
       )
 
       // Wait before retrying
@@ -257,7 +259,10 @@ export class CircuitBreaker {
       // Open circuit if threshold exceeded
       if (this.failures >= this.options.failureThreshold) {
         this.state = 'open'
-        console.error('[circuit-breaker] Circuit opened after', this.failures, 'failures')
+        log.error('[circuit-breaker] Circuit opened after failures', undefined, {
+          failures: this.failures,
+          threshold: this.options.failureThreshold
+        })
       }
 
       throw error

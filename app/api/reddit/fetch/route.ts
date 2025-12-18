@@ -13,13 +13,13 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { RedditApiClient } from '@/lib/reddit/api-client'
-import { RedditRateLimiter } from '@/lib/reddit/rate-limiter'
-import { RedisCache } from '@/lib/services/redis-cache'
-import { getHighPrioritySubreddits, getAllSubredditNames } from '@/lib/reddit/subreddit-config'
-import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/lib/services/monitoring'
-import type { Database } from '@/types/supabase'
+import { createServerAdminClient } from '@/features/supabase/server'
+import { RedditApiClient } from '@/services/reddit/api-client'
+import { RedditRateLimiter } from '@/services/reddit/rate-limiter'
+import { RedisCache } from '@/services/cache/redis'
+import { getHighPrioritySubreddits, getAllSubredditNames } from '@/services/reddit/subreddit-config'
+import { JobMonitor, PerformanceTracker, ErrorAggregator } from '@/services/monitoring'
+import { log } from '@/lib/logger'
 
 // Environment validation
 function validateEnvironment() {
@@ -40,10 +40,10 @@ function validateEnvironment() {
 
 // Simple logger for API routes
 const logger = {
-  info: (msg: string, ...args: unknown[]) => console.log(`[Reddit Fetch] ${msg}`, ...args),
-  warn: (msg: string, ...args: unknown[]) => console.warn(`[Reddit Fetch] ${msg}`, ...args),
-  error: (msg: string, ...args: unknown[]) => console.error(`[Reddit Fetch] ${msg}`, ...args),
-  debug: (msg: string, ...args: unknown[]) => console.log(`[Reddit Fetch DEBUG] ${msg}`, ...args)
+  info: (msg: string, context?: Record<string, unknown>) => log.info(`[Reddit Fetch] ${msg}`, context),
+  warn: (msg: string, context?: Record<string, unknown>) => log.warn(`[Reddit Fetch] ${msg}`, context),
+  error: (msg: string, error?: Error | unknown, context?: Record<string, unknown>) => log.error(`[Reddit Fetch] ${msg}`, error, context),
+  debug: (msg: string, context?: Record<string, unknown>) => log.info(`[Reddit Fetch DEBUG] ${msg}`, context)
 }
 
 /**
@@ -159,10 +159,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Initialize Supabase client with service role key
-    const supabase = createClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    )
+    const supabase = createServerAdminClient()
 
     // Insert posts into database (using upsert to handle duplicates)
     let insertedCount = 0
@@ -180,8 +177,8 @@ export async function POST(request: NextRequest) {
       const batchNum = Math.floor(i / BATCH_SIZE) + 1
 
       const { data, error } = await supabase
-        .from('reddit_posts')
-        .upsert(batch, {
+        .from('reddit_posts' as never)
+        .upsert(batch as never, {
           onConflict: 'reddit_id',
           ignoreDuplicates: true
         })

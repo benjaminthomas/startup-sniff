@@ -7,13 +7,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import {
   sendOnboardingDay1,
   sendOnboardingDay3,
   sendOnboardingDay7,
-} from '@/modules/notifications/services/email-notifications'
-import { type EmailPreferences } from '@/modules/notifications/actions/email-preferences'
+} from '@/features/notifications/services/email-notifications'
+import { type EmailPreferences } from '@/features/notifications/actions/email-preferences'
+import { log } from '@/lib/logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -25,14 +26,14 @@ export async function GET(request: NextRequest) {
     const cronSecret = process.env.CRON_SECRET
 
     if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-      console.error('[onboarding-drip] Unauthorized cron request')
+      log.error('[onboarding-drip] Unauthorized cron request')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const supabase = createServerAdminClient()
     const now = new Date()
 
-    console.log(`[onboarding-drip] Running onboarding drip campaign at ${now.toISOString()}`)
+    log.info(`[onboarding-drip] Running onboarding drip campaign at ${now.toISOString()}`)
 
     let day1Count = 0
     let day3Count = 0
@@ -58,8 +59,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day1Start.toISOString())
       .lte('created_at', day1End.toISOString())
 
-    if (day1Users) {
-      for (const user of day1Users) {
+    const typedDay1Users = (day1Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay1Users.length > 0) {
+      for (const user of typedDay1Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -67,17 +70,17 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay1(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day1_sent_at: now.toISOString(),
               last_onboarding_email: 'day1',
-            })
+            } as never)
             .eq('id', user.id)
 
           day1Count++
-          console.log(`[onboarding-drip] Day 1 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 1 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 1 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 1 failed for ${user.email}:`, error)
           failCount++
         }
       }
@@ -103,8 +106,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day3Start.toISOString())
       .lte('created_at', day3End.toISOString())
 
-    if (day3Users) {
-      for (const user of day3Users) {
+    const typedDay3Users = (day3Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay3Users.length > 0) {
+      for (const user of typedDay3Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -112,17 +117,17 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay3(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day3_sent_at: now.toISOString(),
               last_onboarding_email: 'day3',
-            })
+            } as never)
             .eq('id', user.id)
 
           day3Count++
-          console.log(`[onboarding-drip] Day 3 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 3 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 3 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 3 failed for ${user.email}:`, error)
           failCount++
         }
       }
@@ -148,8 +153,10 @@ export async function GET(request: NextRequest) {
       .gte('created_at', day7Start.toISOString())
       .lte('created_at', day7End.toISOString())
 
-    if (day7Users) {
-      for (const user of day7Users) {
+    const typedDay7Users = (day7Users || []) as Array<{ id: string; email: string; full_name: string | null; email_preferences: unknown }>
+
+    if (typedDay7Users.length > 0) {
+      for (const user of typedDay7Users) {
         const prefs = user.email_preferences as EmailPreferences | null
         if (prefs?.onboarding === false) continue
 
@@ -157,23 +164,23 @@ export async function GET(request: NextRequest) {
           await sendOnboardingDay7(user.email, user.full_name || undefined)
 
           await supabase
-            .from('users')
+            .from('users' as never)
             .update({
               onboarding_day7_sent_at: now.toISOString(),
               last_onboarding_email: 'day7',
-            })
+            } as never)
             .eq('id', user.id)
 
           day7Count++
-          console.log(`[onboarding-drip] Day 7 sent to ${user.email}`)
+          log.info(`[onboarding-drip] Day 7 sent to ${user.email}`)
         } catch (error) {
-          console.error(`[onboarding-drip] Day 7 failed for ${user.email}:`, error)
+          log.error(`[onboarding-drip] Day 7 failed for ${user.email}:`, error)
           failCount++
         }
       }
     }
 
-    console.log(
+    log.info(
       `[onboarding-drip] Completed: Day 1: ${day1Count}, Day 3: ${day3Count}, Day 7: ${day7Count}, Failed: ${failCount}`
     )
 
@@ -185,7 +192,7 @@ export async function GET(request: NextRequest) {
       failed: failCount,
     })
   } catch (error) {
-    console.error('[onboarding-drip] Unexpected error:', error)
+    log.error('[onboarding-drip] Unexpected error:', error)
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : 'Unknown error',

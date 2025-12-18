@@ -1,15 +1,16 @@
 import { Metadata } from "next";
+import Link from "next/link";
 import type { StartupIdea, User as AppUser } from "@/types/global";
 import type { PlanType } from "@/types/database";
-import { getCurrentSession } from "@/modules/auth/services/jwt";
-import { UserDatabase } from "@/modules/auth/services/database";
-import { createServerAdminClient } from "@/modules/supabase";
-import { DashboardShell } from "@/components/features/dashboard/dashboard-shell";
-import { StatsCards } from "@/components/features/dashboard/stats-cards";
-import { RecentIdeas } from "@/components/features/dashboard/recent-ideas";
-import { QuickActions } from "@/components/features/dashboard/quick-actions";
+import { getCurrentSession } from "@/features/auth/services/jwt";
+import { UserDatabase } from "@/features/auth/services/database";
+import { createServerAdminClient } from "@/features/supabase";
+import { DashboardShell } from "@/features/dashboard/components/dashboard-shell";
+import { RecentIdeas } from "@/features/dashboard/components/recent-ideas";
+import { QuickActions } from "@/features/dashboard/components/quick-actions";
 import { UsageTracker } from "@/components/ui/usage-tracker";
-import { getCurrentUserUsage } from "@/modules/usage";
+import { getCurrentUserUsage } from "@/features/usage";
+import { log } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: "Dashboard | StartupSniff",
@@ -111,7 +112,7 @@ export default async function DashboardPage() {
         .limit(10);
 
       if (ideaError) {
-        console.error("Failed to fetch startup ideas:", ideaError);
+        log.error("Failed to fetch startup ideas:", ideaError);
       } else if (ideaRows) {
         ideas = ideaRows.map((ideaRaw: Record<string, unknown>) => {
           return {
@@ -145,7 +146,7 @@ export default async function DashboardPage() {
       }
     }
   } catch (error) {
-    console.error("Database query failed:", error);
+    log.error("Database query failed:", error);
     // Continue with default values
   }
 
@@ -154,85 +155,166 @@ export default async function DashboardPage() {
     month: "long",
     day: "numeric",
   }).format(new Date());
-  const greetingName =
-    user?.full_name?.split(" ")[0] ||
-    user?.email?.split("@")[0] ||
-    "there";
 
   return (
     <DashboardShell>
-      <div className="space-y-8">
-        <div className="overflow-hidden rounded-3xl border border-primary/10 bg-gradient-to-r from-primary/10 via-indigo-500/10 to-sky-400/10 p-6 shadow-sm shadow-primary/15">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground/70">
-                {formattedDate}
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">
+            {formattedDate}
+          </p>
+          <h1 className="text-2xl font-semibold text-neutral-900">
+            Home
+          </h1>
+          <p className="text-sm text-neutral-600">
+            Account details overview and analytics
+          </p>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+          {/* Feature Card */}
+          <div
+            className="rounded-2xl p-12 text-white"
+            style={{
+              background: 'linear-gradient(135deg, #2D6EF7 0%, #1E5EE8 100%)',
+            }}
+          >
+            <h2 className="text-3xl font-bold leading-tight mb-4">
+              Let&apos;s create campaign for your amazing brand!
+            </h2>
+            <p className="text-sm opacity-90 mb-8 max-w-md">
+              Discover startup ideas and validate them with AI-powered insights
+            </p>
+            <Link
+              href="/dashboard/generate"
+              className="inline-block bg-white text-[#2D6EF7] px-6 py-3 rounded-lg font-semibold text-sm hover:bg-neutral-50 transition-all duration-200 hover:shadow-lg"
+            >
+              Generate Ideas
+            </Link>
+          </div>
+
+          {/* Recent Campaign Card */}
+          <div className="bg-white rounded-xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-neutral-900">Recent Campaign</h3>
+              <span className="text-xs text-[#2D6EF7] font-medium">Active</span>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <h4 className="text-lg font-semibold text-neutral-900">
+                  {ideas[0]?.title || 'No recent ideas'}
+                </h4>
+                <p className="text-xs text-neutral-500 mt-1">
+                  Today, {new Date().toLocaleDateString()}
+                </p>
+              </div>
+              <div className="flex -space-x-2">
+                <div className="w-8 h-8 rounded-full bg-neutral-200 border-2 border-white" />
+                <div className="w-8 h-8 rounded-full bg-neutral-300 border-2 border-white" />
+                <div className="w-8 h-8 rounded-full bg-neutral-400 border-2 border-white" />
+              </div>
+              {ideas[0] && (
+                <Link
+                  href={`/dashboard/ideas/${ideas[0].id}`}
+                  className="block w-full text-center text-[#2D6EF7] text-sm font-medium hover:underline"
+                >
+                  See Campaign Details
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Section */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-neutral-900">Last Transaction</h2>
+            <Link
+              href="/dashboard/billing"
+              className="text-[#2D6EF7] text-sm font-medium hover:underline"
+            >
+              See Details
+            </Link>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#D1FAE5] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#10B981]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-neutral-900">
+                  {usageData?.usage.ideas_used ?? ideas.length}
+                </span>
+              </div>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mt-2">
+                Ideas Generated
               </p>
-              <h1 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
-                Hello, {greetingName}!
-              </h1>
-              <p className="text-lg font-medium leading-snug text-transparent bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text">
-                How can I help you today?
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Here&apos;s what&apos;s happening with your startup ideas today.
+            </div>
+
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-[#EBF2FE] flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#2D6EF7]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-2xl font-bold text-neutral-900">
+                  {usageData?.usage.validations_used ?? ideas.filter(i => i?.is_validated).length}
+                </span>
+              </div>
+              <p className="text-xs font-medium text-neutral-500 uppercase tracking-wide mt-2">
+                Validations
               </p>
             </div>
           </div>
         </div>
 
-        <div className="grid gap-6">
-          <StatsCards
-            totalIdeas={usageData?.usage.ideas_used ?? ideas.length}
-            validatedIdeas={
-              usageData?.usage.validations_used ??
-              ideas.filter((idea) => idea?.is_validated).length
-            }
-            favoriteIdeas={ideas.filter((idea) => idea?.is_favorite).length}
-            planType={
-              (user?.plan_type as "free" | "pro_monthly" | "pro_yearly") ||
-              "free"
-            }
-          />
+        {/* Quick Actions and Usage Tracker Section */}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+          <div className="space-y-6">
+            <QuickActions />
+            <UsageTracker
+              planType={
+                ((user?.plan_type as PlanType | undefined) ??
+                  (usageData?.planType as PlanType | undefined) ??
+                  "free") as PlanType
+              }
+              usage={
+                usageData?.usage ?? {
+                  ideas_used: ideas.length,
+                  validations_used: ideas.filter((idea) => idea?.is_validated)
+                    .length,
+                  content_used: 0,
+                }
+              }
+              limits={
+                usageData?.limits ??
+                ((user?.plan_type as PlanType | undefined) === "pro_monthly" ||
+                (user?.plan_type as PlanType | undefined) === "pro_yearly"
+                  ? {
+                      ideas_per_month: -1,
+                      validations_per_month: -1,
+                      content_per_month: -1,
+                    }
+                  : {
+                      ideas_per_month: 3,
+                      validations_per_month: 1,
+                      content_per_month: 2,
+                    })
+              }
+            />
+          </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-            <div className="space-y-6">
-              <QuickActions />
-              <UsageTracker
-                planType={
-                  ((user?.plan_type as PlanType | undefined) ??
-                    (usageData?.planType as PlanType | undefined) ??
-                    "free") as PlanType
-                }
-                usage={
-                  usageData?.usage ?? {
-                    ideas_used: ideas.length,
-                    validations_used: ideas.filter((idea) => idea?.is_validated)
-                      .length,
-                    content_used: 0,
-                  }
-                }
-                limits={
-                  usageData?.limits ??
-                  ((user?.plan_type as PlanType | undefined) === "pro_monthly" ||
-                  (user?.plan_type as PlanType | undefined) === "pro_yearly"
-                    ? {
-                        ideas_per_month: -1,
-                        validations_per_month: -1,
-                        content_per_month: -1,
-                      }
-                    : {
-                        ideas_per_month: 3,
-                        validations_per_month: 1,
-                        content_per_month: 2,
-                      })
-                }
-              />
-            </div>
-
-            <div className="space-y-6">
-              <RecentIdeas ideas={ideas} />
-            </div>
+          <div className="space-y-6">
+            <RecentIdeas ideas={ideas} />
           </div>
         </div>
       </div>

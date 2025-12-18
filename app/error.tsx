@@ -10,6 +10,7 @@
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
+import { log } from '@/lib/logger/client'
 
 export default function Error({
   error,
@@ -20,7 +21,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log error to Sentry would happen here when configured
-    console.error('[Error]', error)
+    log.error('[Error]', error)
   }, [error])
 
   return (

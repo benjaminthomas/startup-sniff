@@ -23,7 +23,7 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'pro_monthly',
     name: 'Pro',
-    price: 29,
+    price: 2900,
     priceId: process.env.NEXT_PUBLIC_RAZORPAY_PRO_MONTHLY_PLAN_ID || 'plan_RQbJW54uNkoMwA',
     billingCycle: 'monthly',
     features: [
@@ -48,14 +48,14 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     id: 'pro_yearly',
-    name: 'Pro',
-    price: 290, // ~24/month
+    name: 'Pro Yearly',
+    price: 28908, // ₹2900 * 12 * 0.83 = 17% off
     priceId: process.env.NEXT_PUBLIC_RAZORPAY_PRO_YEARLY_PLAN_ID || 'plan_RQbJzVfk744fiY',
     billingCycle: 'yearly',
     features: [
       'Everything in Pro plan',
-      'Save $58/year (2 months free)',
-      'Billed annually'
+      'Save ₹5,892/year (17% off)',
+      'Billed annually at ₹28,908'
     ],
     limits: {
       ideas: -1, // Unlimited

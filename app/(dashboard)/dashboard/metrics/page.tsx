@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/ui/page-header"
-import { createServerAdminClient } from '@/modules/supabase/server'
+import { createServerAdminClient } from '@/features/supabase/server'
 import { Check, AlertTriangle, XCircle, TrendingUp, Users, Target, Clock, BarChart3, ArrowRight } from 'lucide-react'
 
 export const metadata = {
@@ -81,15 +81,19 @@ export default async function MetricsPage() {
     .not('viability_score', 'is', null)
     .not('reddit_id', 'like', 'test_%')
 
+  // Type assertions for query results
+  const typedUsers = (users || []) as Array<{ id: string; created_at: string }>
+  const typedOpportunities = (opportunities || []) as Array<{ viability_score: number | null }>
+
   // Calculate metrics
-  const totalUsers = users?.length || 0
-  const totalOpportunities = opportunities?.length || 0
-  const highPotential = opportunities?.filter(o => o.viability_score && o.viability_score >= 7).length || 0
+  const totalUsers = typedUsers.length
+  const totalOpportunities = typedOpportunities.length
+  const highPotential = typedOpportunities.filter(o => o.viability_score && o.viability_score >= 7).length
 
   // Calculate 7-day return rate (simplified - based on user creation dates)
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const recentUsers = users?.filter(u => new Date(u.created_at) >= sevenDaysAgo).length || 0
+  const recentUsers = typedUsers.filter(u => new Date(u.created_at) >= sevenDaysAgo).length
 
   // Placeholder metrics (will be replaced with real analytics)
   const avgSessionTime = 145 // seconds - placeholder

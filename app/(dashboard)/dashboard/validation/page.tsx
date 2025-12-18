@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { Target, Users, DollarSign, CheckCircle } from "lucide-react";
-import { ValidationForm } from "@/components/features/validation/validation-form";
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { ValidationForm } from "@/features/validation/components/validation-form";
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
 import { redirect } from 'next/navigation';
+import type { StartupIdea } from '@/types/global';
 
 export default async function ValidationPage() {
   const session = await getCurrentSession();
@@ -29,11 +30,13 @@ export default async function ValidationPage() {
     .eq('user_id', session.userId)
     .eq('is_validated', true);
 
-    if (validatedIdeas && validatedIdeas.length > 0) {
-      validationStats.ideasValidated = validatedIdeas.length;
+  const typedValidatedIdeas = (validatedIdeas || []) as Array<Pick<StartupIdea, 'market_analysis'>>
+
+    if (typedValidatedIdeas.length > 0) {
+      validationStats.ideasValidated = typedValidatedIdeas.length;
 
       // Calculate average market size from validated ideas
-      const marketSizes = validatedIdeas
+      const marketSizes = typedValidatedIdeas
         .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.tam)
         .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).tam as number);
 
@@ -43,7 +46,7 @@ export default async function ValidationPage() {
       }
 
       // Calculate potential users from validated ideas
-      const userEstimates = validatedIdeas
+      const userEstimates = typedValidatedIdeas
         .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.sam)
         .map(idea => ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).sam as number);
 
@@ -56,7 +59,7 @@ export default async function ValidationPage() {
 
       // Calculate revenue estimate based on market size (fallback since revenue_potential.monthly doesn't exist)
       // Use a simple heuristic: assume 1% market penetration of SAM with $10 average revenue per user monthly
-      const revenueEstimates = validatedIdeas
+      const revenueEstimates = typedValidatedIdeas
         .filter(idea => (idea.market_analysis as Record<string, unknown>)?.market_size && ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>)?.sam)
         .map(idea => {
           const sam = ((idea.market_analysis as Record<string, unknown>).market_size as Record<string, unknown>).sam as number;

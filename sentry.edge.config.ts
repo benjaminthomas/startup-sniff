@@ -1,3 +1,5 @@
+import { log } from '@/lib/logger'
+
 /**
  * Sentry Edge Configuration
  * Epic 1, Story 1.11: Error Handling and Monitoring
@@ -30,7 +32,7 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   beforeSend(event: any) {
     // Don't send events in development
     if (process.env.NODE_ENV !== 'production') {
-      console.error('Sentry event (dev mode - edge):', event)
+      log.error('Sentry event (dev mode - edge):', event)
       return null
     }
 

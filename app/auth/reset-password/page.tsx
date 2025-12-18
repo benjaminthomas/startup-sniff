@@ -6,11 +6,13 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { getOrGenerateCSRFToken } from '@/modules/auth/utils/csrf'
-import { createServerAdminClient } from '@/modules/supabase'
-import { ResetPasswordForm } from '@/components/auth/reset-password-form'
+import { getOrGenerateCSRFToken } from '@/features/auth/utils/csrf'
+import { getCurrentSession } from '@/features/auth/services/jwt'
+import { createServerAdminClient } from '@/features/supabase'
+import { ResetPasswordForm } from '@/features/auth/components/reset-password-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { log } from '@/lib/logger'
 
 export const metadata: Metadata = {
   title: 'Reset Password | StartupSniff',
@@ -44,17 +46,17 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
   // Check if this is a valid password recovery session
   const cookieStore = await cookies()
   const recoverySession = cookieStore.get('auth-recovery')
-  
-  // Get user session directly from Supabase client
-  const supabase = createServerAdminClient()
-  const { data: { user }, error: userError } = await supabase.auth.getUser()
-  
+
+  // Use JWT session instead of Supabase auth
+  const session = await getCurrentSession()
+
   // Debug logging
-  console.log('Reset password page - Recovery session:', recoverySession ? 'exists' : 'missing')
-  console.log('Reset password page - Code param:', code ? 'exists' : 'missing')
-  console.log('Reset password page - Recovery param:', recoveryParam ? 'true' : 'false')
-  console.log('Reset password page - Direct user check:', user ? 'authenticated' : 'not authenticated')
-  console.log('Reset password page - User error:', userError ? userError.message : 'none')
+  log.info('Reset password page', {
+    recoverySession: recoverySession ? 'exists' : 'missing',
+    codeParam: code ? 'exists' : 'missing',
+    recoveryParam: recoveryParam ? 'true' : 'false',
+    sessionStatus: session ? 'authenticated' : 'not authenticated'
+  })
   
   // Handle password reset code if present
   if (code) {
@@ -65,12 +67,12 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
       
       if (exchangeError) {
-        console.error('Password reset code exchange failed:', exchangeError)
+        log.error('Password reset code exchange failed:', exchangeError)
         redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
       }
       
       if (!data.session || !data.user) {
-        console.error('No session data after password reset code exchange')
+        log.error('No session data after password reset code exchange')
         redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
       }
       
@@ -87,24 +89,32 @@ export default async function ResetPasswordPage({ searchParams }: ResetPasswordP
       // Redirect to the same page without the code parameter to clean the URL
       redirect('/auth/reset-password')
     } catch (error) {
-      console.error('Password reset code handling error:', error)
+      log.error('Password reset code handling error:', error)
       redirect('/auth/forgot-password?error=An error occurred processing your reset link. Please request a new one.')
     }
   }
   
   // Allow access if any of:
   // 1. Recovery session cookie exists (traditional flow)
-  // 2. User is authenticated (came from password reset callback)
+  // 2. JWT session exists (came from password reset callback)
   // 3. Recovery URL parameter is present (callback flow)
   // 4. Recovery token is present (new token-based flow)
-  const hasAccess = recoverySession || user || recoveryParam || recoveryToken
-  
+  const hasAccess = recoverySession || session || recoveryParam || recoveryToken
+
   if (!hasAccess) {
-    console.log('Access denied - Recovery cookie:', recoverySession ? 'exists' : 'missing', 'User:', user ? 'authenticated' : 'not authenticated', 'Recovery param:', recoveryParam)
+    log.info('Access denied', {
+      recoverySession: recoverySession ? 'exists' : 'missing',
+      sessionStatus: session ? 'authenticated' : 'not authenticated',
+      recoveryParam
+    })
     redirect('/auth/forgot-password?error=Invalid or expired reset link. Please request a new one.')
   }
 
-  console.log('Reset password access granted - Recovery cookie:', recoverySession ? 'exists' : 'missing', 'User:', user ? 'authenticated' : 'not authenticated', 'Recovery param:', recoveryParam)
+  log.info('Reset password access granted', {
+    recoverySession: recoverySession ? 'exists' : 'missing',
+    sessionStatus: session ? 'authenticated' : 'not authenticated',
+    recoveryParam
+  })
 
   // Get CSRF token for the form
   const csrfToken = await getOrGenerateCSRFToken()

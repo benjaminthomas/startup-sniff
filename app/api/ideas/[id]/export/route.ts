@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentSession } from '@/modules/auth/services/jwt';
-import { createServerAdminClient } from '@/modules/supabase';
+import { getCurrentSession } from '@/features/auth/services/jwt';
+import { createServerAdminClient } from '@/features/supabase';
+import { log } from '@/lib/logger'
+import { type StartupIdea } from '@/types/global'
 
 export async function GET(
   request: NextRequest,
@@ -28,6 +30,8 @@ export async function GET(
       return NextResponse.json({ error: 'Idea not found' }, { status: 404 });
     }
 
+    const typedIdea = idea as StartupIdea
+
     // Fetch Reddit sources if they exist
     const redditSources: Array<{
       reddit_id: string;
@@ -45,11 +49,11 @@ export async function GET(
 
     // Return the idea data with Reddit sources
     return NextResponse.json({
-      ...idea,
+      ...typedIdea,
       redditSources
     });
   } catch (error) {
-    console.error('Error exporting idea:', error);
+    log.error('Error exporting idea:', error);
     return NextResponse.json({ error: 'Failed to export idea' }, { status: 500 });
   }
 }

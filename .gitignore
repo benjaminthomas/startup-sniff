@@ -47,3 +47,7 @@ next-env.d.ts
 
 # sentry instrumentation backup
 instrumentation.ts.sentry-disabled
+build-test.log
+
+# Winston log files
+logs/

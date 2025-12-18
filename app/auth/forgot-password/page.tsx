@@ -5,9 +5,9 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { getCurrentUser } from '@/modules/auth/actions'
-import { getOrGenerateCSRFToken } from '@/modules/auth/utils/csrf'
-import { ForgotPasswordForm } from '@/components/auth/forgot-password-form'
+import { getCurrentUser } from '@/features/auth/actions'
+import { getOrGenerateCSRFToken } from '@/features/auth/utils/csrf'
+import { ForgotPasswordForm } from '@/features/auth/components/forgot-password-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft } from 'lucide-react'
 
