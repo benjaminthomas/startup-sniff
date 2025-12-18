@@ -1,10 +1,9 @@
-import { log } from '@/lib/logger'
-
 /**
  * Sentry Edge Configuration
  * Epic 1, Story 1.11: Error Handling and Monitoring
  *
  * This configuration is used for edge runtime error tracking (middleware, edge functions)
+ * Note: Edge runtime doesn't support Node.js modules like 'os', so we use console.error instead of Winston logger
  */
 
 // Only initialize Sentry if DSN is configured
@@ -32,7 +31,7 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   beforeSend(event: any) {
     // Don't send events in development
     if (process.env.NODE_ENV !== 'production') {
-      log.error('Sentry event (dev mode - edge):', event)
+      console.error('Sentry event (dev mode - edge):', event)
       return null
     }
 

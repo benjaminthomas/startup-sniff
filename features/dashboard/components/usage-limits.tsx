@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Zap, Lightbulb, BarChart3 } from 'lucide-react';
+import { Zap, Lightbulb, BarChart3, FileText } from 'lucide-react';
 import Link from 'next/link';
 import { UsageLimits as UsageLimitsType } from '@/types/global';
 
@@ -31,6 +31,7 @@ export function UsageLimits({ limits }: UsageLimitsProps) {
 
   const ideasProgress = (limits.ideas_generated / limits.monthly_limit_ideas) * 100;
   const validationsProgress = (limits.validations_completed / limits.monthly_limit_validations) * 100;
+  const contentProgress = (limits.content_generated / limits.monthly_limit_content) * 100;
 
   return (
     <div className="space-y-6">
@@ -71,6 +72,19 @@ export function UsageLimits({ limits }: UsageLimitsProps) {
             <Progress value={validationsProgress} className="h-2" />
           </div>
 
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Content Generated</span>
+              </div>
+              <span className="text-sm text-muted-foreground">
+                {limits.content_generated}/{limits.monthly_limit_content}
+              </span>
+            </div>
+            <Progress value={contentProgress} className="h-2" />
+          </div>
+
           <div className="pt-4 border-t">
             <p className="text-xs text-muted-foreground mb-3">
               Limits reset on {new Date(limits.reset_date).toLocaleDateString('en-US', {
@@ -81,7 +95,7 @@ export function UsageLimits({ limits }: UsageLimitsProps) {
               })}
             </p>
             
-            {(ideasProgress > 80 || validationsProgress > 80) && (
+            {(ideasProgress > 80 || validationsProgress > 80 || contentProgress > 80) && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-3">
                 <p className="text-xs text-yellow-800">
                   You&apos;re approaching your monthly limit. Consider upgrading for unlimited access.

@@ -83,24 +83,19 @@ function getConfidenceIcon(level: string) {
 export function RecentIdeas({ ideas }: RecentIdeasProps) {
   if (ideas.length === 0) {
     return (
-      <Card className="border border-white/80 bg-white/95 shadow-sm shadow-primary/10 backdrop-blur">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-base font-semibold text-foreground">Recent Ideas</CardTitle>
-            <CardDescription>Your latest startup ideas will appear here</CardDescription>
-          </div>
-          <div className="hidden h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-sm shadow-violet-500/30 sm:flex">
-            <Sparkles className="h-5 w-5" />
-          </div>
+      <Card className="bg-white shadow-sm border-gray-100">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold text-foreground">Recent Ideas</CardTitle>
+          <CardDescription>Your latest startup ideas will appear here</CardDescription>
         </CardHeader>
-        <CardContent className="py-12 text-center">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-100 via-indigo-100 to-sky-100 text-primary shadow-inner shadow-primary/10">
+        <CardContent className="py-8 text-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#2D6EF7]/10 text-[#2D6EF7]">
             <Lightbulb className="h-6 w-6" />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
             No ideas generated yet. Get started by creating your first idea!
           </p>
-          <Button asChild className="mt-6">
+          <Button asChild className="mt-6 bg-[#2D6EF7] hover:bg-[#1E5EE8]">
             <Link href="/dashboard/generate">Generate your first idea</Link>
           </Button>
         </CardContent>
@@ -109,13 +104,10 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
   }
 
   return (
-    <Card className="border border-white/80 bg-white/95 shadow-sm shadow-primary/10 backdrop-blur">
+    <Card className="bg-white shadow-sm border-gray-100">
       <CardHeader className="flex flex-row items-center justify-between gap-4 pb-4">
         <div className="space-y-1">
-          <CardTitle className="flex items-center gap-2 text-base font-semibold text-foreground">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-sm shadow-violet-500/30">
-              <Sparkles className="h-5 w-5" />
-            </div>
+          <CardTitle className="text-base font-semibold text-foreground">
             Recent Ideas
           </CardTitle>
           <CardDescription>Your latest startup ideas</CardDescription>
@@ -123,7 +115,7 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
         <Button
           variant="outline"
           size="sm"
-          className="border-violet-100 text-xs font-medium text-violet-600 hover:bg-violet-50"
+          className="text-xs font-medium text-[#2D6EF7] hover:bg-[#2D6EF7]/5"
           asChild
         >
           <Link href="/dashboard/ideas">View all</Link>
@@ -147,15 +139,8 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
             
             return (
               <Link key={idea.id} href={`/dashboard/ideas/${idea.id}`} className="block group">
-                <article
-                  className={cn(
-                    "relative overflow-hidden rounded-3xl border border-transparent bg-white/95 transition-transform duration-200",
-                    "shadow-sm shadow-violet-200/30 hover:-translate-y-1 hover:shadow-lg"
-                  )}
-                >
-                  <div className="absolute inset-0 rounded-3xl border border-violet-100/60" />
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-primary/20 via-sky-300/30 to-blue-300/30" />
-                  <div className="relative flex flex-col gap-5 p-6">
+                <article className="rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-[#2D6EF7]/30 hover:shadow-md">
+                  <div className="flex flex-col gap-4">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
@@ -179,69 +164,32 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
                         )}
                       </div>
 
-                      <div className="flex flex-col items-end gap-2 text-right">
-                        {confidenceScore >= 75 ? (
-                          <div className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-semibold text-primary shadow-sm shadow-violet-200/30">
-                            <Sparkles className="h-3 w-3" />
-                            High confidence
-                          </div>
-                        ) : null}
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(idea.created_at).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                        </span>
-                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(idea.created_at).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </span>
                     </div>
 
                       <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                         {idea.problem_statement}
                       </p>
 
-                      {firstPainPoints.length > 0 && (
-                        <div className="space-y-2 rounded-2xl border border-slate-100/70 bg-slate-50/70 p-4">
-                          <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                            Key pain points
-                          </p>
-                          <div className="flex flex-wrap gap-2">
-                            {firstPainPoints.map((point, idx) => (
-                              <span
-                                key={idx}
-                                className="rounded-full border border-slate-100 bg-white/90 px-3 py-1 text-xs text-muted-foreground"
-                              >
-                                {point}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <div className={cn("flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium", colors.chipBg)}>
-                          <ConfidenceIcon className={cn("h-3 w-3", colors.chipIcon)} />
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium", colors.chipBg)}>
+                          <ConfidenceIcon className={cn("h-3.5 w-3.5", colors.chipIcon)} />
                           <span className={colors.chipText}>{confidenceLabel}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="relative h-1.5 w-24 overflow-hidden rounded-full bg-primary/10">
-                            <div
-                              className={cn(
-                                "absolute inset-y-0 left-0 rounded-full bg-gradient-to-r",
-                                colors.barGradient
-                              )}
-                              style={{ width: `${confidenceScore}%` }}
-                            />
-                          </div>
-                          <span className={cn("text-xs font-mono font-semibold", colors.text)}>
-                            {confidenceScore}%
-                          </span>
-                        </div>
+                        <span className={cn("text-xs font-semibold", colors.text)}>
+                          {confidenceScore}%
+                        </span>
                       </div>
 
-                      <div className="flex items-center gap-2 text-xs font-medium text-primary transition-all group-hover:translate-x-1">
-                        <span>Open idea</span>
-                        <ArrowRight className="h-4 w-4" />
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-[#2D6EF7]">
+                        <span>View details</span>
+                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                       </div>
                     </div>
                   </div>
@@ -252,15 +200,15 @@ export function RecentIdeas({ ideas }: RecentIdeasProps) {
         </div>
 
         {ideas.length > 3 && (
-          <div className="mt-6 border-t border-violet-50 pt-4">
+          <div className="mt-6 border-t border-gray-100 pt-4">
             <Button
               variant="outline"
-              className="w-full border-violet-100 text-primary hover:bg-violet-50"
+              className="w-full text-[#2D6EF7] hover:bg-[#2D6EF7]/5"
               asChild
             >
               <Link href="/dashboard/ideas">
                 View all {ideas.length} ideas
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
