@@ -57,7 +57,7 @@ export default async function DashboardLayout({
           </div>
         </header>
         <div className="relative z-10 flex flex-1 overflow-y-auto px-6 pb-8 pt-6">
-          <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
+          <div className="mx-auto w-full flex flex-col gap-6">
             <TrialBanner className="border border-[#2D6EF7]/10 bg-gradient-to-r from-[#2D6EF7]/5 via-[#2D6EF7]/10 to-[#2D6EF7]/5" />
             {children}
           </div>
