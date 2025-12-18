@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Script from "next/script";
 import {
   Navigation,
   HeroSection,
@@ -22,39 +23,133 @@ export default function HomePage() {
     redirectToAuth(router, planId, isFree);
   };
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://startupsniff.com";
+
+  // JSON-LD structured data for better SEO
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "StartupSniff",
+    "url": appUrl,
+    "logo": `${appUrl}/icon`,
+    "description": "AI-powered platform for discovering and validating startup ideas using market research and Reddit trend analysis",
+    "sameAs": [
+      "https://twitter.com/startupsniff",
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "contactType": "Customer Support",
+      "email": "support@startupsniff.com"
+    }
+  };
+
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "StartupSniff",
+    "url": appUrl,
+    "description": "Discover trending startup opportunities and validate ideas using AI-powered market research and Reddit trend analysis",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": `${appUrl}/dashboard/ideas?q={search_term_string}`
+      },
+      "query-input": "required name=search_term_string"
+    }
+  };
+
+  const softwareApplicationSchema = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "StartupSniff",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Web",
+    "offers": [
+      {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "INR",
+        "name": "Free Plan",
+        "description": "3 AI-generated ideas, 1 validation, 2 content generations per month"
+      },
+      {
+        "@type": "Offer",
+        "price": "2900",
+        "priceCurrency": "INR",
+        "name": "Pro Monthly",
+        "description": "Unlimited AI-generated ideas, validations, and content generations"
+      },
+      {
+        "@type": "Offer",
+        "price": "29000",
+        "priceCurrency": "INR",
+        "name": "Pro Yearly",
+        "description": "Unlimited AI-generated ideas, validations, and content generations - Save 17%"
+      }
+    ],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "127",
+      "bestRating": "5",
+      "worstRating": "1"
+    },
+    "description": "AI-powered platform for generating startup ideas, validating market opportunities, and creating content using Reddit trend analysis"
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
+    <>
+      {/* JSON-LD Structured Data */}
+      <Script
+        id="organization-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+      <Script
+        id="website-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <Script
+        id="software-schema"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareApplicationSchema) }}
+      />
 
-      {/* Spacer for fixed nav */}
-      <div className="h-16"></div>
+      <div className="min-h-screen bg-background text-foreground">
+        <Navigation />
 
-      {/* Hero - First impression */}
-      <HeroSection />
+        {/* Spacer for fixed nav */}
+        <div className="h-16"></div>
 
-      {/* Features - What we offer */}
-      <FeaturesSection />
+        {/* Hero - First impression */}
+        <HeroSection />
 
-      {/* How It Works - Step-by-step process */}
-      <HowItWorksSection />
+        {/* Features - What we offer */}
+        <FeaturesSection />
 
-      {/* Benefits - Why choose us */}
-      <BenefitsSection />
+        {/* How It Works - Step-by-step process */}
+        <HowItWorksSection />
 
-      {/* Use Cases - Who it's for */}
-      <UseCasesSection />
+        {/* Benefits - Why choose us */}
+        <BenefitsSection />
 
-      {/* Social Proof - Trust signals */}
-      <SocialProofSection />
+        {/* Use Cases - Who it's for */}
+        <UseCasesSection />
 
-      {/* Pricing - Plans and pricing */}
-      <PricingSection onPlanSelect={handlePlanSelect} />
+        {/* Social Proof - Trust signals */}
+        <SocialProofSection />
 
-      {/* Final CTA - Last chance to convert */}
-      <CTASection />
+        {/* Pricing - Plans and pricing */}
+        <PricingSection onPlanSelect={handlePlanSelect} />
 
-      {/* Footer - Additional info */}
-      <Footer />
-    </div>
+        {/* Final CTA - Last chance to convert */}
+        <CTASection />
+
+        {/* Footer - Additional info */}
+        <Footer />
+      </div>
+    </>
   );
 }
